@@ -1,0 +1,345 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <script>
+        // Le decimos al navegador que NO restaure automáticamente la
+        // posición del scroll al refrescar: nosotros la controlamos abajo.
+        // Esto evita que, al refrescar varias veces seguidas, la página
+        // vaya bajando cada vez más (esto pasaba porque la restauración
+        // automática del navegador se mezclaba con el scroll suave y con
+        // los reacomodos de layout de la página, y el resultado se iba
+        // acumulando en cada refresco).
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E.E.S.T Nº3 Islas Malvinas</title>
+    <meta name="description" content="Escuela E.E.S.T Nº3 &quot;Islas Malvinas&quot; en Remedios de Escalada, Lanús. Formación técnica en Programación, Construcciones y Turismo.">
+    <link rel="icon" href="Assets/favicon.png" type="image/png">
+    <link rel="preconnect" href="https://picsum.photos">
+    <link rel="preconnect" href="https://www.undav.edu.ar">
+    <style>html{background:#eef3f8}</style>
+    <link rel="stylesheet" href="Styles/hi.css">
+    <style>
+        #carrusel,
+        #inicio,
+        #propuesta {
+            animation: sectionRise 0.55s ease both;
+        }
+    </style>
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido principal</a>
+    <header>
+        <div class="container header-container">
+            <picture><source srcset="Assets/tecnica3.webp" type="image/webp"><img src="Assets/tecnica3.png" alt="Logo del colegio" class="logo" width="130" height="130" fetchpriority="high"></picture>
+            <h1>E.E.S.T Nº3 "Islas Malvinas"</h1>
+            <button class="nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li class="nav-dropdown">
+                        <button class="dropdown-toggle" type="button" aria-expanded="false">Especialidades</button>
+                        <ul class="dropdown-menu"><li class="dropdown-menu-label" aria-hidden="true">Especialidades</li>
+                            <li><a href="informatica.html" class="dropdown-link"><span class="dropdown-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="8 6 3 12 8 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16 6 21 12 16 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="13" y1="4.5" x2="11" y2="19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="dropdown-link-text"><span class="dropdown-link-title">Programación</span><span class="dropdown-link-desc">Desarrollo de software, bases de datos y proyectos digitales.</span></span></a></li>
+                            <li><a href="construcciones.html" class="dropdown-link"><span class="dropdown-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3" width="10" height="18" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="14" y="9.5" width="6.5" height="11.5" rx="1" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 7h1.2M10.3 7h1.2M6.5 10.5h1.2M10.3 10.5h1.2M6.5 14h1.2M10.3 14h1.2M6.5 17.5h1.2M10.3 17.5h1.2M16.5 12.5h1.2M16.5 16h1.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><span class="dropdown-link-text"><span class="dropdown-link-title">Construcciones</span><span class="dropdown-link-desc">Diseño, planificación y dirección técnica de obras.</span></span></a></li>
+                            <li><a href="turismo.html" class="dropdown-link"><span class="dropdown-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.3" stroke="currentColor" stroke-width="1.6"/></svg></span><span class="dropdown-link-text"><span class="dropdown-link-title">Turismo</span><span class="dropdown-link-desc">Gestión turística, patrimonio cultural y atención al viajero.</span></span></a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-dropdown">
+                      <button class="dropdown-toggle" type="button" aria-expanded="false">Centro de Estudiantes</button>
+                      <ul class="dropdown-menu"><li class="dropdown-menu-label" aria-hidden="true">Centro de Estudiantes</li>
+                          <li><a href="a1.html" class="dropdown-link"><span class="dropdown-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 20c0-3 2.5-5.3 5.5-5.3s5.5 2.3 5.5 5.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="8.5" r="2.3" stroke="currentColor" stroke-width="1.6"/><path d="M14.8 14.8c2.5.2 4.7 2.3 4.7 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="dropdown-link-text"><span class="dropdown-link-title">Miembros</span><span class="dropdown-link-desc">Conocé a la comisión directiva y sus integrantes.</span></span></a></li>
+                          <li><a href="b1.html" class="dropdown-link"><span class="dropdown-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.5 4H17.5A2.5 2.5 0 0 1 20 6.5V14.5A2.5 2.5 0 0 1 17.5 17H10L5.5 20.5V17H6.5A2.5 2.5 0 0 1 4 14.5V6.5A2.5 2.5 0 0 1 6.5 4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="dropdown-link-text"><span class="dropdown-link-title">Sugerencias</span><span class="dropdown-link-desc">Dejá tu mensaje o propuesta para el centro.</span></span></a></li>
+                          <li><a href="d1.html" class="dropdown-link"><span class="dropdown-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 10h3l9-4.5v13L7 14H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6.5 14v4.5a1 1 0 0 0 1 1h1a1 1 0 0 0 .97-1.24L8.7 14.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 9.5a3.5 3.5 0 0 1 0 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="dropdown-link-text"><span class="dropdown-link-title">Presentación</span><span class="dropdown-link-desc">Nuestra lista, propuesta y compromiso.</span></span></a></li>
+                      </ul>
+                    </li>
+                    <li><a href="galeria.html">Galería</a></li>
+                    <li><a href="noticias.html">Noticias</a></li>
+                    <li><a href="CONTACTO.HTML">Contacto</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section id="carrusel">
+        <div class="carrusel-frame" id="carruselFrame">
+            <div class="carrusel-clip">
+                <svg class="carrusel-progress-svg" id="carruselProgressSvg" aria-hidden="true">
+                    <path class="cp-track" id="cpTrackRight" pathLength="100"></path>
+                    <path class="cp-track" id="cpTrackLeft" pathLength="100"></path>
+                    <path class="cp-fill" id="cpFillRight" pathLength="100"></path>
+                    <path class="cp-fill" id="cpFillLeft" pathLength="100"></path>
+                </svg>
+            </div>
+            <div class="slider" id="carruselSlider">
+                <div class="carrusel-slides" id="carruselSlides"></div>
+                <div class="carrusel-dim"></div>
+                <span class="carrusel-counter" id="carruselCounter">1 / 3</span>
+                <div class="carrusel-dots" id="carruselDots"></div>
+            </div>
+
+            <button class="prev" onclick="moverSlide(-1)" aria-label="Imagen anterior">
+                <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="next" onclick="moverSlide(1)" aria-label="Imagen siguiente">
+                <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </section>
+
+    <main id="contenido">
+        <section id="inicio" class="section">
+            <div class="container">
+                <h2>Bienvenidos a la E.E.S.T Nº3 "Islas Malvinas"</h2>
+                <div class="separador"></div>
+                <p>Bienvenidos a la E.E.S.T Nº3 "Islas Malvinas". Somos una institución pública comprometida con la formación integral de nuestros estudiantes, ubicada en Remedios de Escalada, partido de Lanús. Desde hace años, trabajamos con dedicación y orgullo para ofrecer una educación técnica de excelencia, que combina la enseñanza teórica con la práctica, y que prepara a nuestros jóvenes para afrontar los desafíos del presente y del futuro con compromiso, creatividad y responsabilidad.</p>
+                <p>En nuestra escuela formamos personas antes que profesionales. Buscamos que cada estudiante descubra sus talentos, desarrolle su pensamiento crítico y adquiera las herramientas necesarias para desenvolverse tanto en el ámbito académico como en el mundo del trabajo. Promovemos el trabajo en equipo, el respeto, la solidaridad y la innovación como pilares fundamentales de la educación técnica.</p>
+                <p>La E.E.S.T Nº3 es mucho más que un edificio con talleres: es una comunidad educativa viva, donde cada proyecto, cada clase y cada experiencia contribuyen a formar ciudadanos responsables y técnicos competentes. Contamos con docentes comprometidos, equipamiento en constante actualización y una fuerte conexión con el entorno social y productivo de nuestra región.</p>
+                <p>Creemos en una educación que transforma, que abre puertas, que inspira y que da oportunidades reales. Por eso, seguimos apostando al conocimiento, al esfuerzo y a los valores humanos que hacen grande a nuestra escuela.</p>
+                <blockquote>"Educando con compromiso, construyendo futuro."</blockquote>
+            </div>
+        </section>
+
+        <section id="propuesta" class="section">
+            <div class="container">
+                <h2>Nuestra Propuesta Educativa</h2>
+                <div class="separador"></div>
+                <div class="card-container">
+                    <div class="card" onclick="location.href='informatica.html'">
+                        <div class="card-header">
+                            <span class="card-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <polyline points="8 6 3 12 8 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <polyline points="16 6 21 12 16 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <line x1="13" y1="4.5" x2="11" y2="19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <h3>Técnico en Programación</h3>
+                        </div>
+                        <div class="card-divider"></div>
+                        <p>Desarrollo de software, bases de datos, aplicaciones y proyectos digitales.</p>
+                    </div>
+                    <div class="card" onclick="location.href='construcciones.html'">
+                        <div class="card-header">
+                            <span class="card-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="3.5" y="3" width="10" height="18" rx="1" stroke="currentColor" stroke-width="1.6"/>
+                                    <rect x="14" y="9.5" width="6.5" height="11.5" rx="1" stroke="currentColor" stroke-width="1.6"/>
+                                    <path d="M6.5 7h1.2M10.3 7h1.2M6.5 10.5h1.2M10.3 10.5h1.2M6.5 14h1.2M10.3 14h1.2M6.5 17.5h1.2M10.3 17.5h1.2M16.5 12.5h1.2M16.5 16h1.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <h3>Maestro Mayor de Obras</h3>
+                        </div>
+                        <div class="card-divider"></div>
+                        <p>Diseño, planificación y dirección técnica de proyectos edilicios.</p>
+                    </div>
+                    <div class="card" onclick="location.href='turismo.html'">
+                        <div class="card-header">
+                            <span class="card-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                                    <circle cx="12" cy="9.5" r="2.3" stroke="currentColor" stroke-width="1.6"/>
+                                </svg>
+                            </span>
+                            <h3>Técnico en Servicios Turísticos</h3>
+                        </div>
+                        <div class="card-divider"></div>
+                        <p>Gestión turística, patrimonio cultural y atención al viajero.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 E.E.S.T Nº3 "Islas Malvinas" - Remedios de Escalada, Lanús</p>
+        <p><em>"Enseñamos profesiones, inspiramos personas."</em></p>
+        <p class="footer-credit">Hecha con <span class="heart">♥</span> por los cursos de Programación 2025-actualidad</p>
+    </footer>
+
+    <script>
+        (function () {
+            // Banco de fotos de la escuela para el carrusel.
+            // Cada vez que se carga o refresca la página se eligen 3 al azar.
+            const bancoFotos = [
+                'Assets/carrusel-index/foto1.jpg',
+                'Assets/carrusel-index/foto2.jpg',
+                'Assets/carrusel-index/foto3.jpg',
+                'Assets/carrusel-index/foto4.jpg',
+                'Assets/carrusel-index/foto5.jpg',
+                'Assets/carrusel-index/foto6.jpg',
+                'Assets/carrusel-index/foto7.jpg',
+                'Assets/carrusel-index/foto8.jpg',
+                'Assets/carrusel-index/foto9.jpg'
+            ];
+
+            function elegirAleatorias(arr, cantidad) {
+                const copia = arr.slice();
+                for (let i = copia.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [copia[i], copia[j]] = [copia[j], copia[i]];
+                }
+                return copia.slice(0, cantidad);
+            }
+
+            const contenedorSlides = document.getElementById('carruselSlides');
+            if (contenedorSlides) {
+                const seleccionadas = elegirAleatorias(bancoFotos, 3);
+                contenedorSlides.innerHTML = seleccionadas.map((src, n) =>
+                    '<div class="slide' + (n === 0 ? ' active' : '') + '">' +
+                        '<img src="' + src + '" alt="Foto de la escuela" width="900" height="300"' +
+                        (n === 0 ? ' fetchpriority="high"' : ' loading="lazy"') +
+                        // Si la foto local todavía no está subida a Assets/carrusel/
+                        // (o el archivo no existe / tiene otro nombre), en vez de
+                        // quedar en blanco se muestra una foto de relleno al azar
+                        // para que el carrusel nunca se vea vacío.
+                        ' onerror="this.onerror=null;this.src=\'https://picsum.photos/900/300?random=\'+Math.floor(Math.random()*1000);"' +
+                    '></div>'
+                ).join('');
+            }
+
+            let indice = 0;
+            const duracion = 5000;
+            let restante = duracion;
+            let inicio = Date.now();
+            let temporizador = null;
+            let resizeTimer = null;
+            let enPausa = false;
+
+            const slides = document.querySelectorAll('.slide');
+            const frame = document.getElementById('carruselFrame');
+            const svg = document.getElementById('carruselProgressSvg');
+            const trackRight = document.getElementById('cpTrackRight');
+            const trackLeft = document.getElementById('cpTrackLeft');
+            const fillRight = document.getElementById('cpFillRight');
+            const fillLeft = document.getElementById('cpFillLeft');
+            const contador = document.getElementById('carruselCounter');
+            const dotsContenedor = document.getElementById('carruselDots');
+            let dots = [];
+
+            if (dotsContenedor) {
+                slides.forEach((_, n) => {
+                    const dot = document.createElement('button');
+                    dot.type = 'button';
+                    dot.className = 'carrusel-dot' + (n === 0 ? ' activo' : '');
+                    dot.setAttribute('aria-label', 'Ir a la imagen ' + (n + 1));
+                    dot.addEventListener('click', () => cambiarA(n));
+                    dotsContenedor.appendChild(dot);
+                });
+                dots = Array.from(dotsContenedor.querySelectorAll('.carrusel-dot'));
+            }
+
+            function mostrarSlide(n) {
+                slides.forEach(slide => slide.classList.remove('active'));
+                indice = (n + slides.length) % slides.length;
+                slides[indice].classList.add('active');
+                if (contador) contador.textContent = (indice + 1) + ' / ' + slides.length;
+                dots.forEach((dot, n2) => dot.classList.toggle('activo', n2 === indice));
+            }
+
+            function construirRecorrido() {
+                if (!svg || !frame) return;
+                const w = frame.clientWidth;
+                const h = frame.clientHeight;
+                if (!w || !h) return;
+                const inset = 2.5;
+                const r = 14;
+                const midX = w / 2;
+                const xStart = inset, xEnd = w - inset;
+                const yStart = inset, yEnd = h - inset;
+
+                svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+                svg.setAttribute('width', w);
+                svg.setAttribute('height', h);
+
+                const rutaDerecha = 'M' + midX + ',' + yStart +
+                    ' L' + (xEnd - r) + ',' + yStart +
+                    ' Q' + xEnd + ',' + yStart + ' ' + xEnd + ',' + (yStart + r) +
+                    ' L' + xEnd + ',' + (yEnd - r) +
+                    ' Q' + xEnd + ',' + yEnd + ' ' + (xEnd - r) + ',' + yEnd +
+                    ' L' + midX + ',' + yEnd;
+
+                const rutaIzquierda = 'M' + midX + ',' + yStart +
+                    ' L' + (xStart + r) + ',' + yStart +
+                    ' Q' + xStart + ',' + yStart + ' ' + xStart + ',' + (yStart + r) +
+                    ' L' + xStart + ',' + (yEnd - r) +
+                    ' Q' + xStart + ',' + yEnd + ' ' + (xStart + r) + ',' + yEnd +
+                    ' L' + midX + ',' + yEnd;
+
+                [trackRight, fillRight].forEach(el => el && el.setAttribute('d', rutaDerecha));
+                [trackLeft, fillLeft].forEach(el => el && el.setAttribute('d', rutaIzquierda));
+            }
+
+            function reiniciarRecorrido(duracionMs) {
+                [fillRight, fillLeft].forEach(el => {
+                    if (!el) return;
+                    el.style.setProperty('--dur', duracionMs + 'ms');
+                    el.classList.remove('run');
+                    void el.getBoundingClientRect();
+                    el.classList.add('run');
+                });
+            }
+
+            function reiniciarAutoplay(duracionMs) {
+                clearTimeout(temporizador);
+                if (enPausa) return;
+                inicio = Date.now();
+                temporizador = setTimeout(() => moverSlide(1), duracionMs);
+            }
+
+            function moverSlide(n) {
+                cambiarA(indice + n);
+            }
+
+            function cambiarA(nuevoIndice) {
+                mostrarSlide(nuevoIndice);
+                restante = duracion;
+                reiniciarRecorrido(duracion);
+                reiniciarAutoplay(duracion);
+            }
+
+            function pausarAutoplay() {
+                enPausa = true;
+                clearTimeout(temporizador);
+                restante -= (Date.now() - inicio);
+                if (restante < 0) restante = 0;
+            }
+
+            function reanudarAutoplay() {
+                enPausa = false;
+                reiniciarAutoplay(restante);
+            }
+
+            construirRecorrido();
+            reiniciarRecorrido(duracion);
+            reiniciarAutoplay(duracion);
+
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(construirRecorrido, 150);
+            });
+
+            if (frame) {
+                frame.addEventListener('mouseenter', pausarAutoplay);
+                frame.addEventListener('mouseleave', reanudarAutoplay);
+            }
+
+            window.moverSlide = moverSlide;
+        })();
+    </script>
+
+    <script src="ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "photos": [
+    { "id": "n1", "title": "Aula", "image": "Assets/fotos_galeria/aulas-1.jpg", "visible": true, "categoria": "Aulas" },
+
+    { "id": "n2", "title": "Taller 1", "image": "Assets/fotos_galeria/talleres-1.jpg", "visible": true, "categoria": "Talleres" },
+    { "id": "n3", "title": "Taller 2", "image": "Assets/fotos_galeria/talleres-2.jpg", "visible": true, "categoria": "Talleres" },
+    { "id": "n4", "title": "Taller 3", "image": "Assets/fotos_galeria/talleres-3.jpg", "visible": true, "categoria": "Talleres" },
+    { "id": "n5", "title": "Taller 4", "image": "Assets/fotos_galeria/talleres-4.jpg", "visible": true, "categoria": "Talleres" },
+
+    { "id": "n6", "title": "Laboratorio 1", "image": "Assets/fotos_galeria/laboratorio-1.jpg", "visible": true, "categoria": "Laboratorio" },
+    { "id": "n7", "title": "Laboratorio 2", "image": "Assets/fotos_galeria/laboratorio-2.jpg", "visible": true, "categoria": "Laboratorio" },
+    { "id": "n8", "title": "Laboratorio 3", "image": "Assets/fotos_galeria/laboratorio-3.jpg", "visible": true, "categoria": "Laboratorio" },
+
+    { "id": "n9", "title": "Biblioteca", "image": "Assets/fotos_galeria/biblioteca-1.jpg", "visible": true, "categoria": "Biblioteca" },
+
+    { "id": "n10", "title": "Patio 1", "image": "Assets/fotos_galeria/patio-1.jpg", "visible": true, "categoria": "Patio" },
+    { "id": "n11", "title": "Patio 2", "image": "Assets/fotos_galeria/patio-2.jpg", "visible": true, "categoria": "Patio" },
+
+    { "id": "p1", "title": "Comunidad técnica", "image": "Assets/imagen1.jpg", "visible": true, "categoria": "proyectos" },
+    { "id": "p2", "title": "Aulas en movimiento", "image": "Assets/imagen2.jpg", "visible": true, "categoria": "proyectos" },
+    { "id": "p3", "title": "Talleres y proyectos", "image": "Assets/imagen3.jpg", "visible": true, "categoria": "proyectos" },
+
+    { "id": "n12", "title": "Secretaría 1", "image": "Assets/fotos_galeria/secretaria-1.jpg", "visible": true, "categoria": "Secretaria" },
+    { "id": "n13", "title": "Secretaría 2", "image": "Assets/fotos_galeria/secretaria-2.jpg", "visible": true, "categoria": "Secretaria" }
+  ],
+  "categorias": ["Aulas", "Talleres", "Laboratorio", "Biblioteca", "Patio", "proyectos", "Secretaria"]
+}

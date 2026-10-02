@@ -1,0 +1,166 @@
+/* ==========================================
+/* ==========================================
+   VARIABLES Y ESTILOS BASE
+   ========================================== */
+:root {
+  --bg-dark-1: #0b1826;
+  --bg-dark-2: #0e1f30;
+  --panel-bg: #122234;
+  --panel-card: #152a40;
+  --panel-border: #213c58;
+  
+  --gold: #caa24a;
+  --gold-light: #e8c877;
+  --gold-dark: #8a6a26;
+  
+  --header-grad-1: #0e2c4d;
+  --header-grad-2: #3d7ba8;
+  
+  --text-main: #ffffff;
+  --text-title: #eaf1f8;
+  --text-muted: #8fa7c0;
+  
+  --font-main: 'Segoe UI', Arial, sans-serif;
+  --font-brand: Georgia, 'Times New Roman', serif;
+  
+  --shadow-panel: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  background: linear-gradient(180deg, var(--bg-dark-1) 0%, var(--bg-dark-2) 100%);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================
+   ENCABEZADO INSTITUCIONAL
+   ========================================== */
+.main-header {
+  background: linear-gradient(135deg, var(--header-grad-1) 0%, var(--header-grad-2) 100%);
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid var(--gold);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-title {
+  font-family: var(--font-brand);
+  font-size: 1.8rem;
+  color: var(--text-title);
+  letter-spacing: 0.5px;
+}
+
+.user-badge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gold-light);
+  background: rgba(202, 162, 74, 0.15);
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--gold);
+}
+
+/* ==========================================
+   CONTENEDOR PRINCIPAL
+   ========================================== */
+.admin-container {
+  max-width: 1200px;
+  margin: 2.5rem auto;
+  padding: 0 1.5rem;
+  width: 100%;
+  flex: 1;
+}
+
+.content-section {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 18px;
+  padding: 2.5rem 2rem;
+  box-shadow: var(--shadow-panel);
+}
+
+.section-title {
+  font-family: var(--font-brand);
+  font-size: 1.6rem;
+  color: var(--gold-light);
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 0.75rem;
+}
+
+/* ==========================================
+   GRID DE NAVEGACIÓN ADMINISTRATIVA
+   ========================================== */
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.admin-card {
+  background: var(--panel-card);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 1.8rem 1.5rem;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  box-shadow: var(--shadow-panel);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.admin-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--gold);
+  background: linear-gradient(180deg, var(--panel-card) 0%, rgba(202, 162, 74, 0.08) 100%);
+}
+
+.admin-card:active {
+  transform: scale(0.97);
+}
+
+.card-icon {
+  font-size: 2.5rem;
+}
+
+.card-title {
+  color: var(--text-title);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.card-desc {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* ==========================================
+   PIE DE PÁGINA
+   ========================================== */
+.main-footer {
+  text-align: center;
+  padding: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--panel-border);
+}

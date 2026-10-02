@@ -1,0 +1,3332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Administrar galería — E.E.S.T Nº3 Islas Malvinas</title>
+<style>
+  :root{
+    --gold:#caa24a; --gold-light:#e8c877; --gold-dark:#8a6a26;
+    --bg:#eef3f8; --ink-soft:#5b6b7c; --line:#dde5ee;
+    --dk-bg:#0b1826; --dk-panel:#122234; --dk-card:#152a40; --dk-line:#213c58;
+    --dk-text:#eaf1f8; --dk-text-soft:#8fa7c0;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:'Segoe UI',Arial,sans-serif;
+    background: linear-gradient(180deg, #0b1826 0%, #0e1f30 12%, #0e1f30 78%, #0b1826 100%);
+    color:#eaf1f8; padding:0; min-height:100vh; display:flex; flex-direction:column; }
+  h1.page-title{ display:none; }
+  p.page-sub{ display:none; }
+  section.option{ max-width:1600px; width:100%; margin:0 auto; background:var(--dk-panel); border-radius:18px;
+    border:1px solid var(--dk-line); box-shadow:0 8px 28px rgba(0,0,0,0.35); overflow:hidden; }
+  .option-body{ padding:22px; }
+  .option-note{ display:none; }
+
+  .site-header{ background:linear-gradient(120deg,#0e2c4d 0%,#154573 55%,#3d7ba8 100%); padding:14px 32px;
+    display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap; }
+  .site-header .brand{ display:flex; align-items:center; gap:14px; }
+  .site-header .brand img{ height:52px; width:52px; object-fit:contain; }
+  .site-header .brand h1{ color:#fff; font-size:19px; margin:0; font-family:Georgia,'Times New Roman',serif; font-weight:700; white-space:nowrap; }
+  .site-header nav ul{ list-style:none; display:flex; gap:8px; margin:0; padding:0; flex-wrap:wrap; }
+  .site-header nav a, .site-header nav button{ color:#fff; text-decoration:none; font-size:13.5px; font-weight:600;
+    background:rgba(255,255,255,.12); border:none; border-radius:999px; padding:8px 16px; cursor:pointer;
+    font-family:inherit; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+  .site-header nav a:hover, .site-header nav button:hover{ background:rgba(255,255,255,.22); }
+
+  .panel-wrap{ flex:1; display:flex; align-items:center; justify-content:center; padding:40px 24px 80px; }
+  .o7{ background:var(--dk-bg); border-radius:14px; padding:32px; width:100%; margin:0 auto; }
+  .footer-note{ display:none; }
+
+  .gallery-heading{ display:flex; align-items:flex-end; justify-content:space-between; gap:18px;
+    flex-wrap:wrap; margin-bottom:18px; }
+  .gallery-title{ display:inline-flex; align-items:center; gap:10px; }
+  .gallery-heading h2{ margin:0; color:var(--dk-text); font-size:clamp(1.5rem,2.6vw,2rem); font-weight:800; }
+  .gallery-heading p{ max-width:480px; margin:6px 0 0; font-size:.95rem; color:var(--dk-text-soft); flex-basis:100%; }
+  .gallery-count-pill{ display:inline-flex; align-items:center; gap:7px; padding:8px 18px; border-radius:999px;
+    background:rgba(202,162,74,.16); box-shadow:inset 0 0 0 1px rgba(202,162,74,.35); color:#8a6a1f;
+    font-size:.76rem; font-weight:700; letter-spacing:.5px; text-transform:uppercase; white-space:nowrap; }
+  .gallery-count-pill svg{ width:14px; height:14px; flex-shrink:0; }
+  .gallery-count-pill strong{ font-size:.92rem; color:#103b66; }
+
+  /* ---- Tarjetas de estadísticas (estilo tomado de noticias-admin) ---- */
+  .stats-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin:0 0 22px; }
+  .stat-card{ background:var(--dk-card); border:1px solid var(--dk-line); border-radius:12px; padding:16px 18px;
+    transition:border-color .15s ease, background .15s ease, transform .12s ease; }
+  .stat-card b{ display:block; font-size:26px; font-weight:800; color:var(--dk-text); line-height:1.1;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .stat-card b.gold{ color:var(--gold-light); }
+  .stat-card span{ display:block; margin-top:6px; font-size:11px; font-weight:700; letter-spacing:.4px;
+    text-transform:uppercase; color:var(--dk-text-soft); }
+  /* Igual que en noticias-admin: funcionan como atajos rápidos, no sólo
+     como información pasiva. */
+  .stat-card.is-clickable{ cursor:pointer; }
+  .stat-card.is-clickable:hover{ border-color:var(--gold-dark); }
+  .stat-card.is-clickable:active{ transform:scale(.97); }
+  .stat-card.is-active{ border-color:var(--gold-dark); background:rgba(202,162,74,.1); }
+  @keyframes flashGoldStats{
+    0%,100%{ background:transparent; }
+    15%,85%{ background:rgba(202,162,74,.18); }
+  }
+  .flash-highlight{ border-radius:14px; animation:flashGoldStats 1.8s ease; }
+  /* La fila de categorías usa un marco propio en vez del fondo genérico
+     de arriba: como los chips son píldoras redondeadas, un fondo o un
+     inset pegado al borde del contenedor queda tapado por los chips y
+     sólo se nota en los huecos entre ellos. Este marco (::before) se
+     separa unos px hacia afuera y envuelve toda la fila de forma pareja,
+     igual que en noticias-admin. */
+  .o7-cats-wrap{ position:relative; border-radius:14px; }
+  .o7-cats-wrap.flash-highlight{ animation:none; background:transparent; }
+  .o7-cats-wrap.flash-highlight::before{
+    content:""; position:absolute; inset:-8px -8px -14px -8px; border-radius:16px;
+    pointer-events:none; animation:flashGoldFrame 1.8s ease;
+  }
+  @keyframes flashGoldFrame{
+    0%,100%{ box-shadow:none; }
+    12%,88%{ box-shadow:0 0 0 2px var(--gold-dark), 0 0 22px rgba(202,162,74,.35); }
+  }  @media (max-width:900px){ .stats-grid{ grid-template-columns:repeat(2, 1fr); } }
+  .o7-preview-btn{ background:rgba(255,255,255,.06); color:var(--dk-text); border:1px solid var(--dk-line);
+    border-radius:7px; font-size:12px; font-weight:600; padding:7px 14px; cursor:pointer; white-space:nowrap;
+    display:flex; align-items:center; gap:6px; }
+  .o7-preview-btn:hover{ border-color:var(--gold-dark); color:var(--gold-light); }
+  .o7-preview-btn .dot{ width:6px; height:6px; border-radius:50%; background:#2f9e5c; }
+
+  .o7-save-btn{ background:var(--gold); color:#241a05; border:none; border-radius:7px; font-size:12px; font-weight:700;
+    padding:7px 14px; cursor:pointer; white-space:nowrap; }
+  .o7-save-btn:hover{ background:var(--gold-light); }
+  .o7-restore-btn{ background:transparent; color:var(--dk-text-soft); border:1px solid var(--dk-line); border-radius:7px;
+    font-size:12px; font-weight:600; padding:7px 14px; cursor:pointer; white-space:nowrap; }
+  .o7-restore-btn:hover{ border-color:var(--gold); color:var(--gold-light); background:rgba(202,162,74,.1); }
+  .o7-restore-btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .o7-restore-btn:disabled:hover{ border-color:var(--dk-line); color:var(--dk-text-soft); background:transparent; }
+
+  .o7-confirm-body{ padding:20px 22px; background:var(--dk-panel); display:flex; flex-direction:column; gap:8px; }
+  .o7-confirm-body p{ color:var(--dk-text); font-size:13.5px; line-height:1.5; margin:0; }
+  .o7-delete-card{ display:flex; align-items:center; gap:14px; background:rgba(163,59,59,.12); border:1px solid rgba(163,59,59,.4);
+    border-radius:12px; padding:12px; }
+  .o7-delete-thumb{ width:96px; height:96px; border-radius:9px; flex:0 0 auto;
+    background:linear-gradient(135deg,#26456a,#173049); background-size:cover; background-position:center; }
+  .o7-delete-icon{ width:96px; height:96px; border-radius:50%; background:rgba(163,59,59,.2); color:#e78888; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center; }
+  .o7-delete-icon svg{ width:36px; height:36px; }
+  .o7-delete-info{ min-width:0; }
+  .o7-delete-cat{ display:inline-block; font-size:10.5px; font-weight:700; color:var(--gold-light); background:rgba(202,162,74,.16);
+    border-radius:999px; padding:2px 8px; margin-bottom:6px; }
+  .o7-delete-title{ color:#fff; font-size:13.5px; font-weight:700; margin:0 0 5px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .o7-delete-warn{ color:#e08a8a; font-size:12px; margin:0; display:flex; align-items:center; gap:5px; }
+  .o7-delete-warn svg{ width:13px; height:13px; flex:0 0 auto; }
+  .o7-confirm-foot{ display:flex; justify-content:flex-end; gap:8px; padding:14px 22px; border-top:1px solid var(--dk-line); }
+  .o7-btn-cancel{ background:transparent; color:var(--dk-text-soft); border:1px solid var(--dk-line); border-radius:8px; font-size:12.5px;
+    font-weight:600; padding:8px 16px; cursor:pointer; transition:background-color .15s ease, border-color .15s ease, color .15s ease, transform .12s ease; }
+  .o7-btn-cancel:hover{ border-color:var(--gold); color:var(--gold-light); }
+  .o7-btn-cancel:active{ transform:scale(.96); }
+  .o7-btn-confirm{ background:var(--gold); color:#241a05; border:none; border-radius:8px; font-size:12.5px;
+    font-weight:600; padding:8px 16px; cursor:pointer; transition:background-color .15s ease, transform .12s ease; }
+  .o7-btn-confirm:hover{ background:var(--gold-light); }
+  .o7-btn-confirm:active{ transform:scale(.96); }
+  .o7-btn-confirm.danger{ background:#a33b3b; color:#fff; }
+  .o7-btn-confirm.danger:hover{ background:#822f2f; }
+
+  .o7-toast{ position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); opacity:0;
+    background:#103b66; color:#fff; font-size:13px; font-weight:600; padding:10px 20px; border-radius:999px;
+    box-shadow:0 10px 24px rgba(0,0,0,.25); transition:.25s; pointer-events:none; z-index:60; }
+  .o7-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .o7-modal-bg{ position:fixed; inset:0; background:rgba(6,14,28,.72); display:flex;
+    align-items:center; justify-content:center; z-index:50; padding:24px;
+    opacity:0; visibility:hidden; pointer-events:none;
+    transition:opacity .18s ease, visibility 0s linear .18s; }
+  .o7-modal-bg.open{ opacity:1; visibility:visible; pointer-events:auto;
+    transition:opacity .18s ease, visibility 0s linear 0s; }
+  .o7-modal-bg > .o7-modal, .o7-modal-bg > .o7-photo-viewer{
+    transform:translateY(14px) scale(.97); opacity:0;
+    transition:transform .22s cubic-bezier(.2,.8,.2,1), opacity .18s ease; }
+  .o7-modal-bg.open > .o7-modal, .o7-modal-bg.open > .o7-photo-viewer{ transform:translateY(0) scale(1); opacity:1; }
+  .o7-modal{ background:var(--dk-panel); border:1px solid var(--dk-line); border-top:3px solid var(--gold);
+    border-radius:16px; width:100%; max-width:720px; overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.5); }
+  .o7-modal-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 18px;
+    border-bottom:1px solid var(--dk-line); }
+  .o7-modal-head .t{ color:#fff; font-size:14px; font-weight:700; }
+  .o7-modal-head .x{ width:28px; height:28px; border-radius:8px; border:1px solid var(--dk-line); background:transparent;
+    color:var(--dk-text); cursor:pointer; font-size:14px; }
+  .o7-modal-head .x:hover{ border-color:var(--gold); color:var(--gold-light); }
+  .o7-modal-body{ padding:18px; background:var(--dk-bg); }
+  .o7-frame{ position:relative; border-radius:10px; overflow:hidden; height:220px;
+    background:#0c1c30; display:flex; align-items:center; justify-content:center; }
+  .o7-frame .badge{ position:absolute; top:10px; left:10px; background:rgba(16,59,102,.72); color:#fff; font-size:11px;
+    font-weight:600; padding:4px 11px; border-radius:999px; }
+  .o7-frame .count{ position:absolute; top:10px; right:10px; background:rgba(6,18,32,.55); color:#fff; font-size:11px;
+    padding:4px 10px; border-radius:999px; font-variant-numeric:tabular-nums; }
+  .o7-frame .cap{ position:absolute; left:10px; bottom:10px; background:rgba(11,24,38,.85); color:#fff;
+    font-size:13px; font-weight:700; padding:6px 13px; border-radius:999px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:calc(100% - 62px); }
+  .o7-frame .arrow{ position:absolute; top:50%; transform:translateY(-50%); width:32px; height:32px; border-radius:50%;
+    background:rgba(11,24,38,.85); color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:15px; cursor:pointer; z-index:2; }
+  .o7-frame .arrow.l{ left:10px; } .o7-frame .arrow.r{ right:10px; }
+  .o7-frame-img{ max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain;
+    cursor:zoom-in; transform-origin:center center; transition:transform .18s ease; touch-action:none; will-change:transform; }
+  .o7-frame-img.is-zoomed{ cursor:grab; }
+  .o7-frame-img.is-panning{ cursor:grabbing; transition:none; }
+  .o7-zoom-controls{ display:flex; align-items:center; justify-content:center; gap:6px; margin-top:12px; }
+  .o7-zoom-btn{ width:32px; height:32px; border-radius:50%; border:1px solid var(--dk-line); background:var(--dk-card);
+    color:var(--dk-text); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:15px;
+    font-weight:700; line-height:1; }
+  .o7-zoom-btn:hover{ background:var(--gold-dark); color:#fff; }
+  .o7-zoom-btn:disabled{ opacity:.35; cursor:default; }
+  .o7-zoom-btn:disabled:hover{ background:var(--dk-card); color:var(--dk-text); }
+  .o7-zoom-level{ min-width:44px; text-align:center; font-size:12px; font-weight:700; color:var(--dk-text); }
+  .o7-zoom-reset{ font-size:11px; }
+
+  /* Se abre por encima de cualquier otro modal (p. ej. "Editar foto"),
+     así que necesita más z-index que el resto de .o7-modal-bg. */
+  #photoViewModal{ z-index:70; }
+
+  /* --- Visor minimalista: sólo la foto, sin badges/flechas/miniaturas --- */
+  .o7-photo-viewer{ position:relative; max-width:92vw; max-height:92vh; display:flex;
+    align-items:center; justify-content:center; }
+  .o7-viewer-img{ max-width:92vw; max-height:92vh; width:auto; height:auto; object-fit:contain;
+    border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,.5); background:#0c1c30; cursor:zoom-in;
+    transform-origin:center center; transition:transform .18s ease; touch-action:none; will-change:transform; }
+  .o7-viewer-img.is-zoomed{ cursor:grab; }
+  .o7-viewer-img.is-panning{ cursor:grabbing; transition:none; }
+  .o7-viewer-close{ position:absolute; top:-6px; right:-6px; width:38px; height:38px; border-radius:50%;
+    border:1.5px solid rgba(234,241,248,.18); background:rgba(11,24,38,.92); color:#eaf1f8; cursor:pointer;
+    font-size:15px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(0,0,0,.4);
+    opacity:1;
+    transition:border-color .2s ease, color .2s ease, background-color .2s ease, box-shadow .2s ease, transform .2s ease, opacity .2s ease;
+    z-index:3; }
+  .o7-viewer-close:hover,
+  .o7-viewer-close:focus-visible{
+    border-color:var(--gold); color:var(--gold-light); background:rgba(11,24,38,.98);
+    box-shadow:0 8px 22px rgba(0,0,0,.45), 0 0 0 3px rgba(202,162,74,.18); transform:scale(1.07); }
+  .o7-viewer-close:active{ transform:scale(.96); }
+  .o7-photo-viewer:has(.o7-viewer-img.is-zoomed) .o7-viewer-close{ opacity:0; pointer-events:none; }
+  .o7-mini-thumbs{ display:flex; gap:8px; margin-top:12px; }
+  .o7-mini-thumb{ flex:1; height:44px; border-radius:7px; background:linear-gradient(135deg,#26456a,#173049);
+    border:2px solid transparent; opacity:.6; cursor:pointer; }
+  .o7-mini-thumb.active{ border-color:var(--gold); opacity:1; }
+  .o7-modal-foot{ text-align:center; color:var(--dk-text-soft); font-size:11.5px; padding:0 18px 16px; }
+
+  /* --- Formulario "Añadir/Editar foto" --- */
+  .o7-addphoto-modal{ display:flex; flex-direction:column; max-height:88vh; max-width:640px;
+    border-top:4px solid var(--gold); }
+  .o7-addphoto-modal .o7-modal-head{ flex:0 0 auto; }
+  .o7-addphoto-modal .o7-confirm-foot{ flex:0 0 auto; }
+  .o7-addphoto-scroll-wrap{ position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+  .o7-addphoto-scroll{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:none; }
+  .o7-addphoto-scroll::-webkit-scrollbar{ display:none; }
+  .o7-addphoto-scrollbar-track{ position:absolute; top:10px; bottom:10px; right:6px; width:4px;
+    z-index:4; pointer-events:none; display:none; }
+  .o7-addphoto-scrollbar-thumb{ position:absolute; right:0; width:4px; border-radius:999px;
+    background:var(--gold); opacity:.85; }
+  .o7-form-body{ padding:18px 20px 6px; background:var(--dk-panel); display:flex; gap:16px; }
+  .o7-field{ display:flex; flex-direction:column; gap:6px; }
+  .o7-field[hidden]{ display:none; }
+  .o7-field-label{ font-size:12.5px; font-weight:700; color:var(--gold-light); }
+  .o7-field input[type="text"], .o7-field select{ border:1.5px solid var(--dk-line); border-radius:8px;
+    padding:9px 11px; font-size:13.5px; color:var(--dk-text); background:var(--dk-bg); font-family:inherit; }
+  .o7-field input[type="text"]:focus, .o7-field select:focus{ outline:none; border-color:var(--gold-dark); background:#0c1c30; }
+  .o7-photo-col{ flex:0 0 232px; display:flex; flex-direction:column; gap:8px; }
+  .o7-fields-col{ flex:1; min-width:0; display:flex; flex-direction:column; gap:14px; }
+  .o7-file-preview{ width:100%; height:232px; border-radius:10px; background:#0c1c30;
+    display:flex; align-items:center; justify-content:center; overflow:hidden; padding:10px; }
+  .o7-file-preview .ph{ color:#8fa7c0; font-size:11px; text-align:center; line-height:1.3; padding:0 8px; }
+  .o7-file-preview img{ max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain;
+    border-radius:6px; }
+  .o7-field-or{ margin:-2px 0 0; font-size:11.5px; color:#8fa7c0; text-align:center; }
+  .o7-photo-upload[hidden]{ display:none; }
+  .o7-photo-upload{ border:1.5px dashed var(--dk-line); border-radius:8px; padding:9px 8px; display:flex; align-items:center;
+    justify-content:center; gap:6px; font-size:12px; font-weight:600; color:var(--dk-text-soft); cursor:pointer;
+    background:var(--dk-bg); transition:border-color .15s ease, color .15s ease, background-color .15s ease, transform .12s ease; }
+  .o7-photo-upload:hover{ border-color:var(--gold-dark); color:var(--gold-light); background:rgba(202,162,74,.08); }
+  .o7-photo-upload:active{ transform:scale(.97); }
+  .o7-photo-upload svg{ width:14px; height:14px; flex:0 0 auto; }
+  .o7-photo-upload input[type="file"]{ position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
+
+  .o7-type-toggle{ display:flex; gap:6px; background:var(--dk-bg); border:1.5px solid var(--dk-line); border-radius:8px; padding:3px; }
+  .o7-type-btn{ flex:1; border:0; border-radius:6px; padding:8px 10px; font-size:12.5px; font-weight:700;
+    color:var(--dk-text-soft); background:transparent; cursor:pointer; transition:background-color .15s ease, color .15s ease; }
+  .o7-type-btn:hover{ color:var(--gold-light); }
+  .o7-type-btn.is-active{ background:var(--gold-dark); color:#132338; }
+  .o7-thumb.is-video::before{ content:''; position:absolute; inset:0; display:flex; }
+  .o7-thumb-video-badge{ position:absolute; left:6px; bottom:6px; z-index:2; background:rgba(10,24,40,.72);
+    color:#fff; font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
+    padding:3px 7px; border-radius:999px; display:flex; align-items:center; gap:4px; pointer-events:none; }
+  .o7-thumb-video-badge svg{ width:10px; height:10px; }
+  .o7-thumb-video-empty{ display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#12283f,#0c1c30); }
+  .o7-thumb-video-empty svg{ width:32px; height:32px; color:var(--gold-light); opacity:.85; }
+
+  @media (max-width:560px){
+    .o7-form-body{ flex-direction:column; }
+    .o7-photo-col{ flex:0 0 auto; width:100%; }
+    .o7-file-preview{ height:200px; }
+  }
+
+  /* --- Recuadro dinámico con zoom y borde dorado: compartido entre
+     "Editar foto" y "Añadir foto" (ambos modales tienen la clase
+     o7-addphoto-modal) --- */
+  .o7-addphoto-modal .o7-photo-col{ align-items:center; }
+  .o7-addphoto-modal .o7-photo-frame{ position:relative; width:232px; height:232px; border-radius:10px;
+    overflow:hidden; background:#0c1826; box-sizing:border-box; border:1px solid var(--dk-line); cursor:pointer;
+    transition:width .35s cubic-bezier(.2,.8,.3,1), height .35s cubic-bezier(.2,.8,.3,1), border-color .15s ease, box-shadow .15s ease; }
+  .o7-addphoto-modal .o7-photo-frame:hover{ border-color:var(--gold-dark); }
+  .o7-addphoto-modal .o7-photo-frame.dragover{ border-color:var(--gold-light); box-shadow:0 0 0 4px rgba(202,162,74,.45); }
+  .o7-photo-upload.dragover{ border-color:var(--gold-light); box-shadow:0 0 0 4px rgba(202,162,74,.45); background:rgba(202,162,74,.08); }
+  .o7-addphoto-modal .o7-fields-col{ background:var(--dk-panel); }
+  .o7-addphoto-modal .o7-file-preview{ position:absolute; inset:0; width:auto; height:auto;
+    border-radius:0; background:transparent; padding:0; }
+  .o7-addphoto-modal .o7-file-preview .ph{ color:#5f88ae; font-size:46px; font-weight:300; line-height:1; user-select:none; }
+  .o7-addphoto-modal .o7-file-preview img{ width:100%; height:100%; max-width:100%; max-height:100%;
+    object-fit:contain; border-radius:0; transform-origin:center center; transition:transform .1s ease-out;
+    animation:o7-img-in .3s ease; cursor:zoom-in; -webkit-user-drag:none; user-select:none; }
+  @keyframes o7-img-in{ from{ opacity:0; transform:scale(.94); } to{ opacity:1; } }
+  .o7-addphoto-modal .o7-file-preview img.is-zoomed{ cursor:grab; }
+  .o7-addphoto-modal .o7-file-preview img.is-panning{ cursor:grabbing; transition:none; }
+  .o7-addphoto-modal .o7-photo-expand-hint{ position:absolute; top:8px; right:8px; z-index:3; width:26px; height:26px;
+    border-radius:50%; background:rgba(16,59,102,.75); color:#fff; display:flex; align-items:center;
+    justify-content:center; opacity:0; transform:scale(.9); pointer-events:none;
+    transition:opacity .15s ease, transform .15s ease; }
+  .o7-addphoto-modal .o7-photo-expand-hint svg{ width:14px; height:14px; }
+  .o7-addphoto-modal .o7-photo-frame:has(.o7-file-preview img):hover .o7-photo-expand-hint{ opacity:1; transform:scale(1); }
+  .o7-addphoto-modal .o7-photo-badge{ position:absolute; top:8px; left:8px; z-index:3; display:none;
+    align-items:center; gap:4px; background:var(--dk-card); color:var(--gold-light); font-size:10.5px; font-weight:700;
+    padding:4px 9px 4px 7px; border-radius:20px; box-shadow:0 1px 4px rgba(0,0,0,.35); }
+  .o7-addphoto-modal .o7-photo-badge svg{ width:12px; height:12px; }
+  .o7-addphoto-modal .o7-photo-badge.show{ display:flex; animation:o7-badge-in .3s ease; }
+  @keyframes o7-badge-in{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:translateY(0); } }
+  .o7-addphoto-modal .o7-photo-dims{ font-size:11px; color:#8fa7c0; margin:0; }
+  .o7-addphoto-modal .o7-photo-dims.warn{ color:var(--gold-light); font-weight:700; background:rgba(202,162,74,.15); border-radius:6px;
+    padding:6px 9px; }
+
+  /* --- Peso de la miniatura, mostrado en la esquina de cada tarjeta --- */
+  .o7-thumb-weight{ position:absolute; bottom:6px; right:6px; z-index:2; background:rgba(6,18,32,.6); color:#fff;
+    font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:999px; font-variant-numeric:tabular-nums; }
+  .o7-thumb.o7-thumb-loading{ display:flex; align-items:center; justify-content:center; }
+  .o7-thumb.o7-thumb-loading::after{ content:''; width:20px; height:20px; border-radius:50%;
+    border:2px solid rgba(255,255,255,.18); border-top-color:rgba(255,255,255,.55); animation:o7-thumb-spin .8s linear infinite; }
+  @keyframes o7-thumb-spin{ to{ transform:rotate(360deg); } }
+
+  /* --- Aviso de "cambios sin guardar" en Vista previa en vivo --- */
+  .o7-preview-dirty{ display:flex; align-items:center; gap:8px; background:rgba(202,162,74,.14); color:var(--gold-light); font-size:12px;
+    font-weight:700; padding:9px 18px; border-bottom:1px solid rgba(202,162,74,.3); }
+  .o7-preview-dirty svg{ width:14px; height:14px; flex:0 0 auto; }
+  .o7-preview-dirty span{ flex:1; }
+  .o7-preview-dirty-actions{ display:flex; gap:8px; }
+  .o7-preview-dirty-btn{ font-size:11.5px; font-weight:700; border-radius:999px; padding:5px 13px; cursor:pointer;
+    border:1px solid transparent; font-family:inherit; }
+  .o7-preview-dirty-btn.save{ background:#8a6a1f; color:#fff; }
+  .o7-preview-dirty-btn.save:hover{ background:#6f551a; }
+  .o7-preview-dirty-btn.keep{ background:transparent; color:#8a6a1f; border-color:#e8c877; }
+  .o7-preview-dirty-btn.keep:hover{ background:rgba(202,162,74,.14); }
+
+  .o7-seg-toggle{ display:flex; gap:6px; }
+  .o7-seg-btn{ flex:1; padding:8px 10px; border-radius:7px; border:1.5px solid var(--dk-line); background:var(--dk-bg);
+    color:var(--dk-text-soft); font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .o7-seg-btn:hover{ border-color:var(--gold-dark); color:var(--gold-light); }
+  .o7-seg-btn.active{ background:#103b66; border-color:#103b66; color:#fff; }
+  .o7-seg-btn.active:hover{ border-color:#103b66; color:#fff; }
+  .o7-form-error{ color:#e08a8a; font-size:12.5px; font-weight:600; min-height:16px; margin:0; }
+
+  .o7-toolbar{ display:flex; align-items:center; gap:10px; background:var(--dk-panel); border:1px solid var(--dk-line);
+    border-radius:10px; padding:10px 12px; margin-bottom:16px; }
+  .o7-toolbar input[type="text"]{ flex:1; background:var(--dk-bg); border:1px solid var(--dk-line); border-radius:7px;
+    padding:7px 10px; color:var(--dk-text); font-size:12.5px; }
+  .o7-toolbar button{ background:var(--gold); color:#241a05; border:none; border-radius:7px; font-size:12px; font-weight:700;
+    padding:7px 14px; cursor:pointer; white-space:nowrap; }
+
+  .o7-select-group{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .o7-select-count{ color:var(--dk-text); font-size:11.5px; font-weight:700; background:rgba(202,162,74,.14);
+    border:1px solid var(--dk-line); border-radius:999px; padding:6px 13px; white-space:nowrap; }
+  .o7-bulk-delete-btn{ background:#a33b3b; color:#fff; border:none; border-radius:7px; font-size:12px; font-weight:700;
+    padding:7px 14px; cursor:pointer; white-space:nowrap; }
+  .o7-bulk-delete-btn:hover{ background:#822f2f; }
+  .o7-bulk-delete-btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .o7-select-btn{ background:transparent; color:var(--dk-text-soft); border:1px solid var(--dk-line); border-radius:7px;
+    font-size:12px; font-weight:600; padding:7px 14px; cursor:pointer; white-space:nowrap;
+    display:flex; align-items:center; gap:6px; }
+  .o7-select-btn svg{ width:13px; height:13px; flex:0 0 auto; }
+  .o7-select-btn:hover{ border-color:var(--gold-dark); color:var(--gold-light); }
+  .o7-select-btn.active{ background:rgba(202,162,74,.15); color:var(--gold-light); border-color:var(--gold-dark); }
+
+  .o7-cats-wrap{ margin-bottom:10px; }
+  .o7-cats{
+    position:relative;
+    display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; scroll-behavior:smooth;
+  }
+  /* La barra nativa se reemplaza por la barra dorada propia de abajo. */
+  .o7-cats{ scrollbar-width:none; }
+  .o7-cats::-webkit-scrollbar{ display:none; }
+
+  /* Módulo dorado que se desliza detrás del chip seleccionado. Es un
+     único elemento persistente (no se recrea en cada renderCats) que
+     se reposiciona con "left"/"width" según el chip activo, animando
+     con transition en vez de saltar de golpe. Va como hijo de .o7-cats
+     (no de .o7-cats-wrap) para que se desplace junto con el scroll de
+     la fila, ya que su posición absoluta usa .o7-cats como referencia.
+     Mismo look que tenía el chip activo antes (fondo dorado traslúcido
+     + borde), sólo que ahora es este módulo aparte el que se mueve. */
+  .o7-cats-highlight{
+    position:absolute; top:0; left:0; width:0; height:0;
+    box-sizing:border-box;
+    border-radius:999px;
+    background:rgba(202,162,74,.15);
+    border:1px solid var(--gold-dark);
+    pointer-events:none;
+    opacity:0;
+    z-index:0;
+    transition:left .32s cubic-bezier(.22,1,.36,1), width .32s cubic-bezier(.22,1,.36,1), top .32s cubic-bezier(.22,1,.36,1), height .32s cubic-bezier(.22,1,.36,1), opacity .2s ease;
+  }
+  .o7-cats-highlight.is-visible{ opacity:1; }
+
+  .o7-chip{ background:var(--dk-panel); color:var(--dk-text-soft); border:1px solid var(--dk-line); font-size:12px;
+    font-weight:600; padding:6px 14px; border-radius:999px; white-space:nowrap; flex:0 0 auto; cursor:grab; display:flex; align-items:center; gap:6px;
+    transition:background-color .15s ease, color .15s ease, border-color .15s ease, transform .12s ease; }
+  .o7-chip:active{ transform:scale(.96); }
+  .o7-chip.dragging{ opacity:.4; }
+  .o7-chip.ghost{ border:1px dashed var(--gold-dark); background:rgba(202,162,74,.06); }
+
+  /* El fondo y borde del chip activo se apagan: ahora los da el módulo
+     dorado que se desliza por detrás (.o7-cats-highlight), con el mismo
+     look que tenía antes. Sólo el chip ACTIVO recibe position+z-index
+     (igual que noticias.html): así, al desplazarse de un chip a otro, el
+     módulo dorado pasa por ARRIBA de los chips inactivos (que quedan sin
+     posicionar, pintados antes en el orden de apilamiento) y sólo quede
+     tapado por el chip que en cada momento está activo. El peso de fuente
+     queda fijo (arriba, en .o7-chip) en vez de cambiar acá: si sólo el
+     activo pasaba a negrita, su texto se ensanchaba un poco al activarse
+     y empujaba a los chips siguientes, dando la sensación de que "todas
+     las categorías se movían de lugar" al tocar una. */
+  .o7-chip.active{ position:relative; z-index:1; background:transparent; color:var(--gold-light); border-color:transparent; }
+  .o7-chip.add{ border-style:dashed; cursor:pointer; }
+  .o7-chip.add:hover{ border-color:var(--gold-dark); color:var(--gold-light); }
+
+  /* Mientras se arrastra una foto, las categorías quedan marcadas como
+     zona de destino válida; al pasar por encima, un flash dorado confirma
+     que la foto quedó etiquetada ahí, sin soltar el arrastre. */
+  .o7-cats.drop-mode .o7-chip:not(.add):not([data-cat="__todas__"]){
+    box-shadow:0 0 0 1px dashed var(--gold-dark); outline:1px dashed var(--gold-dark); outline-offset:2px; }
+  .o7-chip.drop-hover{ border-color:var(--gold); background:rgba(202,162,74,.22); color:var(--gold-light); }
+  .o7-chip.tag-flash{ animation:o7TagFlash .5s ease; }
+  @keyframes o7TagFlash{ 0%{ transform:scale(1); } 35%{ transform:scale(1.12); background:rgba(202,162,74,.4); }
+    100%{ transform:scale(1); } }
+
+  .o7-chip .chip-label{ cursor:grab; }
+  .o7-chip .chip-ic{ display:flex; align-items:center; justify-content:center; width:20px; height:20px;
+    border-radius:6px; cursor:pointer; opacity:.6; line-height:1; flex:0 0 auto; color:inherit;
+    transition:background-color .15s ease, color .15s ease, opacity .15s ease, transform .12s ease; }
+  .o7-chip .chip-ic:active{ transform:scale(.9); }
+  .o7-chip .chip-ic svg{ width:13px; height:13px; display:block; }
+  .o7-chip .chip-ic:hover{ opacity:1; background:rgba(202,162,74,.18); color:var(--gold-light); }
+  .o7-chip .chip-ic.del:hover{ background:rgba(163,59,59,.25); color:#e78888; }
+  .o7-chip.editing{ cursor:default; }
+  .o7-chip .chip-edit-input{ background:var(--dk-bg); border:1px solid var(--gold-dark); border-radius:6px;
+    color:var(--dk-text); font-size:12px; font-family:inherit; padding:3px 8px; outline:none;
+    animation:o7ChipInputIn .15s ease; transform-origin:left center; transition:width .12s ease; }
+  @keyframes o7ChipInputIn{ from{ opacity:0; transform:scale(.9); } to{ opacity:1; transform:scale(1); } }
+
+  /* --- Fila horizontal con scroll --- */
+  .o7-row-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .o7-row-head .h{ color:var(--dk-text-soft); font-size:11.5px; text-transform:uppercase; letter-spacing:.5px; }
+  .o7-nav-btns{ display:flex; gap:6px; margin-top:16px; }
+  .o7-nav-btns button{ width:28px; height:28px; border-radius:7px; background:var(--dk-panel); border:1px solid var(--dk-line);
+    color:var(--dk-text-soft); cursor:pointer; font-size:13px; }
+  .o7-nav-btns button:hover{ border-color:var(--gold-dark); color:var(--gold-light); }
+
+  .o7-scroll-wrap{ position:relative; margin-bottom:10px; }
+  .o7-scroll{
+    display:flex; gap:12px; overflow-x:auto; padding-bottom:6px; scroll-behavior:smooth;
+  }
+  /* La barra nativa se reemplaza por la barra dorada propia de abajo
+     (misma que usa galeria.html), así que se oculta la del navegador. */
+  .o7-scroll{ scrollbar-width:none; }
+  .o7-scroll::-webkit-scrollbar{ display:none; }
+
+  /* --- Barra de desplazamiento personalizada con efecto resorte ---
+     Copiada de galeria.html (.gallery-thumbs-scrollbar-*). Se usa tanto
+     para la fila de fotos como para la fila de categorías (clase común
+     .o7-scrollbar-*, cada fila tiene su propia instancia vía JS). */
+  .o7-scrollbar-wrap{ margin-top:6px; }
+  .o7-scrollbar-wrap.is-hidden{ display:none; }
+  .o7-scrollbar-track{
+    position:relative; width:100%; margin:0 auto; height:16px; border-radius:999px;
+    background:rgba(255,255,255,.12); overflow:hidden;
+  }
+  .o7-scrollbar-thumb{
+    position:absolute; top:50%; left:18px; transform:translateY(-50%);
+    height:10px; width:40px; border-radius:999px;
+    background:rgba(202,162,74,.85); cursor:grab; touch-action:none;
+    transition:left .5s cubic-bezier(.34,1.56,.64,1);
+  }
+  .o7-scrollbar-thumb:hover{ background:rgba(202,162,74,.72); }
+  .o7-scrollbar-thumb.is-dragging{ cursor:grabbing; background:rgba(202,162,74,.8); transition:none; }
+  .o7-scrollbar-thumb.is-tracking{ transition:left .45s cubic-bezier(.22,1,.36,1); }
+  .o7-cats-wrap .o7-scrollbar-track{ height:12px; }
+  .o7-cats-wrap .o7-scrollbar-thumb{ height:8px; }
+
+  .o7-card{ flex:0 0 190px; background:var(--dk-card); border:1px solid var(--dk-line); border-radius:10px;
+    overflow:hidden; position:relative; cursor:grab; will-change:transform; }
+  .o7-card.dragging{ opacity:.4; }
+  .o7-card.ghost{ border:2px dashed var(--gold-dark); background:rgba(202,162,74,.06); }
+
+  .o7-thumb{ height:142px; background:linear-gradient(135deg,#26456a,#173049); cursor:zoom-in; overflow:hidden; position:relative; }
+  .o7-thumb:hover{ filter:brightness(1.12); }
+
+  .o7-select-check{ position:absolute; top:7px; left:7px; width:22px; height:22px; border-radius:6px; z-index:2;
+    background:rgba(11,24,38,.6); border:1.5px solid rgba(255,255,255,.55); display:none; align-items:center;
+    justify-content:center; color:#fff; transition:background-color .15s ease, border-color .15s ease; }
+  .o7-select-check svg{ width:12px; height:12px; opacity:0; transition:opacity .1s ease; }
+  .o7-scroll.select-mode .o7-select-check{ display:flex; }
+  .o7-scroll.select-mode .o7-card{ cursor:pointer; }
+  .o7-scroll.select-mode .o7-card .o7-actions{ display:none; }
+  .o7-card.selected{ outline:2px solid var(--gold); outline-offset:-2px; }
+  .o7-card.selected .o7-select-check{ background:var(--gold); border-color:var(--gold); }
+  .o7-card.selected .o7-select-check svg{ opacity:1; color:#241a05; }
+  .o7-info{ padding:9px 11px; min-width:0; }
+  .o7-info .t{ color:var(--dk-text); font-size:12.5px; font-weight:600;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .o7-info .c{ color:var(--dk-text-soft); font-size:11px; margin:2px 0 8px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .o7-actions{ display:flex; gap:5px; align-items:center; }
+  .o7-actions .b{ font-size:10.5px; color:var(--dk-text-soft); border:1px solid var(--dk-line); border-radius:999px;
+    padding:3px 10px; cursor:pointer; background:transparent; }
+  .o7-actions .b:hover{ border-color:var(--gold); color:var(--gold-light); background:rgba(202,162,74,.1); }
+
+  .o7-add-card{ flex:0 0 190px; background:var(--dk-panel); border:2px dashed var(--dk-line); border-radius:10px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer;
+    min-height:172px; transition:.15s; }
+  .o7-add-card:hover{ border-color:var(--gold-dark); background:rgba(202,162,74,.06); }
+  .o7-add-card .plus{ width:40px; height:40px; border-radius:50%; background:rgba(202,162,74,.15);
+    color:var(--gold-light); font-size:20px; display:flex; align-items:center; justify-content:center; font-weight:700; }
+  .o7-add-card .lbl{ color:var(--dk-text-soft); font-size:12px; font-weight:600; }
+  .o7-add-card:hover .lbl{ color:var(--gold-light); }
+
+  .footer-note{ max-width:1020px; margin:16px auto 0; text-align:center; color:var(--ink-soft); font-size:13px; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <img src="Assets/tecnica3.png" alt="Logo del colegio">
+    <h1>E.E.S.T Nº3 "Islas Malvinas"</h1>
+  </div>
+  <nav>
+    <ul>
+      <li><a href="index-admin.html">Panel principal</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="panel-wrap">
+
+<h1 class="page-title">Opción 7 refinada — desplazamiento horizontal</h1>
+<p class="page-sub">Las fotos ahora se leen de izquierda a derecha, como una cinta, con su propia barra de scroll</p>
+
+<section class="option">
+  <div class="option-body">
+    <p class="option-note">Esta versión ya lee las fotos y categorías reales de tu galería (las mismas que usa <code>galeria.html</code>, guardadas en el navegador) en vez de datos de ejemplo. Arrastrá fotos y categorías para reordenarlas. "Guardar cambios" pide confirmación y, al aceptar, aplica ese nuevo orden directamente a la galería pública, avisando con un mensaje breve abajo cuando se completa la acción.</p>
+
+    <div class="gallery-heading">
+      <div class="gallery-title">
+        <h2>Administrar galería</h2>
+      </div>
+      <p>Reordená fotos y categorías, y aplicá los cambios directamente a la galería pública.</p>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card is-clickable" id="statCardTotal" title="Ver todas las fotos, sin filtros">
+        <b id="statTotal">0</b><span>Fotos totales</span>
+      </div>
+      <div class="stat-card is-clickable" id="statCardCategorias" title="Ir a la fila de categorías">
+        <b id="statCategorias">0</b><span>Categorías totales</span>
+      </div>
+      <div class="stat-card" id="statCardEspacio" title="Espacio aproximado que ocupan las fotos guardadas">
+        <b id="statEspacio">0 KB</b><span>Espacio usado</span>
+      </div>
+    </div>
+
+    <div class="o7">
+      <div class="o7-toolbar">
+        <button class="o7-preview-btn" id="btnPreview"><span class="dot"></span>Vista previa en vivo</button>
+        <button class="o7-save-btn" id="btnSave">Guardar cambios</button>
+        <div class="o7-select-group">
+          <span class="o7-select-count" id="selectCount" hidden>0 seleccionadas</span>
+          <button class="o7-bulk-delete-btn" id="btnBulkDelete" hidden disabled>Eliminar seleccionadas</button>
+          <button class="o7-select-btn" id="btnToggleSelect">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Seleccionar
+          </button>
+        </div>
+      </div>
+
+      <div class="o7-cats-wrap">
+        <div class="o7-cats" id="catsRow"></div>
+        <div class="o7-scrollbar-wrap" id="catsScrollbarWrap" aria-hidden="true">
+          <div class="o7-scrollbar-track" id="catsScrollbarTrack">
+            <div class="o7-scrollbar-thumb" id="catsScrollbarThumb"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="o7-row-head">
+        <span class="h">Fotos · arrastrá para reordenar</span>
+        <div class="o7-nav-btns"><button id="btnLeft">‹</button><button id="btnRight">›</button></div>
+      </div>
+
+      <div class="o7-scroll-wrap">
+        <div class="o7-scroll" id="scrollRow"></div>
+      </div>
+
+      <div class="o7-scrollbar-wrap" id="scrollbarWrap" aria-hidden="true">
+        <div class="o7-scrollbar-track" id="scrollbarTrack">
+          <div class="o7-scrollbar-thumb" id="scrollbarThumb"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="o7-modal-bg" id="previewModal">
+  <div class="o7-modal">
+    <div class="o7-modal-head">
+      <span class="t">Vista previa · Página pública</span>
+      <button class="x" id="btnClosePreview">✕</button>
+    </div>
+    <div class="o7-preview-dirty" id="previewDirtyBar" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/></svg>
+      <span>Previsualizando cambios sin guardar</span>
+      <div class="o7-preview-dirty-actions">
+        <button type="button" class="o7-preview-dirty-btn keep" id="btnPreviewKeepEditing">Seguir editando</button>
+        <button type="button" class="o7-preview-dirty-btn save" id="btnPreviewSaveNow">Guardar ahora</button>
+      </div>
+    </div>
+    <div class="o7-modal-body">
+      <div class="o7-frame">
+        <img class="o7-frame-img" id="previewImg" src="" alt="">
+        <span class="arrow l">‹</span>
+        <span class="badge">General</span>
+        <span class="count">01 / 07</span>
+        <span class="cap">Comunidad técnica</span>
+        <span class="arrow r">›</span>
+      </div>
+      <div class="o7-zoom-controls">
+        <button class="o7-zoom-btn" id="btnZoomOut" title="Alejar" aria-label="Alejar imagen">−</button>
+        <span class="o7-zoom-level" id="zoomLevel">100%</span>
+        <button class="o7-zoom-btn" id="btnZoomIn" title="Acercar" aria-label="Acercar imagen">+</button>
+        <button class="o7-zoom-btn o7-zoom-reset" id="btnZoomReset" title="Restablecer zoom" aria-label="Restablecer zoom">⟲</button>
+      </div>
+      <div class="o7-mini-thumbs">
+        <div class="o7-mini-thumb active"></div>
+        <div class="o7-mini-thumb"></div>
+        <div class="o7-mini-thumb"></div>
+        <div class="o7-mini-thumb"></div>
+        <div class="o7-mini-thumb"></div>
+      </div>
+    </div>
+    <p class="o7-modal-foot">Así se ve tu galería ahora mismo para cualquier visitante, con el orden y las categorías que definiste.</p>
+  </div>
+</div>
+
+<div class="o7-modal-bg" id="photoViewModal">
+  <div class="o7-photo-viewer">
+    <button class="o7-viewer-close" id="btnCloseViewer" aria-label="Cerrar">✕</button>
+    <img class="o7-viewer-img" id="viewerImg" src="" alt="">
+  </div>
+</div>
+
+<div class="o7-modal-bg" id="addPhotoModal">
+  <div class="o7-modal o7-addphoto-modal">
+    <div class="o7-modal-head">
+      <span class="t">Añadir foto</span>
+      <button class="x" id="btnCloseAddPhoto">✕</button>
+    </div>
+    <div class="o7-addphoto-scroll-wrap">
+      <div class="o7-addphoto-scroll" id="addPhotoScroll">
+        <div class="o7-form-body">
+          <div class="o7-photo-col">
+            <div class="o7-photo-frame" id="newPhotoFrame">
+              <div class="o7-file-preview" id="newPhotoPreview">
+                <span class="ph">+</span>
+              </div>
+              <div class="o7-photo-expand-hint" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+              </div>
+              <div class="o7-photo-badge" id="newPhotoBadge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Foto cargada
+              </div>
+            </div>
+          </div>
+          <div class="o7-fields-col">
+            <div class="o7-type-toggle" id="newTypeToggle" role="group" aria-label="Tipo de contenido">
+              <button type="button" class="o7-type-btn is-active" data-type="image" id="newTypeImageBtn">Foto</button>
+              <button type="button" class="o7-type-btn" data-type="video" id="newTypeVideoBtn">Video</button>
+            </div>
+            <label class="o7-field">
+              <span class="o7-field-label">Nombre</span>
+              <input type="text" id="newPhotoTitle" placeholder="" maxlength="80">
+            </label>
+            <label class="o7-photo-upload" id="newVideoFileWrap" hidden>
+              <input type="file" id="newVideoFile" accept="video/*">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span id="newVideoFileLabel">Subir video descargado</span>
+            </label>
+            <p class="o7-field-or" id="newVideoOr" hidden>o pegá un enlace</p>
+            <label class="o7-field" id="newVideoUrlField" hidden>
+              <span class="o7-field-label">Enlace del video (YouTube, Vimeo o archivo .mp4)</span>
+              <input type="text" id="newVideoUrl" placeholder="https://www.youtube.com/watch?v=...">
+            </label>
+            <label class="o7-field" id="newImageUrlField" hidden>
+              <span class="o7-field-label">O pegá el enlace de una imagen</span>
+              <input type="text" id="newImageUrl" placeholder="https://...">
+            </label>
+            <label class="o7-photo-upload">
+              <input type="file" id="newPhotoFile" accept="image/*">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span id="newPhotoUploadLabel">Subir imagen</span>
+            </label>
+            <p class="o7-photo-dims" id="newPhotoDims">Arrastrá una imagen al recuadro o usá el botón. El marco se ajusta solo.</p>
+            <p class="o7-form-error" id="newPhotoError"></p>
+          </div>
+        </div>
+      </div>
+      <div class="o7-addphoto-scrollbar-track" id="addPhotoScrollTrack">
+        <div class="o7-addphoto-scrollbar-thumb" id="addPhotoScrollThumb"></div>
+      </div>
+    </div>
+    <div class="o7-confirm-foot">
+      <button class="o7-btn-cancel" id="btnCancelAddPhoto">Cancelar</button>
+      <button class="o7-btn-confirm" id="btnConfirmAddPhoto">Añadir foto</button>
+    </div>
+  </div>
+</div>
+
+<div class="o7-modal-bg" id="editPhotoModal">
+  <div class="o7-modal o7-addphoto-modal">
+    <div class="o7-modal-head">
+      <span class="t">Editar foto</span>
+      <button class="x" id="btnCloseEditPhoto">✕</button>
+    </div>
+    <div class="o7-addphoto-scroll-wrap">
+      <div class="o7-addphoto-scroll" id="editPhotoScroll">
+        <div class="o7-form-body">
+          <div class="o7-photo-col">
+            <div class="o7-photo-frame" id="editPhotoFrame">
+              <div class="o7-file-preview" id="editPhotoPreview">
+                <span class="ph">+</span>
+              </div>
+              <div class="o7-photo-expand-hint" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+              </div>
+              <div class="o7-photo-badge" id="editPhotoBadge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Foto actualizada
+              </div>
+            </div>
+          </div>
+          <div class="o7-fields-col">
+            <div class="o7-type-toggle" id="editTypeToggle" role="group" aria-label="Tipo de contenido">
+              <button type="button" class="o7-type-btn is-active" data-type="image" id="editTypeImageBtn">Foto</button>
+              <button type="button" class="o7-type-btn" data-type="video" id="editTypeVideoBtn">Video</button>
+            </div>
+            <label class="o7-field">
+              <span class="o7-field-label">Nombre</span>
+              <input type="text" id="editPhotoTitle" maxlength="80">
+            </label>
+            <label class="o7-photo-upload" id="editVideoFileWrap" hidden>
+              <input type="file" id="editVideoFile" accept="video/*">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span id="editVideoFileLabel">Subir video descargado</span>
+            </label>
+            <p class="o7-field-or" id="editVideoOr" hidden>o pegá un enlace</p>
+            <label class="o7-field" id="editVideoUrlField" hidden>
+              <span class="o7-field-label">Enlace del video (YouTube, Vimeo o archivo .mp4)</span>
+              <input type="text" id="editVideoUrl" placeholder="https://www.youtube.com/watch?v=...">
+            </label>
+            <label class="o7-field" id="editImageUrlField" hidden>
+              <span class="o7-field-label">O pegá el enlace de una imagen</span>
+              <input type="text" id="editImageUrl" placeholder="https://...">
+            </label>
+            <label class="o7-photo-upload">
+              <input type="file" id="editPhotoFile" accept="image/*">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span id="editPhotoUploadLabel">Cambiar foto</span>
+            </label>
+            <p class="o7-photo-dims" id="editPhotoDims">Arrastrá una imagen al recuadro o usá el botón. El marco se ajusta solo.</p>
+            <p class="o7-form-error" id="editPhotoError"></p>
+          </div>
+        </div>
+      </div>
+      <div class="o7-addphoto-scrollbar-track" id="editPhotoScrollTrack">
+        <div class="o7-addphoto-scrollbar-thumb" id="editPhotoScrollThumb"></div>
+      </div>
+    </div>
+    <div class="o7-confirm-foot">
+      <button class="o7-btn-cancel" id="btnCancelEditPhoto">Cancelar</button>
+      <button class="o7-btn-confirm" id="btnConfirmEditPhoto">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<div class="o7-modal-bg" id="saveModal">
+  <div class="o7-modal">
+    <div class="o7-modal-head">
+      <span class="t">Confirmar cambios</span>
+      <button class="x" id="btnCloseSave">✕</button>
+    </div>
+    <div class="o7-confirm-body">
+      <p>¿Estás seguro de que querés guardar los cambios? Se va a descargar un archivo <strong>galeria-datos.json</strong> con todas las fotos y categorías. Subí ese archivo a la misma carpeta del servidor donde está <strong>galeria.html</strong> (reemplazando el anterior) para que los cambios se vean para todas las personas que visiten la galería, no sólo en esta computadora.</p>
+    </div>
+    <div class="o7-confirm-foot">
+      <button class="o7-btn-cancel" id="btnCancelSave">Cancelar</button>
+      <button class="o7-btn-confirm" id="btnConfirmSave">Sí, guardar y descargar</button>
+    </div>
+  </div>
+</div>
+
+<div class="o7-modal-bg" id="deletePhotoModal">
+  <div class="o7-modal">
+    <div class="o7-modal-head">
+      <span class="t">Eliminar foto</span>
+      <button class="x" id="btnCloseDeletePhoto">✕</button>
+    </div>
+    <div class="o7-confirm-body">
+      <div class="o7-delete-card">
+        <div class="o7-delete-thumb" id="deletePhotoThumb"></div>
+        <div class="o7-delete-info">
+          <span class="o7-delete-cat" id="deletePhotoCat"></span>
+          <p class="o7-delete-title" id="deletePhotoTitle"></p>
+          <p class="o7-delete-warn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/></svg>
+            Esta acción no se puede deshacer.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="o7-confirm-foot">
+      <button class="o7-btn-cancel" id="btnCancelDeletePhoto">Cancelar</button>
+      <button class="o7-btn-confirm danger" id="btnConfirmDeletePhoto">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div class="o7-modal-bg" id="deleteBulkModal">
+  <div class="o7-modal">
+    <div class="o7-modal-head">
+      <span class="t">Eliminar fotos seleccionadas</span>
+      <button class="x" id="btnCloseDeleteBulk">✕</button>
+    </div>
+    <div class="o7-confirm-body">
+      <div class="o7-delete-card">
+        <div class="o7-delete-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        </div>
+        <div class="o7-delete-info">
+          <p class="o7-delete-title" id="deleteBulkTitle"></p>
+          <p class="o7-delete-warn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/></svg>
+            Esta acción no se puede deshacer.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="o7-confirm-foot">
+      <button class="o7-btn-cancel" id="btnCancelDeleteBulk">Cancelar</button>
+      <button class="o7-btn-confirm danger" id="btnConfirmDeleteBulk">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div class="o7-modal-bg" id="deleteCategoryModal">
+  <div class="o7-modal">
+    <div class="o7-modal-head">
+      <span class="t">Eliminar categoría</span>
+      <button class="x" id="btnCloseDeleteCategory">✕</button>
+    </div>
+    <div class="o7-confirm-body">
+      <p id="deleteCategoryMsg"></p>
+    </div>
+    <div class="o7-confirm-foot">
+      <button class="o7-btn-cancel" id="btnCancelDeleteCategory">Cancelar</button>
+      <button class="o7-btn-confirm danger" id="btnConfirmDeleteCategory">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div class="o7-modal-bg" id="addCategoryModal">
+  <div class="o7-modal" style="max-width:420px;">
+    <div class="o7-modal-head">
+      <span class="t">Nueva categoría</span>
+      <button class="x" id="btnCloseAddCategory">✕</button>
+    </div>
+    <div class="o7-confirm-body">
+      <label class="o7-field">
+        <span class="o7-field-label">Nombre de la nueva categoría</span>
+        <input type="text" id="addCategoryInput" autocomplete="off">
+      </label>
+      <p class="o7-form-error" id="addCategoryError"></p>
+    </div>
+    <div class="o7-confirm-foot">
+      <button class="o7-btn-cancel" id="btnCancelAddCategory">Cancelar</button>
+      <button class="o7-btn-confirm" id="btnConfirmAddCategory">Crear categoría</button>
+    </div>
+  </div>
+</div>
+
+<div class="o7-toast" id="toast">Cambios guardados</div>
+
+<script>
+  // --- Datos reales, compartidos con galeria.html ---------------------
+  // Estas dos claves de localStorage son las mismas que lee galeria.html.
+  // Si abrís este archivo y galeria.html desde el mismo origen (mismo
+  // dominio o mismo servidor local), lo que guardés acá va a aparecer
+  // directamente en la galería pública.
+  const GALLERY_KEY = 'eest3Galeria';
+  const CATS_ORDER_KEY = 'eest3GaleriaCategorias';
+
+  // Mismo borrado de datos viejos que en galeria.html, para que el panel
+  // de admin también arranque con la galería nueva.
+  const DATA_VERSION_KEY = 'eest3GaleriaVersion';
+  const DATA_VERSION = '2026-08-19-assets';
+  if (localStorage.getItem(DATA_VERSION_KEY) !== DATA_VERSION) {
+    localStorage.removeItem(GALLERY_KEY);
+    localStorage.removeItem(CATS_ORDER_KEY);
+    localStorage.setItem(DATA_VERSION_KEY, DATA_VERSION);
+  }
+
+  // Mismos datos de referencia que trae galeria.html por si todavía no
+  // se guardó nada en este navegador.
+  const defaultPhotos = [
+    { id: 'n1', title: 'Aula', image: 'Assets/fotos_galeria/aulas-1.jpg', visible: true, categoria: 'Aulas' },
+
+    { id: 'n2', title: 'Taller 1', image: 'Assets/fotos_galeria/talleres-1.jpg', visible: true, categoria: 'Talleres' },
+    { id: 'n3', title: 'Taller 2', image: 'Assets/fotos_galeria/talleres-2.jpg', visible: true, categoria: 'Talleres' },
+    { id: 'n4', title: 'Taller 3', image: 'Assets/fotos_galeria/talleres-3.jpg', visible: true, categoria: 'Talleres' },
+    { id: 'n5', title: 'Taller 4', image: 'Assets/fotos_galeria/talleres-4.jpg', visible: true, categoria: 'Talleres' },
+
+    { id: 'n6', title: 'Laboratorio 1', image: 'Assets/fotos_galeria/laboratorio-1.jpg', visible: true, categoria: 'Laboratorio' },
+    { id: 'n7', title: 'Laboratorio 2', image: 'Assets/fotos_galeria/laboratorio-2.jpg', visible: true, categoria: 'Laboratorio' },
+    { id: 'n8', title: 'Laboratorio 3', image: 'Assets/fotos_galeria/laboratorio-3.jpg', visible: true, categoria: 'Laboratorio' },
+
+    { id: 'n9', title: 'Biblioteca', image: 'Assets/fotos_galeria/biblioteca-1.jpg', visible: true, categoria: 'Biblioteca' },
+
+    { id: 'n10', title: 'Patio 1', image: 'Assets/fotos_galeria/patio-1.jpg', visible: true, categoria: 'Patio' },
+    { id: 'n11', title: 'Patio 2', image: 'Assets/fotos_galeria/patio-2.jpg', visible: true, categoria: 'Patio' },
+
+    { id: 'p1', title: 'Comunidad técnica', image: 'Assets/imagen1.jpg', visible: true, categoria: 'proyectos' },
+    { id: 'p2', title: 'Aulas en movimiento', image: 'Assets/imagen2.jpg', visible: true, categoria: 'proyectos' },
+    { id: 'p3', title: 'Talleres y proyectos', image: 'Assets/imagen3.jpg', visible: true, categoria: 'proyectos' },
+
+    { id: 'n12', title: 'Secretaría 1', image: 'Assets/fotos_galeria/secretaria-1.jpg', visible: true, categoria: 'Secretaria' },
+    { id: 'n13', title: 'Secretaría 2', image: 'Assets/fotos_galeria/secretaria-2.jpg', visible: true, categoria: 'Secretaria' }
+  ];
+
+  const getCategoria = (photo) => {
+    const raw = photo && typeof photo.categoria === 'string' ? photo.categoria.trim() : '';
+    return raw || 'General';
+  };
+
+  // Una foto puede pertenecer a varias categorías (se etiqueta arrastrándola
+  // por encima de cada chip). "categorias" es la lista real; "categoria"
+  // (singular) se mantiene en sync con la primera, sólo por compatibilidad
+  // con datos viejos guardados antes de este cambio.
+  const getCategorias = (photo) => {
+    if (photo && Array.isArray(photo.categorias) && photo.categorias.length) {
+      const limpias = photo.categorias
+        .map((c) => (typeof c === 'string' ? c.trim() : ''))
+        .filter(Boolean);
+      if (limpias.length) return [...new Set(limpias)];
+    }
+    return [getCategoria(photo)];
+  };
+
+  const readPhotos = () => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(GALLERY_KEY));
+      return Array.isArray(stored) && stored.length ? stored : defaultPhotos;
+    } catch {
+      return defaultPhotos;
+    }
+  };
+
+  const readCategoryOrder = (disponibles) => {
+    let guardado = null;
+    try {
+      const stored = JSON.parse(localStorage.getItem(CATS_ORDER_KEY));
+      if (Array.isArray(stored) && stored.length) guardado = stored;
+    } catch {}
+    if (!guardado) return [...disponibles].sort((a, b) => a.localeCompare(b, 'es'));
+    const enOrden = guardado.filter((c) => disponibles.includes(c));
+    const faltantes = disponibles.filter((c) => !guardado.includes(c)).sort((a, b) => a.localeCompare(b, 'es'));
+    return [...enOrden, ...faltantes];
+  };
+
+  // Mide el ancho que ocuparía un texto con determinada tipografía, sin
+  // tocar el DOM visible (usa un canvas oculto). Se usa para que el input
+  // de "editar categoría" arranque con el mismo ancho que tenía el chip y
+  // se vaya agrandando a medida que se escribe, en vez de saltar a un
+  // ancho fijo.
+  function measureTextWidth(text, font){
+    if(!measureTextWidth._ctx){
+      measureTextWidth._ctx = document.createElement('canvas').getContext('2d');
+    }
+    measureTextWidth._ctx.font = font;
+    return measureTextWidth._ctx.measureText(text).width;
+  }
+
+  const escapeHtml = (str) => String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+
+  // --- Utilidades de peso e imagen: comprimir fotos grandes antes de
+  // guardarlas y generar una miniatura liviana aparte para la grilla ---
+  const COMPRESS_THRESHOLD_BYTES = 1_200_000; // ~1.2 MB: a partir de acá se recomprime
+
+  function estimateBytesFromDataUrl(dataUrl){
+    if(!dataUrl) return 0;
+    const comma = dataUrl.indexOf(',');
+    const base64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+    const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+    return Math.max(0, Math.round(base64.length * 3 / 4 - padding));
+  }
+
+  function formatBytes(bytes){
+    if(bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    if(bytes >= 1024) return Math.round(bytes / 1024) + ' KB';
+    return bytes + ' B';
+  }
+
+  // --- Videos: en vez de guardar el archivo (pesaría demasiado para
+  // localStorage y para galeria-datos.json), se guarda un enlace
+  // (YouTube, Vimeo o un .mp4/.webm alojado en otro lado) y, si se puede,
+  // se detecta automáticamente una miniatura para usar como portada.
+  function parseVideoUrl(raw){
+    const url = (raw || '').trim();
+    if(!url) return null;
+    let m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+    if(m){
+      const id = m[1];
+      return { provider: 'youtube', embedUrl: `https://www.youtube-nocookie.com/embed/${id}`, thumbUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg` };
+    }
+    m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if(m){
+      const id = m[1];
+      return { provider: 'vimeo', embedUrl: `https://player.vimeo.com/video/${id}`, thumbUrl: `https://vumbnail.com/${id}.jpg` };
+    }
+    if(/^https?:\/\//i.test(url)){
+      if(/\.(mp4|webm|ogv|ogg|mov)(\?.*)?$/i.test(url)){
+        return { provider: 'direct', embedUrl: url, thumbUrl: '' };
+      }
+      return { provider: 'url', embedUrl: url, thumbUrl: '' };
+    }
+    // Ruta relativa dentro del propio hosting (por ejemplo, un video que se
+    // subió a mano por FTP/administrador de archivos junto a galeria.html):
+    // "Assets/videos/mi-video.mp4". No lleva http:// adelante.
+    if(/\.(mp4|webm|ogv|ogg|mov)(\?.*)?$/i.test(url) && !/^data:/i.test(url)){
+      return { provider: 'direct', embedUrl: url, thumbUrl: '' };
+    }
+    return null;
+  }
+
+  // Un video subido como archivo (en vez de pegar un enlace) se guarda
+  // como data URL, igual que las fotos. Pesa mucho más que una imagen, así
+  // que avisamos y ponemos un tope para no dejar gigante el
+  // galeria-datos.json ni la galería lenta para quien la visite.
+  const VIDEO_WARN_BYTES = 8 * 1024 * 1024;   // 8 MB: se permite, pero se avisa
+  const VIDEO_MAX_BYTES = 45 * 1024 * 1024;   // 45 MB: se bloquea, mejor subirlo a YouTube y pegar el enlace
+
+  // Redimensiona/recomprime una imagen (dataURL) con un canvas. Se usa
+  // tanto para achicar fotos muy pesadas antes de guardarlas como para
+  // generar la miniatura liviana que se usa en la grilla.
+  function resizeDataUrl(dataUrl, maxDim, quality){
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if(!w || !h){ resolve(dataUrl); return; }
+        if(w > maxDim || h > maxDim){
+          if(w >= h){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        try { resolve(canvas.toDataURL('image/jpeg', quality)); }
+        catch { resolve(dataUrl); }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  // Saca sola una miniatura de un video subido como archivo: lo carga en
+  // un <video> oculto, se posiciona un poquito adentro (para no agarrar un
+  // primer fotograma negro) y dibuja ese cuadro en un canvas. Si algo
+  // falla (formato raro, navegador que no deja, etc.) devuelve '' y el
+  // video queda sin miniatura automática, tal como pasaba antes.
+  function extractVideoFrame(videoDataUrl){
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = 'auto';
+      let done = false;
+      const finish = (result) => {
+        if(done) return;
+        done = true;
+        video.removeAttribute('src');
+        video.load();
+        resolve(result);
+      };
+      const captureFrame = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth || 320;
+          canvas.height = video.videoHeight || 180;
+          if(!canvas.width || !canvas.height){ finish(''); return; }
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          finish(canvas.toDataURL('image/jpeg', 0.82));
+        } catch(err){
+          finish('');
+        }
+      };
+      video.addEventListener('loadedmetadata', () => {
+        const seekTo = Math.min(0.35, (video.duration || 1) / 2 || 0.1);
+        try { video.currentTime = seekTo; }
+        catch(err){ captureFrame(); }
+      }, { once: true });
+      video.addEventListener('seeked', captureFrame, { once: true });
+      video.addEventListener('error', () => finish(''), { once: true });
+      // Si a los 4 segundos no pasó nada (formato no soportado, etc.), no
+      // dejamos colgado el "Añadir foto" esperando: seguimos sin miniatura.
+      setTimeout(() => finish(''), 4000);
+      video.src = videoDataUrl;
+    });
+  }
+
+  // photosData mantiene siempre el estado "vigente" en memoria (incluye
+  // cambios sin guardar todavía).
+  let photosData = readPhotos();
+  // Limpieza de datos viejos: versiones anteriores llegaron a sumar varias
+  // categorías a una misma foto (arrastrar la "agregaba" en vez de
+  // "moverla"). Ahora una foto vive en una sola categoría a la vez, así
+  // que si queda algo con varias, nos quedamos con la primera.
+  photosData.forEach((p) => {
+    if(Array.isArray(p.categorias) && p.categorias.length > 1){
+      p.categorias = [p.categorias[0]];
+      p.categoria = p.categorias[0];
+    }
+  });
+
+  const catsRow = document.getElementById('catsRow');
+  const cardsRow = document.getElementById('scrollRow');
+
+  // --- Tarjetas de estadísticas (arriba del todo) ---
+  const statTotal = document.getElementById('statTotal');
+  const statCardTotal = document.getElementById('statCardTotal');
+  const statCategorias = document.getElementById('statCategorias');
+  const statCardCategorias = document.getElementById('statCardCategorias');
+  const statEspacio = document.getElementById('statEspacio');
+
+  // Se llama después de cada renderCats() (fotos agregadas/eliminadas,
+  // categorías creadas/renombradas/borradas, cambio de filtro), así los
+  // números de arriba nunca quedan desactualizados.
+  function updateStats(){
+    const counts = new Map();
+    photosData.forEach((p) => {
+      getCategorias(p).forEach((c) => counts.set(c, (counts.get(c) || 0) + 1));
+    });
+    extraCategorias.forEach((c) => { if(!counts.has(c)) counts.set(c, 0); });
+
+    statTotal.textContent = photosData.length;
+    statCategorias.textContent = counts.size;
+
+    // Tamaño real que ocupa lo que se guarda en el navegador (fotos +
+    // miniaturas, tal cual se serializan al hacer "Guardar cambios").
+    // Medimos el JSON real en vez de estimar a mano para que el número
+    // coincida con el peso real, chico o grande.
+    const totalBytes = new Blob([JSON.stringify(photosData)]).size;
+    statEspacio.textContent = formatBytes(totalBytes);
+
+    statCardTotal.classList.toggle('is-active', currentFilter === '__todas__');
+  }
+
+  function flashHighlight(el){
+    if(!el) return;
+    el.classList.remove('flash-highlight');
+    void el.offsetWidth;
+    el.classList.add('flash-highlight');
+    setTimeout(() => el.classList.remove('flash-highlight'), 1800);
+  }
+
+  statCardTotal.addEventListener('click', () => selectCategory('__todas__'));
+  statCardCategorias.addEventListener('click', () => {
+    catsRow.scrollTo({ left: 0, behavior: 'smooth' });
+    flashHighlight(catsRow.closest('.o7-cats-wrap'));
+  });
+
+  // Carga diferida de miniaturas: la tarjeta arranca sin imagen de fondo
+  // y recién la carga cuando entra (o está por entrar) en pantalla, así
+  // no se procesan de una todas las fotos de la galería al abrir la página.
+  const thumbObserver = 'IntersectionObserver' in window
+    ? new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if(!entry.isIntersecting) return;
+          const el = entry.target;
+          const src = el.dataset.thumbSrc;
+          if(src){
+            el.style.backgroundImage = `url('${src}')`;
+            el.classList.remove('o7-thumb-loading');
+          }
+          thumbObserver.unobserve(el);
+        });
+      }, { root: null, rootMargin: '200px', threshold: 0.01 })
+    : null;
+
+  // Toma el orden actual de las tarjetas tal como están en pantalla y lo
+  // aplica a photosData, para que quede guardado en memoria de inmediato
+  // (no sólo al apretar "Guardar cambios"). Si hay un filtro de categoría
+  // activo, sólo se reordenan las fotos visibles; el resto queda igual.
+  function syncPhotoOrderFromDOM(){
+    const idsEnOrden = [...cardsRow.querySelectorAll('.o7-card')].map((el) => el.dataset.id);
+    const porId = new Map(photosData.map((p) => [p.id, p]));
+    const idsVisiblesSet = new Set(idsEnOrden);
+    const nuevasVisibles = idsEnOrden.map((id) => porId.get(id)).filter(Boolean);
+    let cursorVisible = 0;
+    photosData = photosData.map((p) => idsVisiblesSet.has(p.id) ? nuevasVisibles[cursorVisible++] : p);
+  }
+
+  // --- Selección múltiple de fotos ---
+  // selectedPhotoIds guarda los ids en una estructura aparte del DOM, así
+  // que la selección sobrevive al cambiar de categoría (renderCards() se
+  // vuelve a ejecutar al filtrar, pero acá se relee qué estaba tildado).
+  let selectionMode = false;
+  let selectedPhotoIds = new Set();
+
+  const btnToggleSelect = document.getElementById('btnToggleSelect');
+  const selectCountEl = document.getElementById('selectCount');
+  const btnBulkDelete = document.getElementById('btnBulkDelete');
+
+  function updateSelectionUI(){
+    const n = selectedPhotoIds.size;
+    selectCountEl.hidden = !selectionMode;
+    selectCountEl.textContent = n === 1 ? '1 seleccionada' : `${n} seleccionadas`;
+    btnBulkDelete.hidden = !selectionMode;
+    btnBulkDelete.disabled = n === 0;
+    btnToggleSelect.classList.toggle('active', selectionMode);
+    btnToggleSelect.lastChild.textContent = selectionMode ? ' Cancelar selección' : ' Seleccionar';
+    updateStats();
+  }
+
+  function toggleCardSelection(id){
+    if(selectedPhotoIds.has(id)) selectedPhotoIds.delete(id);
+    else selectedPhotoIds.add(id);
+    const card = cardsRow.querySelector(`.o7-card[data-id="${id}"]`);
+    if(card) card.classList.toggle('selected', selectedPhotoIds.has(id));
+    updateSelectionUI();
+  }
+
+  btnToggleSelect.onclick = () => {
+    selectionMode = !selectionMode;
+    if(!selectionMode) selectedPhotoIds.clear();
+    renderCards();
+    updateSelectionUI();
+  };
+
+  // id de la foto que se está arrastrando en este momento (null si no hay
+  // ningún arrastre activo). Se usa para poder "etiquetar al vuelo" cuando
+  // esa foto pasa por encima de un chip de categoría.
+  // Usadas por makeSortable() para no duplicar listeners entre renders
+  // (ver comentario junto a la función, más abajo). Declaradas acá arriba
+  // porque renderCards() ya llama a makeSortable() durante la carga
+  // inicial, antes de llegar a donde estaban definidas al final del
+  // script — eso las dejaba en "zona muerta temporal" y rompía el primer
+  // render (por eso no aparecían ni las fotos ni el botón de agregar).
+  const sortableContainers = new WeakSet();
+  const sortableItems = new WeakSet();
+  const dragElByContainer = new WeakMap();
+  // Estado del auto-scroll durante un arrastre: una entrada por contenedor
+  // mientras el cursor está cerca de alguno de sus bordes. Ver makeSortable().
+  const autoScrollState = new WeakMap();
+
+  let draggingCardId = null;
+  // Todos los ids que viajan en el arrastre actual: normalmente es solo
+  // [draggingCardId], pero si hay varias fotos tildadas (modo selección)
+  // y la que arrastrás es una de ellas, acá van todas juntas.
+  let draggingIds = [];
+  let categoryOpenTimer = null;
+  let hoverChip = null;
+  let categorySwitchedDuringDrag = false;
+
+  // Un solo listener para toda la fila de categorías (en vez de uno por
+  // chip) evita el parpadeo: moverse entre el texto y los íconos de un
+  // mismo chip dispara dragenter/dragleave de ida y vuelta, y eso
+  // reiniciaba el temporizador antes de que llegara a cumplirse.
+  // Con "closest" sabemos si seguimos sobre el MISMO chip sin importar
+  // sobre qué elemento interno esté el cursor exactamente.
+  catsRow.addEventListener('dragover', (e) => {
+    if(!draggingCardId) return;
+    const chipEl = e.target.closest('.o7-chip:not(.add):not([data-cat="__todas__"])');
+    if(!chipEl){
+      if(hoverChip){ hoverChip.classList.remove('drop-hover'); hoverChip = null; }
+      clearTimeout(categoryOpenTimer);
+      return;
+    }
+    e.preventDefault();
+    if(chipEl === hoverChip) return; // seguimos sobre el mismo chip: no reiniciar nada
+    if(hoverChip) hoverChip.classList.remove('drop-hover');
+    hoverChip = chipEl;
+    hoverChip.classList.add('drop-hover');
+    const nombre = chipEl.dataset.cat;
+
+    // Pasar por encima del chip solo ABRE esa categoría para poder ver
+    // dónde vas a soltar la foto; todavía no la asigna a nada. La
+    // categoría recién queda asignada cuando la foto se suelta entre
+    // las imágenes de esa sección (ver dragend de la tarjeta).
+    clearTimeout(categoryOpenTimer);
+    categoryOpenTimer = setTimeout(() => openCategoryDuringDrag(nombre), 450);
+  });
+  catsRow.addEventListener('dragleave', (e) => {
+    if(catsRow.contains(e.relatedTarget)) return; // seguimos dentro de la fila
+    if(hoverChip){ hoverChip.classList.remove('drop-hover'); hoverChip = null; }
+    clearTimeout(categoryOpenTimer);
+  });
+  catsRow.addEventListener('drop', (e) => {
+    e.preventDefault();
+    // Soltar la foto (o las fotos, si hay varias tildadas) directamente
+    // sobre un chip, sin esperar a que la categoría se abra, también las
+    // mueve al instante: cubre el caso de un arrastre rápido que suelta
+    // antes de que termine de abrirse.
+    const chipEl = e.target.closest('.o7-chip:not(.add):not([data-cat="__todas__"])');
+    const idsAMover = draggingIds.length ? draggingIds : (draggingCardId ? [draggingCardId] : []);
+    if(!chipEl || !idsAMover.length) return;
+    const nombre = chipEl.dataset.cat;
+    // Ojo con el orden: filter() respetaría el orden que ya tenían en
+    // photosData, no el orden en que las fuiste tildando. Usamos el orden
+    // de idsAMover (que es el de selección) para que las fotos soltadas
+    // queden de izquierda a derecha tal como las elegiste.
+    const porId = new Map(photosData.map((p) => [p.id, p]));
+    const fotosAMover = idsAMover.map((id) => porId.get(id)).filter(Boolean);
+    if(!fotosAMover.length) return;
+    fotosAMover.forEach((foto) => { foto.categorias = [nombre]; foto.categoria = nombre; });
+    // Acá la(s) foto(s) se soltaron directo sobre el chip, sin que la
+    // sección llegara a abrirse (arrastre rápido, o el caso típico de una
+    // categoría recién creada que todavía no tiene fotos): no hay ninguna
+    // posición visual elegida para respetar. Antes esto dejaba la foto en
+    // el mismo lugar del arreglo que ya tenía (el de su categoría vieja),
+    // así que dentro de la categoría nueva podía aparecer en cualquier
+    // lado según de dónde venía. Las colocamos al final del grupo de esa
+    // categoría, que es lo esperable, respetando el orden en que estaban
+    // seleccionadas entre sí.
+    const idsSet = new Set(idsAMover);
+    photosData = photosData.filter((p) => !idsSet.has(p.id));
+    let insertAt = photosData.length;
+    for(let i = photosData.length - 1; i >= 0; i--){
+      if(getCategorias(photosData[i]).includes(nombre)){ insertAt = i + 1; break; }
+    }
+    photosData.splice(insertAt, 0, ...fotosAMover);
+    categorySwitchedDuringDrag = false; // ya se resolvió acá; que el dragend no lo vuelva a tocar
+    currentFilter = nombre;
+    if(fotosAMover.length === 1){
+      showToast(`"${fotosAMover[0].title}" movida a "${nombre}"`);
+    } else {
+      showToast(`${fotosAMover.length} fotos movidas a "${nombre}"`);
+      selectedPhotoIds.clear();
+      updateSelectionUI();
+    }
+    draggingIds = [];
+    renderCats();
+    renderCards();
+  });
+
+  // Categoría actualmente seleccionada para filtrar las fotos de abajo.
+  // '__todas__' muestra todas las fotos sin filtrar.
+  let currentFilter = '__todas__';
+
+  // Secciones creadas con "+ Nueva categoría" que todavía no tienen
+  // ninguna foto. Como las categorías normalmente salen de las fotos
+  // (photosData), esta lista aparte es la única forma de que una
+  // sección vacía siga apareciendo en la fila hasta que se le agregue
+  // una foto o se la elimine.
+  let extraCategorias = [];
+
+  // Orden de categorías que el usuario armó arrastrando chips pero que
+  // todavía NO se guardó (no confirmó "Guardar cambios"). Sin esto,
+  // cualquier acción que dispare un re-render de los chips (filtrar,
+  // renombrar, agregar/eliminar una categoría) volvía a leer el orden
+  // guardado en localStorage y el arrastre recién hecho se perdía.
+  let manualCatsOrder = null;
+
+  function selectCategory(cat){
+    currentFilter = cat;
+    renderCats();
+    renderCards();
+  }
+
+  const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  const ICON_DEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+
+  // Módulo dorado que se desliza hasta el chip activo (ver
+  // .o7-cats-highlight en el CSS). Se crea una sola vez y se reutiliza
+  // en cada renderCats() -re-insertándolo en vez de recrearlo- para que
+  // el navegador pueda animar el cambio de "left"/"width" en vez de
+  // saltar de golpe a la nueva posición.
+  const catsHighlight = document.createElement('div');
+  catsHighlight.className = 'o7-cats-highlight';
+
+  function updateCatsHighlight(){
+    const activeChip = catsRow.querySelector('.o7-chip.active');
+    if(!activeChip){
+      catsHighlight.classList.remove('is-visible');
+      return;
+    }
+    catsHighlight.style.left = activeChip.offsetLeft + 'px';
+    catsHighlight.style.width = activeChip.offsetWidth + 'px';
+    catsHighlight.style.top = activeChip.offsetTop + 'px';
+    catsHighlight.style.height = activeChip.offsetHeight + 'px';
+    catsHighlight.classList.add('is-visible');
+  }
+
+  function renderCats(){
+    // Guardamos la posición horizontal del scroll antes de vaciar y
+    // reconstruir los chips: como catsRow.innerHTML se resetea más abajo,
+    // el navegador perdía el scrollLeft y la fila volvía siempre al
+    // principio (chip "Todas") cada vez que se hacía click en una
+    // categoría fuera de pantalla. La restauramos al final.
+    const scrollLeftAntes = catsRow.scrollLeft;
+    const counts = new Map();
+    photosData.forEach((p) => {
+      getCategorias(p).forEach((c) => counts.set(c, (counts.get(c) || 0) + 1));
+    });
+    extraCategorias.forEach((c) => { if(!counts.has(c)) counts.set(c, 0); });
+    const disponibles = Array.from(counts.keys());
+    let ordenadas;
+    if (manualCatsOrder) {
+      // Hay un arrastre sin guardar todavía: respetamos ese orden en vez
+      // de volver a leer el último guardado.
+      const enOrden = manualCatsOrder.filter((c) => disponibles.includes(c));
+      const faltantes = disponibles.filter((c) => !manualCatsOrder.includes(c)).sort((a, b) => a.localeCompare(b, 'es'));
+      ordenadas = [...enOrden, ...faltantes];
+    } else {
+      ordenadas = readCategoryOrder(disponibles);
+    }
+
+    // Si la categoría filtrada ya no existe (se borró o se renombró),
+    // volvemos a mostrar todas.
+    if (currentFilter !== '__todas__' && !ordenadas.includes(currentFilter)) {
+      currentFilter = '__todas__';
+    }
+
+    catsRow.innerHTML = '';
+    // Se reinserta el módulo dorado (ver comentario en su declaración) y
+    // se fuerza un reflow leyendo su tamaño: así el navegador "confirma"
+    // la posición que tenía antes de este render, y el cambio a la nueva
+    // posición -más abajo, en updateCatsHighlight()- queda animado en vez
+    // de saltar directo al lugar nuevo.
+    catsRow.appendChild(catsHighlight);
+    void catsHighlight.offsetWidth;
+
+    const todas = document.createElement('div');
+    todas.className = 'o7-chip' + (currentFilter === '__todas__' ? ' active' : '');
+    todas.dataset.cat = '__todas__';
+    todas.textContent = `Todas · ${photosData.length}`;
+    todas.onclick = () => selectCategory('__todas__');
+    catsRow.appendChild(todas);
+
+    ordenadas.forEach((nombre) => {
+      const chip = document.createElement('div');
+      chip.className = 'o7-chip' + (currentFilter === nombre ? ' active' : '');
+      chip.draggable = true;
+      chip.dataset.cat = nombre;
+      chip.innerHTML = `
+        <span class="chip-label">${escapeHtml(nombre)} · ${counts.get(nombre)}</span>
+        <span class="chip-ic edit" title="Editar nombre">${ICON_EDIT}</span>
+        <span class="chip-ic del" title="Eliminar categoría">${ICON_DEL}</span>`;
+      chip.querySelector('.chip-label').onclick = (e) => { e.stopPropagation(); selectCategory(nombre); };
+      chip.onclick = () => { if(!chip.classList.contains('editing')) selectCategory(nombre); };
+      chip.querySelector('.edit').onclick = (e) => { e.stopPropagation(); startEditCategoryName(nombre, chip); };
+      chip.querySelector('.del').onclick = (e) => { e.stopPropagation(); deleteCategory(nombre); };
+
+      catsRow.appendChild(chip);
+    });
+
+    const addChip = document.createElement('div');
+    addChip.className = 'o7-chip add';
+    addChip.textContent = '+ Nueva categoría';
+    addChip.onclick = () => openAddCategoryModal();
+    catsRow.appendChild(addChip);
+
+    // "Todas" no es una categoría real (es el botón "ver todo"), así que
+    // no debe poder arrastrarse ni recibir chips soltados delante suyo:
+    // por eso se excluye junto con "+ Nueva categoría".
+    makeSortable(catsRow, '.o7-chip', '.add, [data-cat="__todas__"]', () => {
+      manualCatsOrder = [...catsRow.querySelectorAll('.o7-chip')]
+        .map((el) => el.dataset.cat)
+        .filter((cat) => cat && cat !== '__todas__');
+      updateCatsHighlight();
+    }, '.add');
+
+    // Restauramos el scroll horizontal guardado al principio de la
+    // función: sin esto, cada click en un chip (incluso uno ya visible)
+    // reconstruye el DOM de la fila y el navegador la manda de nuevo al
+    // principio.
+    catsRow.scrollLeft = scrollLeftAntes;
+
+    updateCatsHighlight();
+    updateStats();
+  }
+
+  // --- Modal "Nueva categoría" (reemplaza el flujo anterior de editar
+  //     el chip "+ Nueva categoría" en línea) ---
+  const addCategoryModal = document.getElementById('addCategoryModal');
+  const addCategoryInput = document.getElementById('addCategoryInput');
+  const addCategoryError = document.getElementById('addCategoryError');
+
+  function openAddCategoryModal(){
+    addCategoryInput.value = '';
+    addCategoryError.textContent = '';
+    addCategoryModal.classList.add('open');
+    setTimeout(() => addCategoryInput.focus(), 50);
+  }
+  function closeAddCategoryModal(){
+    addCategoryModal.classList.remove('open');
+  }
+  function confirmAddCategory(){
+    const nombre = addCategoryInput.value.trim();
+    if(!nombre){
+      addCategoryError.textContent = 'Ingresá un nombre para la categoría.';
+      addCategoryInput.focus();
+      return;
+    }
+    const yaExiste = photosData.some((p) => getCategorias(p).includes(nombre)) || extraCategorias.includes(nombre);
+    if(yaExiste){
+      addCategoryError.textContent = `Ya existe la sección "${nombre}".`;
+      selectCategory(nombre);
+      closeAddCategoryModal();
+      showToast(`Ya existía la sección "${nombre}"`);
+      return;
+    }
+    extraCategorias.push(nombre);
+    // Fijamos el orden actual + la nueva al final, para que no se
+    // reordene alfabéticamente junto con el resto al re-renderizar.
+    const ordenActual = [...catsRow.querySelectorAll('.o7-chip')]
+      .map((el) => el.dataset.cat)
+      .filter((cat) => cat && cat !== '__todas__');
+    manualCatsOrder = [...ordenActual, nombre];
+    selectCategory(nombre);
+    showToast(`Sección "${nombre}" creada`);
+    closeAddCategoryModal();
+  }
+  document.getElementById('btnCloseAddCategory').addEventListener('click', closeAddCategoryModal);
+  document.getElementById('btnCancelAddCategory').addEventListener('click', closeAddCategoryModal);
+  document.getElementById('btnConfirmAddCategory').addEventListener('click', confirmAddCategory);
+  addCategoryModal.addEventListener('click', (e) => { if(e.target === addCategoryModal) closeAddCategoryModal(); });
+  addCategoryInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ e.preventDefault(); confirmAddCategory(); }
+  });
+  addCategoryInput.addEventListener('input', () => { addCategoryError.textContent = ''; });
+  addCategoryInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape'){ e.preventDefault(); closeAddCategoryModal(); }
+  });
+
+  function createCardElement(p){
+    const card = document.createElement('div');
+    card.className = 'o7-card' + (selectedPhotoIds.has(p.id) ? ' selected' : '');
+    // Siempre arrastrable: fuera del modo selección funciona como antes
+    // (reordenar / asignar categoría a una sola foto); dentro del modo
+    // selección permite arrastrar cualquiera de las tildadas y mover
+    // juntas todas las que estén seleccionadas (ver dragstart más abajo).
+    card.draggable = true;
+    card.dataset.id = p.id;
+    const isVideo = p.type === 'video';
+    const thumbSrc = p.thumb || p.image || '';
+    const catsFoto = getCategorias(p);
+    const catLabel = catsFoto.length > 1 ? `${catsFoto[0]} +${catsFoto.length - 1}` : catsFoto[0];
+    const weightBadge = (thumbSrc && !isVideo) ? `<span class="o7-thumb-weight">${formatBytes(estimateBytesFromDataUrl(thumbSrc))}</span>` : '';
+    const videoBadge = isVideo ? `<span class="o7-thumb-video-badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Video</span>` : '';
+    card.innerHTML = `
+      <div class="o7-thumb${thumbSrc ? ' o7-thumb-loading' : ''}${isVideo ? ' is-video' : ''}${(!thumbSrc && isVideo) ? ' o7-thumb-video-empty' : ''}" title="Ver más grande"${thumbSrc ? ` data-thumb-src="${escapeHtml(thumbSrc)}"` : ''}>
+        <div class="o7-select-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+        ${!thumbSrc && isVideo ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' : ''}
+        ${weightBadge}
+        ${videoBadge}
+      </div>
+      <div class="o7-info"><div class="t" title="${escapeHtml(p.title)}">${escapeHtml(p.title)}</div><div class="c" title="${escapeHtml(catsFoto.join(', '))}">${escapeHtml(catLabel)}</div>
+        <div class="o7-actions"><span class="b">Editar</span><span class="b">Eliminar</span></div>
+      </div>`;
+    const thumbEl = card.querySelector('.o7-thumb');
+    if(thumbSrc && thumbObserver) thumbObserver.observe(thumbEl);
+    else if(thumbSrc) thumbEl.style.backgroundImage = `url('${thumbSrc}')`;
+    if(thumbSrc){
+      thumbEl.style.backgroundSize = 'contain';
+      thumbEl.style.backgroundPosition = 'center';
+      thumbEl.style.backgroundRepeat = 'no-repeat';
+    }
+    thumbEl.addEventListener('click', () => {
+      if(selectionMode){ toggleCardSelection(p.id); return; }
+      if(isVideo && p.videoUrl){
+        // Los videos subidos como archivo se guardan como "data:" y los
+        // navegadores no dejan abrir ese tipo de enlace directo en una
+        // pestaña nueva; se convierte a un enlace temporal (blob) primero.
+        if(/^data:/i.test(p.videoUrl)){
+          fetch(p.videoUrl).then((r) => r.blob()).then((blob) => {
+            window.open(URL.createObjectURL(blob), '_blank', 'noopener');
+          });
+        } else {
+          window.open(p.videoUrl, '_blank', 'noopener');
+        }
+        return;
+      }
+      openPhotoViewer(p.image, p.title);
+    });
+    card.querySelector('.o7-info').addEventListener('click', () => {
+      if(selectionMode) toggleCardSelection(p.id);
+    });
+    const [btnEditarFoto, btnEliminarFoto] = card.querySelectorAll('.o7-actions .b');
+    btnEditarFoto.addEventListener('click', (e) => { e.stopPropagation(); openEditPhotoModal(p); });
+    btnEliminarFoto.addEventListener('click', (e) => { e.stopPropagation(); deletePhoto(p.id); });
+
+    // Marca qué foto se está arrastrando (para poder etiquetarla y para
+    // poder abrir la categoría sobre la que pasa) y resalta las categorías
+    // como zonas de destino mientras dura el arrastre.
+    card.addEventListener('dragstart', (e) => {
+      draggingCardId = p.id;
+      // Si estás en modo selección y la foto que empezás a arrastrar es
+      // una de las tildadas (y hay más de una tildada), viajan todas
+      // juntas; si no, se arrastra solo esa (comportamiento de siempre).
+      draggingIds = (selectionMode && selectedPhotoIds.has(p.id) && selectedPhotoIds.size > 1)
+        ? [...selectedPhotoIds]
+        : [p.id];
+      // Marca visualmente (opacidad reducida) al resto de las fotos que
+      // viajan junto con la que el navegador está arrastrando de verdad.
+      if(draggingIds.length > 1){
+        draggingIds.forEach((id) => {
+          if(id === p.id) return;
+          const el = cardsRow.querySelector(`.o7-card[data-id="${id}"]`);
+          if(el) el.classList.add('dragging');
+        });
+      }
+      categorySwitchedDuringDrag = false;
+      catsRow.classList.add('drop-mode');
+    });
+    card.addEventListener('dragend', () => {
+      // Recién ahora, al soltarla, se decide si la(s) foto(s) se mueven a
+      // la categoría que estaba abierta. Es un movimiento real (sale de la
+      // categoría en la que estaba y pasa a la nueva), no una copia, para
+      // que no termine apareciendo duplicada en dos secciones a la vez.
+      if(categorySwitchedDuringDrag && currentFilter !== '__todas__'){
+        // Primero congelamos en photosData el orden visual tal cual quedó
+        // en el DOM (la posición exacta donde se soltó la foto arrastrada,
+        // delante o detrás de tal vecina). Recién después reasignamos la
+        // categoría y reconstruimos la lista: si lo hiciéramos al revés,
+        // renderCards() reconstruiría desde el orden viejo de photosData y
+        // se perdería el lugar donde se soltó.
+        syncPhotoOrderFromDOM();
+        p.categorias = [currentFilter];
+        p.categoria = currentFilter;
+
+        // El resto de las fotos seleccionadas (si las hay) no tenían un
+        // lugar visual propio elegido durante el arrastre —solo la que se
+        // arrastra de verdad se veía moverse—, así que a esas las
+        // agrupamos justo después, en el mismo orden en que estaban.
+        const otrosIds = draggingIds.filter((id) => id !== p.id);
+        if(otrosIds.length){
+          const otrosSet = new Set(otrosIds);
+          // Mismo cuidado que en el otro camino de drop: recorremos en el
+          // orden de selección (otrosIds), no en el orden que ya tenían
+          // en photosData.
+          const porId = new Map(photosData.map((x) => [x.id, x]));
+          const otrasFotos = otrosIds.map((id) => porId.get(id)).filter(Boolean);
+          otrasFotos.forEach((f) => { f.categorias = [currentFilter]; f.categoria = currentFilter; });
+          photosData = photosData.filter((x) => !otrosSet.has(x.id));
+          const anchorIdx = photosData.findIndex((x) => x.id === p.id);
+          const insertAt = anchorIdx === -1 ? photosData.length : anchorIdx + 1;
+          photosData.splice(insertAt, 0, ...otrasFotos);
+        }
+
+        const total = 1 + otrosIds.length;
+        if(total === 1){
+          showToast(`"${p.title}" movida a "${currentFilter}"`);
+        } else {
+          showToast(`${total} fotos movidas a "${currentFilter}"`);
+          selectedPhotoIds.clear();
+          updateSelectionUI();
+        }
+        renderCats();
+        renderCards();
+      }
+      categorySwitchedDuringDrag = false;
+      draggingCardId = null;
+      draggingIds = [];
+      catsRow.classList.remove('drop-mode');
+      catsRow.querySelectorAll('.o7-chip.drop-hover').forEach((c) => c.classList.remove('drop-hover'));
+      cardsRow.querySelectorAll('.o7-card.dragging').forEach((c) => c.classList.remove('dragging'));
+      hoverChip = null;
+      clearTimeout(categoryOpenTimer);
+    });
+    return card;
+  }
+
+  function renderCards(){
+    const photoCountEl = document.getElementById('photoCount');
+    if (photoCountEl) photoCountEl.textContent = photosData.length;
+    cardsRow.classList.toggle('select-mode', selectionMode);
+    cardsRow.innerHTML = '';
+    const visibles = currentFilter === '__todas__'
+      ? photosData
+      : photosData.filter((p) => getCategorias(p).includes(currentFilter));
+    visibles.forEach((p) => cardsRow.appendChild(createCardElement(p)));
+    const addCard = document.createElement('div');
+    addCard.className = 'o7-add-card';
+    addCard.id = 'addCard';
+    addCard.innerHTML = `<div class="plus">+</div><div class="lbl">Nueva foto</div>`;
+    addCard.addEventListener('click', openAddPhotoModal);
+    cardsRow.appendChild(addCard);
+
+    makeSortable(cardsRow, '.o7-card', '.o7-add-card', syncPhotoOrderFromDOM);
+  }
+
+  // Al arrastrar una foto y dejarla un ratito sobre una categoría, esa
+  // categoría "se abre" (pasa a ser la vista actual) sin soltar el
+  // arrastre: se reutiliza el mismo nodo DOM de la foto arrastrada para
+  // que el drag nativo del navegador no se corte al cambiar de vista.
+  function openCategoryDuringDrag(nombre){
+    if(currentFilter === nombre) return;
+    categorySwitchedDuringDrag = true;
+    const draggedId = draggingCardId;
+    currentFilter = nombre;
+    renderCats();
+    const draggedEl = draggedId ? cardsRow.querySelector(`.o7-card[data-id="${draggedId}"]`) : null;
+    const photoCountEl = document.getElementById('photoCount');
+    if (photoCountEl) photoCountEl.textContent = photosData.length;
+    cardsRow.innerHTML = '';
+    const visibles = photosData.filter((p) => getCategorias(p).includes(nombre));
+    visibles.forEach((p) => {
+      if(draggedEl && p.id === draggedId){ cardsRow.appendChild(draggedEl); }
+      else { cardsRow.appendChild(createCardElement(p)); }
+    });
+    if(draggedEl && draggedId && !visibles.some((p) => p.id === draggedId)){
+      cardsRow.appendChild(draggedEl);
+    }
+    if(draggedEl) draggedEl.classList.add('dragging');
+    const addCard = document.createElement('div');
+    addCard.className = 'o7-add-card';
+    addCard.id = 'addCard';
+    addCard.innerHTML = `<div class="plus">+</div><div class="lbl">Nueva foto</div>`;
+    addCard.addEventListener('click', openAddPhotoModal);
+    cardsRow.appendChild(addCard);
+    makeSortable(cardsRow, '.o7-card', '.o7-add-card', syncPhotoOrderFromDOM);
+    const chip = catsRow.querySelector(`.o7-chip[data-cat="${CSS.escape(nombre)}"]`);
+    if(chip){ chip.classList.add('drop-hover'); hoverChip = chip; }
+  }
+
+  // Edición en línea: convierte la etiqueta del chip en un campo de texto
+  // editable ahí mismo, sin ventanas emergentes del navegador. Enter o
+  // perder el foco guarda el cambio; Escape lo cancela.
+  function startEditCategoryName(nombreActual, chip){
+    if(chip.classList.contains('editing')) return;
+    const labelEl = chip.querySelector('.chip-label');
+    if(!labelEl) return;
+
+    chip.classList.add('editing');
+    chip.draggable = false;
+
+    // Ancho y tipografía del texto tal como se veía antes de convertirlo
+    // en input, para arrancar exactamente con ese tamaño (medido mientras
+    // labelEl todavía está en el DOM).
+    const labelStyle = window.getComputedStyle(labelEl);
+    const font = `${labelStyle.fontWeight} ${labelStyle.fontSize} ${labelStyle.fontFamily}`;
+    const minWidth = labelEl.getBoundingClientRect().width;
+    const EXTRA = 26; // padding + borde del input + margen para el cursor
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'chip-edit-input';
+    input.value = nombreActual;
+
+    function resizeInput(){
+      const textWidth = measureTextWidth(input.value || nombreActual, font);
+      input.style.width = Math.max(minWidth, textWidth + EXTRA) + 'px';
+    }
+    resizeInput();
+    input.addEventListener('input', resizeInput);
+
+    labelEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    let resolved = false;
+
+    const commit = () => {
+      if(resolved) return;
+      resolved = true;
+      const nombreFinal = input.value.trim();
+      if(!nombreFinal || nombreFinal === nombreActual){
+        renderCats();
+        return;
+      }
+      photosData.forEach((p) => {
+        const cats = getCategorias(p);
+        if(cats.includes(nombreActual)){
+          const nuevas = cats.map((c) => c === nombreActual ? nombreFinal : c);
+          p.categorias = nuevas;
+          p.categoria = nuevas[0];
+        }
+      });
+      const idxExtra = extraCategorias.indexOf(nombreActual);
+      if(idxExtra !== -1) extraCategorias[idxExtra] = nombreFinal;
+      renderCats();
+      renderCards();
+      showToast(`Categoría renombrada a "${nombreFinal}"`);
+    };
+    const cancel = () => {
+      if(resolved) return;
+      resolved = true;
+      renderCats();
+    };
+
+    input.addEventListener('click', (e) => e.stopPropagation());
+    input.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if(e.key === 'Enter'){ e.preventDefault(); commit(); }
+      else if(e.key === 'Escape'){ e.preventDefault(); cancel(); }
+    });
+    input.addEventListener('blur', commit);
+  }
+
+  // --- Modal "Eliminar categoría" (mismo reemplazo del confirm() nativo) -
+  const deleteCategoryModal = document.getElementById('deleteCategoryModal');
+  const deleteCategoryMsgEl = document.getElementById('deleteCategoryMsg');
+  let pendingDeleteCategoryName = null;
+
+  function deleteCategory(nombre){
+    const cantidad = photosData.filter((p) => getCategorias(p).includes(nombre)).length;
+    deleteCategoryMsgEl.textContent = cantidad > 0
+      ? `La categoría "${nombre}" tiene ${cantidad} foto(s). Se van a quitar de esa categoría (si era la única que tenían, pasan a "General"). ¿Eliminar la categoría de todos modos?`
+      : `¿Eliminar la categoría "${nombre}"?`;
+    pendingDeleteCategoryName = nombre;
+    deleteCategoryModal.classList.add('open');
+  }
+  function closeDeleteCategoryModal(){ deleteCategoryModal.classList.remove('open'); pendingDeleteCategoryName = null; }
+
+  document.getElementById('btnCloseDeleteCategory').onclick = closeDeleteCategoryModal;
+  document.getElementById('btnCancelDeleteCategory').onclick = closeDeleteCategoryModal;
+  deleteCategoryModal.addEventListener('click', (e) => { if(e.target === deleteCategoryModal) closeDeleteCategoryModal(); });
+  document.getElementById('btnConfirmDeleteCategory').onclick = () => {
+    const nombre = pendingDeleteCategoryName;
+    if(!nombre) return;
+    photosData.forEach((p) => {
+      const cats = getCategorias(p);
+      if(cats.includes(nombre)){
+        const nuevas = cats.filter((c) => c !== nombre);
+        p.categorias = nuevas.length ? nuevas : ['General'];
+        p.categoria = p.categorias[0];
+      }
+    });
+    extraCategorias = extraCategorias.filter((c) => c !== nombre);
+    closeDeleteCategoryModal();
+    renderCats();
+    renderCards();
+    showToast(`Categoría "${nombre}" eliminada`);
+  };
+
+  renderCats();
+  renderCards();
+
+  // --- Detección de "cambios sin guardar" -------------------------------
+  // Guarda una foto (en texto) del estado tal como quedó la última vez
+  // que se guardó (o como se cargó al abrir la página), para poder
+  // avisar en la Vista previa si lo que se está mostrando todavía no se
+  // publicó en la galería pública.
+  function computeCurrentStateSnapshot(){
+    syncPhotoOrderFromDOM();
+    const catsEnOrden = [...catsRow.querySelectorAll('.o7-chip')]
+      .map((el) => el.dataset.cat)
+      .filter((cat) => cat && cat !== '__todas__');
+    return JSON.stringify({ photos: photosData, cats: catsEnOrden });
+  }
+  let lastSavedStateSnapshot = computeCurrentStateSnapshot();
+  function hasUnsavedChanges(){
+    return computeCurrentStateSnapshot() !== lastSavedStateSnapshot;
+  }
+
+  const row = document.getElementById('scrollRow');
+  document.getElementById('btnLeft').onclick = () => row.scrollBy({left:-220, behavior:'smooth'});
+  document.getElementById('btnRight').onclick = () => row.scrollBy({left:220, behavior:'smooth'});
+
+  // --- Barra de scroll dorada (fila de fotos y fila de categorías) ----
+  // Misma barra (y misma lógica) que usa galeria.html para la fila de
+  // miniaturas: reemplaza la scrollbar nativa por una propia, con efecto
+  // resorte al arrastrar más allá de los límites. Se recalcula sola cada
+  // vez que cambia el contenido de la fila (filtros, alta/baja, drag&drop,
+  // reordenar categorías) gracias al MutationObserver de más abajo, así
+  // no hace falta tocar cada punto del código que reconstruye las filas.
+  function initRowScrollbar(scrollEl, wrapId, trackId, thumbId){
+    const scrollbarWrap = document.getElementById(wrapId);
+    const scrollbarTrack = document.getElementById(trackId);
+    const scrollbarThumb = document.getElementById(thumbId);
+    if(!scrollEl || !scrollbarWrap || !scrollbarTrack || !scrollbarThumb) return;
+    const cardsRow = scrollEl;
+
+    const DRAG_GAP = 8;       // margen funcional mínimo al arrastrar
+    const REST_GAP = 18;      // margen de reposo respecto al comienzo del track
+    const MIN_THUMB = 34;     // ancho mínimo del thumb en px
+    const OVERDRAG_GIVE = 0.32;  // cuánto "cede" al arrastrar más allá del límite
+    const OVERDRAG_MAX = 14;     // tope de esa cesión
+
+    let dragging = false;
+    let dragStartX = 0;
+    let dragStartLeft = DRAG_GAP;
+    let usableWidth = 0;
+    let thumbWidth = MIN_THUMB;
+    let overdragSide = 0; // -1 principio, 1 final, 0 dentro de rango
+    let trackingEndTimer = null;
+
+    const getMaxScroll = () => Math.max(0, cardsRow.scrollWidth - cardsRow.clientWidth);
+
+    const restScrollbar = () => {
+      if(dragging) return;
+      if(overdragSide === 1){
+        const trackWidth = scrollbarTrack.clientWidth;
+        const endLeft = Math.max(REST_GAP, trackWidth - REST_GAP - thumbWidth);
+        scrollbarThumb.style.left = endLeft + 'px';
+      } else {
+        scrollbarThumb.style.left = REST_GAP + 'px';
+      }
+    };
+
+    function syncScrollbarFromScroll(){
+      if(dragging) return;
+      const maxScroll = getMaxScroll();
+      if(maxScroll <= 4) return;
+      scrollbarThumb.classList.add('is-tracking');
+      const maxThumbLeft = Math.max(usableWidth - thumbWidth, 0);
+      const minLeft = DRAG_GAP;
+      const progress = Math.max(0, Math.min(1, cardsRow.scrollLeft / maxScroll));
+      scrollbarThumb.style.left = (minLeft + progress * maxThumbLeft) + 'px';
+      if(trackingEndTimer) clearTimeout(trackingEndTimer);
+      trackingEndTimer = window.setTimeout(() => {
+        scrollbarThumb.classList.remove('is-tracking');
+        trackingEndTimer = null;
+      }, 140);
+    }
+
+    const layoutScrollbar = () => {
+      const maxScroll = getMaxScroll();
+      const hasOverflow = maxScroll > 4;
+      scrollbarWrap.classList.toggle('is-hidden', !hasOverflow);
+      if(!hasOverflow) return;
+      const trackWidth = scrollbarTrack.clientWidth;
+      usableWidth = Math.max(trackWidth - DRAG_GAP * 2, 10);
+      const ratio = cardsRow.clientWidth / cardsRow.scrollWidth;
+      thumbWidth = Math.min(usableWidth, Math.max(usableWidth * ratio, MIN_THUMB));
+      scrollbarThumb.style.width = thumbWidth + 'px';
+      if(cardsRow.scrollLeft > 0){ syncScrollbarFromScroll(); }
+      else { restScrollbar(); }
+    };
+
+    cardsRow.addEventListener('scroll', syncScrollbarFromScroll);
+
+    function onDown(event){
+      dragging = true;
+      scrollbarThumb.classList.add('is-dragging');
+      dragStartX = event.touches ? event.touches[0].clientX : event.clientX;
+      dragStartLeft = parseFloat(scrollbarThumb.style.left) || DRAG_GAP;
+      cardsRow.style.scrollBehavior = 'auto';
+      event.preventDefault();
+    }
+
+    function onMove(event){
+      if(!dragging) return;
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+      const dx = clientX - dragStartX;
+      const maxThumbLeft = Math.max(usableWidth - thumbWidth, 0);
+      const minLeft = DRAG_GAP;
+      const maxLeft = DRAG_GAP + maxThumbLeft;
+      let targetLeft = dragStartLeft + dx;
+
+      if(targetLeft < minLeft){
+        overdragSide = -1;
+        const give = Math.min((minLeft - targetLeft) * OVERDRAG_GIVE, OVERDRAG_MAX);
+        targetLeft = minLeft - give;
+      } else if(targetLeft > maxLeft){
+        overdragSide = 1;
+        const give = Math.min((targetLeft - maxLeft) * OVERDRAG_GIVE, OVERDRAG_MAX);
+        targetLeft = maxLeft + give;
+      } else {
+        overdragSide = 0;
+      }
+
+      scrollbarThumb.style.left = targetLeft + 'px';
+      const clampedLeft = Math.max(minLeft, Math.min(maxLeft, targetLeft));
+      const progress = maxThumbLeft > 0 ? (clampedLeft - minLeft) / maxThumbLeft : 0;
+      cardsRow.scrollLeft = progress * getMaxScroll();
+      event.preventDefault();
+    }
+
+    function onUp(){
+      if(!dragging) return;
+      dragging = false;
+      scrollbarThumb.classList.remove('is-dragging');
+      cardsRow.style.scrollBehavior = '';
+      if(overdragSide !== 0){ restScrollbar(); }
+      overdragSide = 0;
+    }
+
+    scrollbarThumb.addEventListener('mousedown', onDown);
+    scrollbarThumb.addEventListener('touchstart', onDown, { passive: false });
+    window.addEventListener('mousemove', onMove, { passive: false });
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchend', onUp);
+    window.addEventListener('resize', layoutScrollbar);
+
+    // Las tarjetas se reconstruyen por completo en cada renderCards()
+    // (filtros, alta/baja de fotos, drag&drop entre categorías, etc.).
+    // En vez de llamar layoutScrollbar() manualmente desde cada uno de
+    // esos puntos, se observa el contenedor y se recalcula solo.
+    new MutationObserver(() => window.requestAnimationFrame(layoutScrollbar))
+      .observe(cardsRow, { childList: true });
+
+    layoutScrollbar();
+  }
+
+  initRowScrollbar(cardsRow, 'scrollbarWrap', 'scrollbarTrack', 'scrollbarThumb');
+  initRowScrollbar(catsRow, 'catsScrollbarWrap', 'catsScrollbarTrack', 'catsScrollbarThumb');
+
+  // --- Vista previa en vivo, con el orden actual (guardado o no) -------
+  const modal = document.getElementById('previewModal');
+  const frameEl = document.querySelector('.o7-frame');
+  const previewImg = document.getElementById('previewImg');
+  const miniThumbsWrap = document.querySelector('.o7-mini-thumbs');
+  let previewOrder = [];
+  let previewIndex = 0;
+  const pad2 = (n) => (n < 10 ? '0' + n : '' + n);
+
+  function currentPhotoOrder(){
+    return [...cardsRow.querySelectorAll('.o7-card')]
+      .map((card) => photosData.find((p) => p.id === card.dataset.id))
+      .filter(Boolean);
+  }
+
+  // Abre el modal de vista previa ya posicionado en una foto puntual
+  // (se usa al clickear una miniatura). Si no se pasa id, arranca en la
+  // primera foto (comportamiento del botón "Vista previa en vivo").
+  const previewDirtyBar = document.getElementById('previewDirtyBar');
+
+  function openPreview(id){
+    previewOrder = currentPhotoOrder();
+    const found = id ? previewOrder.findIndex((p) => p.id === id) : 0;
+    previewIndex = found >= 0 ? found : 0;
+    if(previewOrder.length) renderPreviewFrame();
+    if(previewDirtyBar) previewDirtyBar.hidden = !hasUnsavedChanges();
+    modal.classList.add('open');
+  }
+
+  function renderPreviewFrame(){
+    const p = previewOrder[previewIndex];
+    if(!p) return;
+    resetZoomPreview(true);
+    previewImg.src = p.image || '';
+    previewImg.alt = p.title || '';
+    frameEl.querySelector('.badge').textContent = getCategoria(p);
+    frameEl.querySelector('.count').textContent = `${pad2(previewIndex + 1)} / ${pad2(previewOrder.length)}`;
+    frameEl.querySelector('.cap').textContent = p.title || '';
+    frameEl.querySelector('.cap').title = p.title || '';
+    renderMiniThumbs();
+  }
+
+  function renderMiniThumbs(){
+    miniThumbsWrap.innerHTML = '';
+    const max = 5;
+    const start = previewOrder.length <= max ? 0 : Math.max(0, Math.min(previewIndex - 2, previewOrder.length - max));
+    previewOrder.slice(start, start + max).forEach((p, i) => {
+      const realIndex = start + i;
+      const div = document.createElement('div');
+      div.className = 'o7-mini-thumb' + (realIndex === previewIndex ? ' active' : '');
+      const miniSrc = p.thumb || p.image;
+      if(miniSrc){
+        div.style.backgroundImage = `url('${miniSrc}')`;
+        div.style.backgroundSize = 'cover';
+        div.style.backgroundPosition = 'center';
+      }
+      div.onclick = () => { previewIndex = realIndex; renderPreviewFrame(); };
+      miniThumbsWrap.appendChild(div);
+    });
+  }
+
+  document.getElementById('btnPreview').onclick = () => openPreview();
+  document.querySelector('.o7-frame .arrow.l').onclick = () => {
+    if(!previewOrder.length) return;
+    previewIndex = (previewIndex - 1 + previewOrder.length) % previewOrder.length;
+    renderPreviewFrame();
+  };
+  document.querySelector('.o7-frame .arrow.r').onclick = () => {
+    if(!previewOrder.length) return;
+    previewIndex = (previewIndex + 1) % previewOrder.length;
+    renderPreviewFrame();
+  };
+  document.getElementById('btnClosePreview').onclick = () => modal.classList.remove('open');
+  modal.addEventListener('click', e => { if(e.target === modal) modal.classList.remove('open'); });
+  if(previewDirtyBar){
+    const btnPreviewKeepEditing = document.getElementById('btnPreviewKeepEditing');
+    const btnPreviewSaveNow = document.getElementById('btnPreviewSaveNow');
+    if(btnPreviewKeepEditing){
+      btnPreviewKeepEditing.onclick = () => modal.classList.remove('open');
+    }
+    if(btnPreviewSaveNow){
+      btnPreviewSaveNow.onclick = () => {
+        modal.classList.remove('open');
+        const saveModalEl = document.getElementById('saveModal');
+        if(saveModalEl) saveModalEl.classList.add('open');
+      };
+    }
+  }
+
+  // --- Zoom de la foto dentro del visor (botones, rueda, doble clic y
+  // arrastre para desplazarse cuando está ampliada) -------------------
+  const ZOOM_MIN = 1, ZOOM_MAX = 4, ZOOM_STEP = 0.5, ZOOM_DBLCLICK = 2.5;
+  let zoomScale = 1, zoomX = 0, zoomY = 0;
+  const zoomLevelEl = document.getElementById('zoomLevel');
+  const btnZoomIn = document.getElementById('btnZoomIn');
+  const btnZoomOut = document.getElementById('btnZoomOut');
+  const btnZoomReset = document.getElementById('btnZoomReset');
+
+  function clampZoomPan(){
+    const w = previewImg.offsetWidth, h = previewImg.offsetHeight;
+    const maxX = Math.max((w * (zoomScale - 1)) / 2, 0);
+    const maxY = Math.max((h * (zoomScale - 1)) / 2, 0);
+    zoomX = Math.max(-maxX, Math.min(maxX, zoomX));
+    zoomY = Math.max(-maxY, Math.min(maxY, zoomY));
+  }
+
+  function applyZoomPreview(instant){
+    previewImg.style.transition = instant ? 'none' : '';
+    clampZoomPan();
+    previewImg.style.transform = `translate(${zoomX}px, ${zoomY}px) scale(${zoomScale})`;
+    previewImg.classList.toggle('is-zoomed', zoomScale > 1);
+    if(zoomLevelEl) zoomLevelEl.textContent = Math.round(zoomScale * 100) + '%';
+    if(btnZoomOut) btnZoomOut.disabled = zoomScale <= ZOOM_MIN;
+    if(btnZoomIn) btnZoomIn.disabled = zoomScale >= ZOOM_MAX;
+    if(instant) void previewImg.offsetWidth;
+  }
+
+  function resetZoomPreview(instant){
+    zoomScale = 1; zoomX = 0; zoomY = 0;
+    applyZoomPreview(instant);
+  }
+
+  function setZoomPreview(next, focalX, focalY){
+    const clamped = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, next));
+    if(clamped === zoomScale) return;
+    if(typeof focalX === 'number' && typeof focalY === 'number'){
+      const rect = previewImg.getBoundingClientRect();
+      const offsetX = focalX - (rect.left + rect.width / 2);
+      const offsetY = focalY - (rect.top + rect.height / 2);
+      const ratio = clamped / zoomScale;
+      zoomX += offsetX * (1 - ratio);
+      zoomY += offsetY * (1 - ratio);
+    }
+    zoomScale = clamped;
+    if(zoomScale === ZOOM_MIN){ zoomX = 0; zoomY = 0; }
+    applyZoomPreview(false);
+  }
+
+  if(btnZoomIn) btnZoomIn.onclick = () => setZoomPreview(zoomScale + ZOOM_STEP);
+  if(btnZoomOut) btnZoomOut.onclick = () => setZoomPreview(zoomScale - ZOOM_STEP);
+  if(btnZoomReset) btnZoomReset.onclick = () => resetZoomPreview(false);
+
+  previewImg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const direction = e.deltaY > 0 ? -1 : 1;
+    setZoomPreview(zoomScale + direction * 0.35, e.clientX, e.clientY);
+  }, { passive: false });
+
+  previewImg.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    if(zoomScale > 1) resetZoomPreview(false);
+    else setZoomPreview(ZOOM_DBLCLICK, e.clientX, e.clientY);
+  });
+
+  let isPanningPreview = false, panStartX = 0, panStartY = 0, panOriginX = 0, panOriginY = 0;
+  previewImg.addEventListener('mousedown', (e) => {
+    if(zoomScale <= 1) return;
+    isPanningPreview = true;
+    previewImg.classList.add('is-panning');
+    panStartX = e.clientX; panStartY = e.clientY;
+    panOriginX = zoomX; panOriginY = zoomY;
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e) => {
+    if(!isPanningPreview) return;
+    zoomX = panOriginX + (e.clientX - panStartX);
+    zoomY = panOriginY + (e.clientY - panStartY);
+    applyZoomPreview(true);
+  });
+  window.addEventListener('mouseup', () => {
+    if(!isPanningPreview) return;
+    isPanningPreview = false;
+    previewImg.classList.remove('is-panning');
+  });
+
+  // --- Visor minimalista: sólo la foto ampliada, sin badges, flechas ni
+  // miniaturas -es lo que se abre al clickear una tarjeta de la fila de
+  // fotos-. Igual permite acercar/alejar con la rueda, doble clic y
+  // arrastrar, pero sin botones visibles encima de la imagen. -------
+  const photoViewModal = document.getElementById('photoViewModal');
+  const viewerImg = document.getElementById('viewerImg');
+  let viewerScale = 1, viewerX = 0, viewerY = 0;
+
+  function clampViewerPan(){
+    const w = viewerImg.offsetWidth, h = viewerImg.offsetHeight;
+    const maxX = Math.max((w * (viewerScale - 1)) / 2, 0);
+    const maxY = Math.max((h * (viewerScale - 1)) / 2, 0);
+    viewerX = Math.max(-maxX, Math.min(maxX, viewerX));
+    viewerY = Math.max(-maxY, Math.min(maxY, viewerY));
+  }
+
+  function applyViewerZoom(instant){
+    viewerImg.style.transition = instant ? 'none' : '';
+    clampViewerPan();
+    viewerImg.style.transform = `translate(${viewerX}px, ${viewerY}px) scale(${viewerScale})`;
+    const zoomed = viewerScale > 1;
+    viewerImg.classList.toggle('is-zoomed', zoomed);
+    document.getElementById('btnCloseViewer').style.opacity = zoomed ? '0' : '';
+    document.getElementById('btnCloseViewer').style.pointerEvents = zoomed ? 'none' : '';
+    if(instant) void viewerImg.offsetWidth;
+  }
+
+  function resetViewerZoom(instant){
+    viewerScale = 1; viewerX = 0; viewerY = 0;
+    applyViewerZoom(instant);
+  }
+
+  function setViewerZoom(next, focalX, focalY){
+    const clamped = Math.max(1, Math.min(4, next));
+    if(clamped === viewerScale) return;
+    if(typeof focalX === 'number' && typeof focalY === 'number'){
+      const rect = viewerImg.getBoundingClientRect();
+      const offsetX = focalX - (rect.left + rect.width / 2);
+      const offsetY = focalY - (rect.top + rect.height / 2);
+      const ratio = clamped / viewerScale;
+      viewerX += offsetX * (1 - ratio);
+      viewerY += offsetY * (1 - ratio);
+    }
+    viewerScale = clamped;
+    if(viewerScale === 1){ viewerX = 0; viewerY = 0; }
+    applyViewerZoom(false);
+  }
+
+  function openPhotoViewer(src, alt){
+    resetViewerZoom(true);
+    viewerImg.src = src || '';
+    viewerImg.alt = alt || '';
+    photoViewModal.classList.add('open');
+  }
+  function closePhotoViewer(){ photoViewModal.classList.remove('open'); }
+
+  document.getElementById('btnCloseViewer').onclick = closePhotoViewer;
+  photoViewModal.addEventListener('click', (e) => { if(e.target === photoViewModal) closePhotoViewer(); });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && photoViewModal.classList.contains('open')) closePhotoViewer();
+  });
+
+  viewerImg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const direction = e.deltaY > 0 ? -1 : 1;
+    setViewerZoom(viewerScale + direction * 0.35, e.clientX, e.clientY);
+  }, { passive: false });
+
+  viewerImg.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    if(viewerScale > 1) resetViewerZoom(false);
+    else setViewerZoom(2.5, e.clientX, e.clientY);
+  });
+
+  let isPanningViewer = false, vPanStartX = 0, vPanStartY = 0, vPanOriginX = 0, vPanOriginY = 0;
+  viewerImg.addEventListener('mousedown', (e) => {
+    if(viewerScale <= 1) return;
+    isPanningViewer = true;
+    viewerImg.classList.add('is-panning');
+    vPanStartX = e.clientX; vPanStartY = e.clientY;
+    vPanOriginX = viewerX; vPanOriginY = viewerY;
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e) => {
+    if(!isPanningViewer) return;
+    viewerX = vPanOriginX + (e.clientX - vPanStartX);
+    viewerY = vPanOriginY + (e.clientY - vPanStartY);
+    applyViewerZoom(true);
+  });
+  window.addEventListener('mouseup', () => {
+    if(!isPanningViewer) return;
+    isPanningViewer = false;
+    viewerImg.classList.remove('is-panning');
+  });
+
+  // --- Modal "Añadir foto" --------------------------------------------
+  const addPhotoModal = document.getElementById('addPhotoModal');
+  const addPhotoScroll = document.getElementById('addPhotoScroll');
+  const addPhotoScrollTrack = document.getElementById('addPhotoScrollTrack');
+  const addPhotoScrollThumb = document.getElementById('addPhotoScrollThumb');
+  const newPhotoFile = document.getElementById('newPhotoFile');
+  const newPhotoPreview = document.getElementById('newPhotoPreview');
+  const newPhotoTitle = document.getElementById('newPhotoTitle');
+  const newPhotoError = document.getElementById('newPhotoError');
+  const newPhotoFrame = document.getElementById('newPhotoFrame');
+  const newPhotoBadge = document.getElementById('newPhotoBadge');
+  const newPhotoDims = document.getElementById('newPhotoDims');
+  const newTypeToggle = document.getElementById('newTypeToggle');
+  const newTypeImageBtn = document.getElementById('newTypeImageBtn');
+  const newTypeVideoBtn = document.getElementById('newTypeVideoBtn');
+  const newVideoUrlField = document.getElementById('newVideoUrlField');
+  const newVideoUrl = document.getElementById('newVideoUrl');
+  const newVideoFileWrap = document.getElementById('newVideoFileWrap');
+  const newVideoFile = document.getElementById('newVideoFile');
+  const newVideoFileLabel = document.getElementById('newVideoFileLabel');
+  const newVideoOr = document.getElementById('newVideoOr');
+  const newImageUrlField = document.getElementById('newImageUrlField');
+  const newImageUrl = document.getElementById('newImageUrl');
+  const newPhotoUploadLabel = document.getElementById('newPhotoUploadLabel');
+  let newPhotoDataUrl = '';
+  let newPhotoThumbUrl = '';
+  let newPhotoWeightNote = '';
+  let newPhotoBadgeTimer = null;
+  let newContentType = 'image';
+  let newVideoDataUrl = '';
+  let newVideoFileName = '';
+  const NEW_FRAME_MAX = 232;
+
+  // --- Alternar entre "Foto" y "Video" en el modal de añadir ------------
+  function setNewContentType(type){
+    newContentType = type === 'video' ? 'video' : 'image';
+    if(newTypeImageBtn) newTypeImageBtn.classList.toggle('is-active', newContentType === 'image');
+    if(newTypeVideoBtn) newTypeVideoBtn.classList.toggle('is-active', newContentType === 'video');
+    if(newVideoUrlField) newVideoUrlField.hidden = newContentType !== 'video';
+    if(newVideoFileWrap) newVideoFileWrap.hidden = newContentType !== 'video';
+    if(newVideoOr) newVideoOr.hidden = newContentType !== 'video';
+    if(newImageUrlField) newImageUrlField.hidden = newContentType !== 'image';
+    if(newPhotoUploadLabel) newPhotoUploadLabel.textContent = newContentType === 'video' ? 'Subir miniatura (opcional)' : 'Subir imagen';
+    if(newPhotoDims){
+      newPhotoDims.textContent = newContentType === 'video'
+        ? 'La miniatura es opcional: se intenta sacar sola (del video subido, o del enlace si es YouTube/Vimeo).'
+        : 'Arrastrá una imagen al recuadro, usá el botón o pegá el enlace de una imagen.';
+      newPhotoDims.classList.remove('warn');
+    }
+    newPhotoError.textContent = '';
+  }
+  if(newTypeImageBtn) newTypeImageBtn.addEventListener('click', () => setNewContentType('image'));
+  if(newTypeVideoBtn) newTypeVideoBtn.addEventListener('click', () => setNewContentType('video'));
+
+  // --- Subir un video descargado como archivo (en vez de pegar un enlace) ---
+  function handleNewVideoFile(file){
+    newPhotoError.textContent = '';
+    if(file.size > VIDEO_MAX_BYTES){
+      newPhotoError.textContent = `Ese video pesa ${formatBytes(file.size)}: es demasiado para subirlo como archivo (máximo ${formatBytes(VIDEO_MAX_BYTES)}). Subilo a YouTube y pegá el enlace.`;
+      newVideoFile.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      newVideoDataUrl = reader.result;
+      newVideoFileName = file.name;
+      if(newVideoUrl) newVideoUrl.value = '';
+      if(newVideoFileLabel) newVideoFileLabel.textContent = `Video cargado: ${file.name}`;
+      if(file.size > VIDEO_WARN_BYTES){
+        newPhotoDims.textContent = `${formatBytes(file.size)} · es un video bastante pesado; si podés, subilo a YouTube en vez de como archivo.`;
+        newPhotoDims.classList.add('warn');
+      } else {
+        newPhotoDims.textContent = `Video cargado (${formatBytes(file.size)}).`;
+        newPhotoDims.classList.remove('warn');
+      }
+      // Si todavía no hay una miniatura elegida a mano, se intenta sacar
+      // sola desde el propio video (un fotograma de más o menos adentro).
+      if(!newPhotoDataUrl){
+        const frame = await extractVideoFrame(newVideoDataUrl);
+        if(frame && !newPhotoDataUrl){
+          newPhotoDataUrl = frame;
+          newPhotoThumbUrl = await resizeDataUrl(frame, 480, 0.75);
+          newPhotoPreview.classList.add('has-img');
+          newPhotoPreview.innerHTML = `<img src="${newPhotoDataUrl}" alt="">`;
+          probeAndSizeNewPhotoFrame(newPhotoDataUrl);
+          showNewPhotoBadge();
+          window.requestAnimationFrame(updateAddPhotoScrollbar);
+        }
+      }
+    };
+    reader.onerror = () => { newPhotoError.textContent = 'No se pudo leer el video. Probá con otro archivo.'; };
+    reader.readAsDataURL(file);
+  }
+  if(newVideoFile){
+    newVideoFile.addEventListener('change', () => {
+      const file = newVideoFile.files && newVideoFile.files[0];
+      if(!file){
+        newVideoDataUrl = '';
+        newVideoFileName = '';
+        if(newVideoFileLabel) newVideoFileLabel.textContent = 'Subir video descargado';
+        return;
+      }
+      handleNewVideoFile(file);
+    });
+  }
+
+  // Ajusta el recuadro azul al ancho y alto reales de la imagen (sin
+  // superar 232x232), igual que en "Editar foto".
+  function sizeNewPhotoFrame(natW, natH){
+    if(!newPhotoFrame) return;
+    let w = NEW_FRAME_MAX, h = NEW_FRAME_MAX;
+    if(natW && natH){
+      const ratio = natW / natH;
+      w = NEW_FRAME_MAX; h = w / ratio;
+      if(h > NEW_FRAME_MAX){ h = NEW_FRAME_MAX; w = h * ratio; }
+    }
+    newPhotoFrame.style.width = `${Math.round(w)}px`;
+    newPhotoFrame.style.height = `${Math.round(h)}px`;
+  }
+  function probeAndSizeNewPhotoFrame(src){
+    const probe = new Image();
+    probe.onload = () => {
+      sizeNewPhotoFrame(probe.naturalWidth, probe.naturalHeight);
+      if(newPhotoDims){
+        const base = `${probe.naturalWidth} × ${probe.naturalHeight}px`;
+        newPhotoDims.textContent = newPhotoWeightNote ? `${base} · ${newPhotoWeightNote}` : base;
+        newPhotoDims.classList.toggle('warn', !!newPhotoWeightNote);
+      }
+    };
+    probe.onerror = () => sizeNewPhotoFrame(0, 0);
+    probe.src = src;
+  }
+
+  if(newPhotoFrame){
+    newPhotoFrame.addEventListener('dragover', (e) => { e.preventDefault(); newPhotoFrame.classList.add('dragover'); });
+    newPhotoFrame.addEventListener('dragleave', () => newPhotoFrame.classList.remove('dragover'));
+    newPhotoFrame.addEventListener('drop', (e) => {
+      e.preventDefault();
+      newPhotoFrame.classList.remove('dragover');
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if(!file) return;
+      // En la pestaña "Video", el recuadro grande sigue siendo la miniatura
+      // (opcional); si lo que se arrastra ahí es en realidad un archivo de
+      // video, se manda al mismo lugar que el botón "Subir video
+      // descargado" en vez de tratarlo como una imagen.
+      if(newContentType === 'video' && file.type.startsWith('video/')){
+        handleNewVideoFile(file);
+        return;
+      }
+      handleNewPhotoFile(file);
+    });
+  }
+
+  // --- Arrastrar un video directamente sobre "Subir video descargado" ---
+  if(newVideoFileWrap){
+    newVideoFileWrap.addEventListener('dragover', (e) => { e.preventDefault(); newVideoFileWrap.classList.add('dragover'); });
+    newVideoFileWrap.addEventListener('dragleave', () => newVideoFileWrap.classList.remove('dragover'));
+    newVideoFileWrap.addEventListener('drop', (e) => {
+      e.preventDefault();
+      newVideoFileWrap.classList.remove('dragover');
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if(file) handleNewVideoFile(file);
+    });
+  }
+
+  // Con foto cargada: click abre el visor con zoom para verla mejor.
+  // Sin foto: click abre el selector de archivos (mismo gesto que
+  // arrastrar una imagen encima).
+  newPhotoPreview.addEventListener('click', (e) => {
+    const img = e.target.closest('img');
+    if(img){ openPhotoViewer(img.src, newPhotoTitle.value || ''); return; }
+    newPhotoFile.click();
+  });
+
+  function showNewPhotoBadge(){
+    if(!newPhotoBadge) return;
+    newPhotoBadge.classList.remove('show');
+    void newPhotoBadge.offsetWidth;
+    newPhotoBadge.classList.add('show');
+    clearTimeout(newPhotoBadgeTimer);
+    newPhotoBadgeTimer = setTimeout(() => newPhotoBadge.classList.remove('show'), 2200);
+  }
+
+  async function handleNewPhotoFile(file){
+    newPhotoError.textContent = '';
+    const reader = new FileReader();
+    reader.onload = async () => {
+      let dataUrl = reader.result;
+      const originalBytes = estimateBytesFromDataUrl(dataUrl);
+      // Si la foto pesa mucho, se recomprime antes de guardarla (menos
+      // peso en el almacenamiento y una galería pública más rápida).
+      if(originalBytes > COMPRESS_THRESHOLD_BYTES){
+        dataUrl = await resizeDataUrl(dataUrl, 1600, 0.85);
+      }
+      const finalBytes = estimateBytesFromDataUrl(dataUrl);
+      newPhotoWeightNote = finalBytes < originalBytes
+        ? `pesaba ${formatBytes(originalBytes)}, se comprimió a ${formatBytes(finalBytes)}`
+        : '';
+      newPhotoDataUrl = dataUrl;
+      newPhotoThumbUrl = await resizeDataUrl(dataUrl, 480, 0.75);
+      newPhotoPreview.classList.add('has-img');
+      newPhotoPreview.innerHTML = `<img src="${newPhotoDataUrl}" alt="">`;
+      probeAndSizeNewPhotoFrame(newPhotoDataUrl);
+      showNewPhotoBadge();
+      window.requestAnimationFrame(updateAddPhotoScrollbar);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Recalcula alto y posición de la barrita de scroll del cuerpo del
+  // modal "Añadir foto" (la parte blanca), igual que el visor de
+  // noticias: se oculta sola si el contenido entra completo y aparece
+  // apenas hay que desplazarse.
+  function updateAddPhotoScrollbar(){
+    if(!addPhotoScroll || !addPhotoScrollTrack || !addPhotoScrollThumb) return;
+    const { scrollHeight, clientHeight, scrollTop } = addPhotoScroll;
+    if(scrollHeight <= clientHeight + 1){
+      addPhotoScrollTrack.style.display = 'none';
+      return;
+    }
+    addPhotoScrollTrack.style.display = 'block';
+    const trackHeight = addPhotoScrollTrack.clientHeight;
+    const thumbHeight = Math.max((clientHeight / scrollHeight) * trackHeight, 24);
+    const maxThumbTop = trackHeight - thumbHeight;
+    const scrollRatio = scrollTop / (scrollHeight - clientHeight);
+    addPhotoScrollThumb.style.height = `${thumbHeight}px`;
+    addPhotoScrollThumb.style.top = `${maxThumbTop * scrollRatio}px`;
+  }
+  if(addPhotoScroll){
+    addPhotoScroll.addEventListener('scroll', updateAddPhotoScrollbar);
+  }
+  window.addEventListener('resize', updateAddPhotoScrollbar);
+
+  function resetAddPhotoForm(){
+    newPhotoFile.value = '';
+    newPhotoDataUrl = '';
+    newPhotoThumbUrl = '';
+    newPhotoWeightNote = '';
+    newPhotoPreview.classList.remove('has-img');
+    newPhotoPreview.innerHTML = '<span class="ph">+</span>';
+    if(newPhotoDims){
+      newPhotoDims.textContent = 'Arrastrá una imagen al recuadro o usá el botón. El marco se ajusta solo.';
+      newPhotoDims.classList.remove('warn');
+    }
+    if(newPhotoBadge) newPhotoBadge.classList.remove('show');
+    sizeNewPhotoFrame(0, 0);
+    newPhotoTitle.value = '';
+    newPhotoError.textContent = '';
+    if(newVideoUrl) newVideoUrl.value = '';
+    if(newVideoFile) newVideoFile.value = '';
+    if(newImageUrl) newImageUrl.value = '';
+    newVideoDataUrl = '';
+    newVideoFileName = '';
+    if(newVideoFileLabel) newVideoFileLabel.textContent = 'Subir video descargado';
+    setNewContentType('image');
+  }
+
+  // Pegar el enlace de una imagen limpia el archivo subido (uno u otro,
+  // no ambos) y actualiza la vista previa con esa URL directamente.
+  if(newImageUrl){
+    newImageUrl.addEventListener('input', () => {
+      const url = newImageUrl.value.trim();
+      if(!url) return;
+      newPhotoFile.value = '';
+      newPhotoWeightNote = '';
+      newPhotoDataUrl = url;
+      newPhotoThumbUrl = url;
+      newPhotoPreview.classList.add('has-img');
+      newPhotoPreview.innerHTML = `<img src="${url}" alt="">`;
+      probeAndSizeNewPhotoFrame(url);
+      window.requestAnimationFrame(updateAddPhotoScrollbar);
+    });
+  }
+
+  function openAddPhotoModal(){
+    resetAddPhotoForm();
+    addPhotoModal.classList.add('open');
+    if(addPhotoScroll) addPhotoScroll.scrollTop = 0;
+    window.requestAnimationFrame(updateAddPhotoScrollbar);
+    setTimeout(() => newPhotoTitle.focus(), 50);
+  }
+  function closeAddPhotoModal(){ addPhotoModal.classList.remove('open'); }
+
+  newPhotoFile.addEventListener('change', () => {
+    const file = newPhotoFile.files && newPhotoFile.files[0];
+    newPhotoError.textContent = '';
+    if(!file){
+      newPhotoDataUrl = '';
+      newPhotoThumbUrl = '';
+      newPhotoWeightNote = '';
+      newPhotoPreview.classList.remove('has-img');
+      newPhotoPreview.innerHTML = '<span class="ph">+</span>';
+      sizeNewPhotoFrame(0, 0);
+      window.requestAnimationFrame(updateAddPhotoScrollbar);
+      return;
+    }
+    if(newImageUrl) newImageUrl.value = '';
+    handleNewPhotoFile(file);
+  });
+
+  document.getElementById('btnCloseAddPhoto').onclick = closeAddPhotoModal;
+  document.getElementById('btnCancelAddPhoto').onclick = closeAddPhotoModal;
+  addPhotoModal.addEventListener('click', (e) => { if(e.target === addPhotoModal) closeAddPhotoModal(); });
+
+  document.getElementById('btnConfirmAddPhoto').onclick = () => {
+    const titulo = newPhotoTitle.value.trim();
+    // La foto se agrega directamente a la sección que se está mirando en
+    // ese momento; si está activo "Todas", cae en "General".
+    const categoria = currentFilter !== '__todas__' ? currentFilter : 'General';
+
+    if(!titulo){ newPhotoError.textContent = 'Escribí un nombre para la foto.'; newPhotoTitle.focus(); return; }
+
+    if(newContentType === 'video'){
+      let info, videoUrlValue;
+      if(newVideoDataUrl){
+        // Video subido como archivo: se guarda su propia data URL, no hace
+        // falta parsear ningún enlace externo.
+        info = { provider: 'direct', embedUrl: newVideoDataUrl, thumbUrl: '' };
+        videoUrlValue = newVideoDataUrl;
+      } else {
+        info = parseVideoUrl(newVideoUrl.value);
+        if(!info){ newPhotoError.textContent = 'Subí un video o pegá un enlace de YouTube, Vimeo o un archivo .mp4 válido.'; newVideoUrl.focus(); return; }
+        videoUrlValue = newVideoUrl.value.trim();
+      }
+      const poster = newPhotoDataUrl || info.thumbUrl || '';
+      const nuevoVideo = {
+        id: 'v' + Date.now() + Math.floor(Math.random() * 1000),
+        title: titulo,
+        type: 'video',
+        videoUrl: videoUrlValue,
+        videoProvider: info.provider,
+        videoEmbedUrl: info.embedUrl,
+        image: poster,
+        thumb: newPhotoThumbUrl || poster,
+        visible: true,
+        categoria: categoria,
+        categorias: [categoria]
+      };
+      photosData.push(nuevoVideo);
+      renderCats();
+      renderCards();
+      closeAddPhotoModal();
+      showToast(`Video añadido a "${categoria}"`);
+      return;
+    }
+
+    if(!newPhotoDataUrl){ newPhotoError.textContent = 'Elegí una foto para subir o pegá el enlace de una imagen.'; return; }
+
+    const nuevaFoto = {
+      id: 'p' + Date.now() + Math.floor(Math.random() * 1000),
+      title: titulo,
+      type: 'image',
+      image: newPhotoDataUrl,
+      thumb: newPhotoThumbUrl || newPhotoDataUrl,
+      visible: true,
+      categoria: categoria,
+      categorias: [categoria]
+    };
+    photosData.push(nuevaFoto);
+    renderCats();
+    renderCards();
+    closeAddPhotoModal();
+    showToast(`Foto añadida a "${categoria}"`);
+  };
+
+  // --- Modal "Editar foto" ---------------------------------------------
+  const editPhotoModal = document.getElementById('editPhotoModal');
+  const editPhotoScroll = document.getElementById('editPhotoScroll');
+  const editPhotoScrollTrack = document.getElementById('editPhotoScrollTrack');
+  const editPhotoScrollThumb = document.getElementById('editPhotoScrollThumb');
+  const editPhotoFile = document.getElementById('editPhotoFile');
+  const editPhotoPreview = document.getElementById('editPhotoPreview');
+  const editPhotoTitle = document.getElementById('editPhotoTitle');
+  const editPhotoError = document.getElementById('editPhotoError');
+  const editPhotoFrame = document.getElementById('editPhotoFrame');
+  const editPhotoBadge = document.getElementById('editPhotoBadge');
+  const editPhotoDims = document.getElementById('editPhotoDims');
+  const editTypeToggle = document.getElementById('editTypeToggle');
+  const editTypeImageBtn = document.getElementById('editTypeImageBtn');
+  const editTypeVideoBtn = document.getElementById('editTypeVideoBtn');
+  const editVideoUrlField = document.getElementById('editVideoUrlField');
+  const editVideoUrl = document.getElementById('editVideoUrl');
+  const editVideoFileWrap = document.getElementById('editVideoFileWrap');
+  const editVideoFile = document.getElementById('editVideoFile');
+  const editVideoFileLabel = document.getElementById('editVideoFileLabel');
+  const editVideoOr = document.getElementById('editVideoOr');
+  const editImageUrlField = document.getElementById('editImageUrlField');
+  const editImageUrl = document.getElementById('editImageUrl');
+  const editPhotoUploadLabel = document.getElementById('editPhotoUploadLabel');
+  let editPhotoDataUrl = '';
+  let editPhotoThumbUrl = '';
+  let editPhotoWeightNote = '';
+  let editingPhotoId = null;
+  let editPhotoBadgeTimer = null;
+  let editContentType = 'image';
+  let editVideoDataUrl = '';
+  const EDIT_FRAME_MAX = 232;
+
+  function setEditContentType(type){
+    editContentType = type === 'video' ? 'video' : 'image';
+    if(editTypeImageBtn) editTypeImageBtn.classList.toggle('is-active', editContentType === 'image');
+    if(editTypeVideoBtn) editTypeVideoBtn.classList.toggle('is-active', editContentType === 'video');
+    if(editVideoUrlField) editVideoUrlField.hidden = editContentType !== 'video';
+    if(editVideoFileWrap) editVideoFileWrap.hidden = editContentType !== 'video';
+    if(editVideoOr) editVideoOr.hidden = editContentType !== 'video';
+    if(editImageUrlField) editImageUrlField.hidden = editContentType !== 'image';
+    if(editPhotoUploadLabel) editPhotoUploadLabel.textContent = editContentType === 'video' ? 'Cambiar miniatura' : 'Cambiar foto';
+    editPhotoError.textContent = '';
+  }
+  if(editTypeImageBtn) editTypeImageBtn.addEventListener('click', () => setEditContentType('image'));
+  if(editTypeVideoBtn) editTypeVideoBtn.addEventListener('click', () => setEditContentType('video'));
+
+  // --- Subir un video descargado como archivo (edición) ---
+  function handleEditVideoFile(file){
+    editPhotoError.textContent = '';
+    if(file.size > VIDEO_MAX_BYTES){
+      editPhotoError.textContent = `Ese video pesa ${formatBytes(file.size)}: es demasiado para subirlo como archivo (máximo ${formatBytes(VIDEO_MAX_BYTES)}). Subilo a YouTube y pegá el enlace.`;
+      editVideoFile.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      editVideoDataUrl = reader.result;
+      if(editVideoUrl) editVideoUrl.value = '';
+      if(editVideoFileLabel) editVideoFileLabel.textContent = `Video cargado: ${file.name}`;
+      if(editPhotoDims){
+        if(file.size > VIDEO_WARN_BYTES){
+          editPhotoDims.textContent = `${formatBytes(file.size)} · es un video bastante pesado; si podés, subilo a YouTube en vez de como archivo.`;
+          editPhotoDims.classList.add('warn');
+        } else {
+          editPhotoDims.textContent = `Video cargado (${formatBytes(file.size)}).`;
+          editPhotoDims.classList.remove('warn');
+        }
+      }
+      // Igual que en "Añadir foto": si no se eligió una miniatura a mano,
+      // se intenta sacar sola desde el propio video.
+      if(!editPhotoDataUrl){
+        const frame = await extractVideoFrame(editVideoDataUrl);
+        if(frame && !editPhotoDataUrl){
+          editPhotoDataUrl = frame;
+          editPhotoThumbUrl = await resizeDataUrl(frame, 480, 0.75);
+          editPhotoPreview.classList.add('has-img');
+          editPhotoPreview.innerHTML = `<img src="${editPhotoDataUrl}" alt="">`;
+          probeAndSizeEditPhotoFrame(editPhotoDataUrl);
+          showEditPhotoBadge();
+          window.requestAnimationFrame(updateEditPhotoScrollbar);
+        }
+      }
+    };
+    reader.onerror = () => { editPhotoError.textContent = 'No se pudo leer el video. Probá con otro archivo.'; };
+    reader.readAsDataURL(file);
+  }
+  if(editVideoFile){
+    editVideoFile.addEventListener('change', () => {
+      const file = editVideoFile.files && editVideoFile.files[0];
+      if(!file){ editVideoDataUrl = ''; if(editVideoFileLabel) editVideoFileLabel.textContent = 'Subir video descargado'; return; }
+      handleEditVideoFile(file);
+    });
+  }
+
+  // Pegar el enlace de una imagen limpia el archivo subido y actualiza
+  // la vista previa con esa URL directamente.
+  if(editImageUrl){
+    editImageUrl.addEventListener('input', () => {
+      const url = editImageUrl.value.trim();
+      if(!url) return;
+      editPhotoFile.value = '';
+      editPhotoWeightNote = '';
+      editPhotoDataUrl = url;
+      editPhotoThumbUrl = url;
+      editPhotoPreview.classList.add('has-img');
+      editPhotoPreview.innerHTML = `<img src="${url}" alt="">`;
+      probeAndSizeEditPhotoFrame(url);
+      window.requestAnimationFrame(updateEditPhotoScrollbar);
+    });
+  }
+
+  // Ajusta el recuadro azul al ancho y alto reales de la imagen (sin
+  // superar el tamaño máximo original de 232x232), en vez de forzar
+  // siempre un cuadrado.
+  function sizeEditPhotoFrame(natW, natH){
+    if(!editPhotoFrame) return;
+    let w = EDIT_FRAME_MAX, h = EDIT_FRAME_MAX;
+    if(natW && natH){
+      const ratio = natW / natH;
+      w = EDIT_FRAME_MAX; h = w / ratio;
+      if(h > EDIT_FRAME_MAX){ h = EDIT_FRAME_MAX; w = h * ratio; }
+    }
+    editPhotoFrame.style.width = `${Math.round(w)}px`;
+    editPhotoFrame.style.height = `${Math.round(h)}px`;
+  }
+  function probeAndSizeEditPhotoFrame(src){
+    const probe = new Image();
+    probe.onload = () => {
+      sizeEditPhotoFrame(probe.naturalWidth, probe.naturalHeight);
+      if(editPhotoDims){
+        const base = `${probe.naturalWidth} × ${probe.naturalHeight}px`;
+        editPhotoDims.textContent = editPhotoWeightNote ? `${base} · ${editPhotoWeightNote}` : base;
+        editPhotoDims.classList.toggle('warn', !!editPhotoWeightNote);
+      }
+    };
+    probe.onerror = () => sizeEditPhotoFrame(0, 0);
+    probe.src = src;
+  }
+
+  // Con foto cargada: click abre el visor con zoom para verla mejor.
+  // Sin foto: click abre el selector de archivos (mismo gesto que
+  // arrastrar una imagen encima).
+  editPhotoPreview.addEventListener('click', (e) => {
+    const img = e.target.closest('img');
+    if(img){ openPhotoViewer(img.src, editPhotoTitle.value || ''); return; }
+    editPhotoFile.click();
+  });
+
+  function showEditPhotoBadge(){
+    if(!editPhotoBadge) return;
+    editPhotoBadge.classList.remove('show');
+    void editPhotoBadge.offsetWidth;
+    editPhotoBadge.classList.add('show');
+    clearTimeout(editPhotoBadgeTimer);
+    editPhotoBadgeTimer = setTimeout(() => editPhotoBadge.classList.remove('show'), 2200);
+  }
+
+  // Procesa un archivo nuevo, venga del input de "Cambiar foto" o de
+  // arrastrar y soltar sobre el recuadro.
+  async function handleEditPhotoFile(file){
+    editPhotoError.textContent = '';
+    const reader = new FileReader();
+    reader.onload = async () => {
+      let dataUrl = reader.result;
+      const originalBytes = estimateBytesFromDataUrl(dataUrl);
+      if(originalBytes > COMPRESS_THRESHOLD_BYTES){
+        dataUrl = await resizeDataUrl(dataUrl, 1600, 0.85);
+      }
+      const finalBytes = estimateBytesFromDataUrl(dataUrl);
+      editPhotoWeightNote = finalBytes < originalBytes
+        ? `pesaba ${formatBytes(originalBytes)}, se comprimió a ${formatBytes(finalBytes)}`
+        : '';
+      editPhotoDataUrl = dataUrl;
+      editPhotoThumbUrl = await resizeDataUrl(dataUrl, 480, 0.75);
+      editPhotoPreview.classList.add('has-img');
+      editPhotoPreview.innerHTML = `<img src="${editPhotoDataUrl}" alt="">`;
+      probeAndSizeEditPhotoFrame(editPhotoDataUrl);
+      showEditPhotoBadge();
+      window.requestAnimationFrame(updateEditPhotoScrollbar);
+    };
+    reader.readAsDataURL(file);
+  }
+  if(editPhotoFrame){
+    editPhotoFrame.addEventListener('dragover', (e) => { e.preventDefault(); editPhotoFrame.classList.add('dragover'); });
+    editPhotoFrame.addEventListener('dragleave', () => editPhotoFrame.classList.remove('dragover'));
+    editPhotoFrame.addEventListener('drop', (e) => {
+      e.preventDefault();
+      editPhotoFrame.classList.remove('dragover');
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if(!file) return;
+      if(editContentType === 'video' && file.type.startsWith('video/')){
+        handleEditVideoFile(file);
+        return;
+      }
+      handleEditPhotoFile(file);
+    });
+  }
+
+  // --- Arrastrar un video directamente sobre "Subir video descargado" ---
+  if(editVideoFileWrap){
+    editVideoFileWrap.addEventListener('dragover', (e) => { e.preventDefault(); editVideoFileWrap.classList.add('dragover'); });
+    editVideoFileWrap.addEventListener('dragleave', () => editVideoFileWrap.classList.remove('dragover'));
+    editVideoFileWrap.addEventListener('drop', (e) => {
+      e.preventDefault();
+      editVideoFileWrap.classList.remove('dragover');
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if(file) handleEditVideoFile(file);
+    });
+  }
+
+  // Misma barrita de scroll "a medida" que usa el modal "Añadir foto".
+  function updateEditPhotoScrollbar(){
+    if(!editPhotoScroll || !editPhotoScrollTrack || !editPhotoScrollThumb) return;
+    const { scrollHeight, clientHeight, scrollTop } = editPhotoScroll;
+    if(scrollHeight <= clientHeight + 1){
+      editPhotoScrollTrack.style.display = 'none';
+      return;
+    }
+    editPhotoScrollTrack.style.display = 'block';
+    const trackHeight = editPhotoScrollTrack.clientHeight;
+    const thumbHeight = Math.max((clientHeight / scrollHeight) * trackHeight, 24);
+    const maxThumbTop = trackHeight - thumbHeight;
+    const scrollRatio = scrollTop / (scrollHeight - clientHeight);
+    editPhotoScrollThumb.style.height = `${thumbHeight}px`;
+    editPhotoScrollThumb.style.top = `${maxThumbTop * scrollRatio}px`;
+  }
+  if(editPhotoScroll){
+    editPhotoScroll.addEventListener('scroll', updateEditPhotoScrollbar);
+  }
+  window.addEventListener('resize', updateEditPhotoScrollbar);
+
+  function openEditPhotoModal(photo){
+    editingPhotoId = photo.id;
+    editPhotoDataUrl = '';
+    editPhotoThumbUrl = '';
+    editPhotoWeightNote = '';
+    editPhotoFile.value = '';
+    editPhotoTitle.value = photo.title || '';
+    editPhotoError.textContent = '';
+    editVideoDataUrl = '';
+    if(editVideoFile) editVideoFile.value = '';
+    if(editVideoFileLabel) editVideoFileLabel.textContent = 'Subir video descargado';
+    setEditContentType(photo.type === 'video' ? 'video' : 'image');
+    if(editVideoUrl) editVideoUrl.value = (photo.type === 'video' && photo.videoProvider !== 'direct') ? (photo.videoUrl || '') : '';
+    if(editImageUrl){
+      // Si la imagen actual es una URL externa (no un archivo subido en
+      // base64), la mostramos también en el campo de enlace para poder
+      // editarla como texto.
+      editImageUrl.value = (photo.type !== 'video' && photo.image && /^https?:\/\//i.test(photo.image)) ? photo.image : '';
+    }
+    if(photo.image){
+      editPhotoPreview.classList.add('has-img');
+      editPhotoPreview.innerHTML = `<img src="${photo.image}" alt="">`;
+      sizeEditPhotoFrame(EDIT_FRAME_MAX, EDIT_FRAME_MAX);
+      probeAndSizeEditPhotoFrame(photo.image);
+    } else {
+      editPhotoPreview.classList.remove('has-img');
+      editPhotoPreview.innerHTML = '<span class="ph">+</span>';
+      sizeEditPhotoFrame(0, 0);
+    }
+    if(editPhotoDims) editPhotoDims.classList.remove('warn');
+    if(editPhotoBadge) editPhotoBadge.classList.remove('show');
+    editPhotoModal.classList.add('open');
+    if(editPhotoScroll) editPhotoScroll.scrollTop = 0;
+    window.requestAnimationFrame(updateEditPhotoScrollbar);
+  }
+  function closeEditPhotoModal(){ editPhotoModal.classList.remove('open'); editingPhotoId = null; }
+
+  editPhotoFile.addEventListener('change', () => {
+    const file = editPhotoFile.files && editPhotoFile.files[0];
+    editPhotoError.textContent = '';
+    if(!file){
+      editPhotoDataUrl = '';
+      editPhotoThumbUrl = '';
+      editPhotoWeightNote = '';
+      // Si se cancela la selección de archivo no se borra la foto: se
+      // vuelve a mostrar la imagen actual, porque no elegir un archivo
+      // nuevo significa conservar la que ya tenía.
+      const fotoActual = photosData.find((p) => p.id === editingPhotoId);
+      if(fotoActual && fotoActual.image){
+        editPhotoPreview.classList.add('has-img');
+        editPhotoPreview.innerHTML = `<img src="${fotoActual.image}" alt="">`;
+        probeAndSizeEditPhotoFrame(fotoActual.image);
+      } else {
+        editPhotoPreview.classList.remove('has-img');
+        editPhotoPreview.innerHTML = '<span class="ph">+</span>';
+        sizeEditPhotoFrame(0, 0);
+      }
+      window.requestAnimationFrame(updateEditPhotoScrollbar);
+      return;
+    }
+    if(editImageUrl) editImageUrl.value = '';
+    handleEditPhotoFile(file);
+  });
+
+  document.getElementById('btnCloseEditPhoto').onclick = closeEditPhotoModal;
+  document.getElementById('btnCancelEditPhoto').onclick = closeEditPhotoModal;
+  editPhotoModal.addEventListener('click', (e) => { if(e.target === editPhotoModal) closeEditPhotoModal(); });
+
+  document.getElementById('btnConfirmEditPhoto').onclick = () => {
+    const foto = photosData.find((p) => p.id === editingPhotoId);
+    if(!foto){ closeEditPhotoModal(); return; }
+    const titulo = editPhotoTitle.value.trim();
+    if(!titulo){ editPhotoError.textContent = 'Escribí un nombre para la foto.'; editPhotoTitle.focus(); return; }
+
+    if(editContentType === 'video'){
+      let info, videoUrlValue;
+      if(editVideoDataUrl){
+        // Se subió un video nuevo como archivo.
+        info = { provider: 'direct', embedUrl: editVideoDataUrl, thumbUrl: '' };
+        videoUrlValue = editVideoDataUrl;
+      } else if(editVideoUrl.value.trim()){
+        info = parseVideoUrl(editVideoUrl.value);
+        if(!info){ editPhotoError.textContent = 'Pegá un enlace de YouTube, Vimeo o un archivo .mp4 válido.'; editVideoUrl.focus(); return; }
+        videoUrlValue = editVideoUrl.value.trim();
+      } else if(foto.type === 'video' && foto.videoUrl){
+        // No se tocó ni el archivo ni el enlace: se conserva el video que ya tenía.
+        info = { provider: foto.videoProvider || 'url', embedUrl: foto.videoEmbedUrl || foto.videoUrl, thumbUrl: '' };
+        videoUrlValue = foto.videoUrl;
+      } else {
+        editPhotoError.textContent = 'Subí un video o pegá un enlace de YouTube, Vimeo o un archivo .mp4 válido.';
+        editVideoUrl.focus();
+        return;
+      }
+      foto.title = titulo;
+      foto.type = 'video';
+      foto.videoUrl = videoUrlValue;
+      foto.videoProvider = info.provider;
+      foto.videoEmbedUrl = info.embedUrl;
+      if(editPhotoDataUrl){
+        foto.image = editPhotoDataUrl;
+        foto.thumb = editPhotoThumbUrl || editPhotoDataUrl;
+      } else if(!foto.image){
+        foto.image = info.thumbUrl || '';
+        foto.thumb = foto.image;
+      }
+      renderCats();
+      renderCards();
+      closeEditPhotoModal();
+      showToast('Video actualizado');
+      return;
+    }
+
+    if(!editPhotoDataUrl && !foto.image){ editPhotoError.textContent = 'Elegí una foto para subir o pegá el enlace de una imagen.'; return; }
+
+    foto.title = titulo;
+    foto.type = 'image';
+    delete foto.videoUrl;
+    delete foto.videoProvider;
+    delete foto.videoEmbedUrl;
+    if(editPhotoDataUrl){
+      foto.image = editPhotoDataUrl;
+      foto.thumb = editPhotoThumbUrl || editPhotoDataUrl;
+    }
+
+    renderCats();
+    renderCards();
+    closeEditPhotoModal();
+    showToast('Foto actualizada');
+  };
+
+  // --- Modal "Eliminar foto" (reemplaza el confirm() nativo del navegador,
+  // igual que "Editar foto" ya tiene su propio modal en vez de un prompt) --
+  const deletePhotoModal = document.getElementById('deletePhotoModal');
+  const deletePhotoThumb = document.getElementById('deletePhotoThumb');
+  const deletePhotoTitleEl = document.getElementById('deletePhotoTitle');
+  const deletePhotoCatEl = document.getElementById('deletePhotoCat');
+  let pendingDeletePhotoId = null;
+
+  function deletePhoto(id){
+    const foto = photosData.find((p) => p.id === id);
+    if(!foto) return;
+    pendingDeletePhotoId = id;
+    deletePhotoTitleEl.textContent = foto.title || '';
+    deletePhotoCatEl.textContent = foto.categoria || 'General';
+    deletePhotoThumb.style.backgroundImage = (foto.thumb || foto.image) ? `url('${foto.thumb || foto.image}')` : '';
+    deletePhotoModal.classList.add('open');
+  }
+  function closeDeletePhotoModal(){ deletePhotoModal.classList.remove('open'); pendingDeletePhotoId = null; }
+
+  document.getElementById('btnCloseDeletePhoto').onclick = closeDeletePhotoModal;
+  document.getElementById('btnCancelDeletePhoto').onclick = closeDeletePhotoModal;
+  deletePhotoModal.addEventListener('click', (e) => { if(e.target === deletePhotoModal) closeDeletePhotoModal(); });
+  document.getElementById('btnConfirmDeletePhoto').onclick = () => {
+    if(!pendingDeletePhotoId) return;
+    const foto = photosData.find((p) => p.id === pendingDeletePhotoId);
+    photosData = photosData.filter((p) => p.id !== pendingDeletePhotoId);
+    closeDeletePhotoModal();
+    renderCats();
+    renderCards();
+    showToast(foto ? `"${foto.title}" eliminada` : 'Foto eliminada');
+  };
+
+  // --- Modal "Eliminar fotos seleccionadas" (borrado masivo desde el modo
+  // de selección múltiple) ---
+  const deleteBulkModal = document.getElementById('deleteBulkModal');
+  const deleteBulkTitleEl = document.getElementById('deleteBulkTitle');
+
+  function openBulkDeleteModal(){
+    if(selectedPhotoIds.size === 0) return;
+    const n = selectedPhotoIds.size;
+    deleteBulkTitleEl.textContent = n === 1 ? 'Vas a eliminar 1 foto.' : `Vas a eliminar ${n} fotos.`;
+    deleteBulkModal.classList.add('open');
+  }
+  function closeDeleteBulkModal(){ deleteBulkModal.classList.remove('open'); }
+
+  btnBulkDelete.onclick = openBulkDeleteModal;
+  document.getElementById('btnCloseDeleteBulk').onclick = closeDeleteBulkModal;
+  document.getElementById('btnCancelDeleteBulk').onclick = closeDeleteBulkModal;
+  deleteBulkModal.addEventListener('click', (e) => { if(e.target === deleteBulkModal) closeDeleteBulkModal(); });
+  document.getElementById('btnConfirmDeleteBulk').onclick = () => {
+    const n = selectedPhotoIds.size;
+    if(n === 0) return;
+    photosData = photosData.filter((p) => !selectedPhotoIds.has(p.id));
+    selectedPhotoIds.clear();
+    selectionMode = false;
+    closeDeleteBulkModal();
+    renderCats();
+    renderCards();
+    updateSelectionUI();
+    showToast(n === 1 ? '1 foto eliminada' : `${n} fotos eliminadas`);
+  };
+
+  // cardsRow y catsRow son contenedores fijos: nunca se recrean, solo se
+  // les vacía el innerHTML en cada render. makeSortable(...) se vuelve a
+  // llamar en cada renderCards()/renderCats()/openCategoryDuringDrag(), así
+  // que si cada llamada agregara sus propios listeners sobre el CONTENEDOR
+  // (el 'dragover'), estos se irían acumulando para siempre: con dos o más
+  // activos a la vez, un solo evento de arrastre dispara varias inserciones
+  // seguidas (cada listener recalculando la posición sobre un DOM que el
+  // listener anterior ya movió), y la tarjeta podía terminar en cualquier
+  // lugar distinto al que soltaste. sortableContainers evita ese registro
+  // duplicado: el listener del contenedor se agrega una sola vez.
+  // Los ITEMS (tarjetas/chips) si se recrean en casi todos los renders, así
+  // que en general no hace falta cuidarlos — salvo el caso puntual de
+  // openCategoryDuringDrag(), que reutiliza el mismo nodo de la tarjeta
+  // arrastrada entre renders para no cortar el drag nativo; sortableItems
+  // evita que ese nodo reciclado acumule sus propios listeners repetidos.
+  // Franja, en píxeles desde cada borde del contenedor, dentro de la cual
+  // el auto-scroll se activa al arrastrar. Y la velocidad máxima (px por
+  // frame) que alcanza pegado justo al borde.
+  const AUTOSCROLL_EDGE = 72;
+  const AUTOSCROLL_MAX_SPEED = 16;
+
+  // Prende (o actualiza) el auto-scroll de "container" según qué tan cerca
+  // del borde izquierdo/derecho esté el cursor (clientX). Si el cursor no
+  // está en ninguna franja de borde, apaga el auto-scroll si estaba activo.
+  // "reorderAt" es la función que recalcula el orden de las tarjetas/chips;
+  // se vuelve a llamar en cada frame de scroll porque, aunque el mouse no
+  // se mueva, las posiciones de los items sí cambian al desplazarse la fila.
+  function updateAutoScroll(container, clientX, reorderAt){
+    const rect = container.getBoundingClientRect();
+    const distFromLeft = clientX - rect.left;
+    const distFromRight = rect.right - clientX;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+
+    let dir = 0, speed = 0;
+    if(distFromLeft < AUTOSCROLL_EDGE && container.scrollLeft > 0){
+      dir = -1;
+      speed = AUTOSCROLL_MAX_SPEED * (1 - Math.max(distFromLeft, 0) / AUTOSCROLL_EDGE);
+    } else if(distFromRight < AUTOSCROLL_EDGE && container.scrollLeft < maxScroll - 1){
+      dir = 1;
+      speed = AUTOSCROLL_MAX_SPEED * (1 - Math.max(distFromRight, 0) / AUTOSCROLL_EDGE);
+    }
+
+    let state = autoScrollState.get(container);
+    if(dir === 0){
+      if(state){ cancelAnimationFrame(state.raf); autoScrollState.delete(container); }
+      return;
+    }
+
+    if(!state){
+      state = { raf: 0, clientX, dir, speed };
+      autoScrollState.set(container, state);
+      const step = () => {
+        const st = autoScrollState.get(container);
+        if(!st) return;
+        container.scrollLeft += st.dir * st.speed;
+        reorderAt(st.clientX);
+        st.raf = requestAnimationFrame(step);
+      };
+      state.raf = requestAnimationFrame(step);
+    } else {
+      state.clientX = clientX;
+      state.dir = dir;
+      state.speed = speed;
+    }
+  }
+
+  function stopAutoScroll(container){
+    const state = autoScrollState.get(container);
+    if(state){ cancelAnimationFrame(state.raf); autoScrollState.delete(container); }
+  }
+
+  // Última posición de inserción calculada por contenedor: si el próximo
+  // cálculo da el mismo resultado (el cursor se movió pero no cruzó a otro
+  // "hueco"), no volvemos a tocar el DOM ni a reiniciar transiciones. Sin
+  // esto, con tarjetas grandes (fotos) el dragover nativo dispara tan
+  // seguido que la animación se corta y reinicia todo el tiempo — se ve
+  // como si se "trabara" y retomara en lugar de deslizarse en un solo
+  // movimiento continuo (con los chips, chicos, apenas se nota).
+  const lastAfterByContainer = new WeakMap();
+  const ANCHOR_END = Symbol('end');
+
+  function makeSortable(container, itemSelector, excludeSelector, onReorder, endAnchorSelector){
+    container.querySelectorAll(itemSelector).forEach(el => {
+      if(excludeSelector && el.matches(excludeSelector)) return;
+      if(sortableItems.has(el)) return;
+      sortableItems.add(el);
+      el.addEventListener('dragstart', () => {
+        dragElByContainer.set(container, el);
+        el.classList.add('dragging');
+      });
+      el.addEventListener('dragend', () => {
+        el.classList.remove('dragging');
+        dragElByContainer.delete(container);
+        lastAfterByContainer.delete(container);
+        stopAutoScroll(container);
+        container.querySelectorAll(itemSelector).forEach(i => i.classList.remove('ghost'));
+        if (typeof onReorder === 'function') onReorder();
+      });
+    });
+
+    if(sortableContainers.has(container)) return;
+    sortableContainers.add(container);
+
+    // Recalcula el orden de los items según la posición X del cursor.
+    // Se llama tanto desde 'dragover' (el cursor se movió) como desde el
+    // loop de auto-scroll (la fila se movió sola bajo un cursor quieto).
+    function reorderAt(clientX){
+      const dragEl = dragElByContainer.get(container);
+      if(!dragEl) return;
+      const after = getDragAfterElement(container, clientX, itemSelector, excludeSelector);
+
+      // Si el "hueco" de destino es el mismo que la última vez, no hay
+      // nada que mover: cortamos acá para no reiniciar la transición en
+      // pleno vuelo (eso es lo que se veía como movimiento entrecortado).
+      const afterKey = after || ANCHOR_END;
+      if(lastAfterByContainer.get(container) === afterKey) return;
+      lastAfterByContainer.set(container, afterKey);
+
+      container.querySelectorAll(itemSelector).forEach(i => i.classList.remove('ghost'));
+
+      // Animación "hacer espacio": las tarjetas/chips que NO se están
+      // arrastrando (la que sigue al cursor no lleva animación, se ve rara
+      // con transform propio) se deslizan suavemente hasta su nuevo lugar
+      // en vez de saltar de golpe. Técnica FLIP: medimos la
+      // posición ANTES de mover el nodo en el DOM, dejamos que el navegador
+      // reordene, medimos la posición DESPUÉS, y animamos la diferencia.
+      const items = [...container.querySelectorAll(itemSelector)];
+      const firstRects = new Map(items.map(el => [el, el.getBoundingClientRect()]));
+
+      if(after == null){
+        const visibles = items.filter(i => !excludeSelector || !i.matches(excludeSelector));
+        const last = visibles[visibles.length - 1];
+        const anchor = endAnchorSelector
+          ? container.querySelector(endAnchorSelector)
+          : (excludeSelector ? container.querySelector(excludeSelector) : null);
+        if(last && last !== dragEl) container.insertBefore(dragEl, anchor);
+      } else {
+        container.insertBefore(dragEl, after);
+      }
+
+      items.forEach(el => {
+        if(el === dragEl) return;
+        const first = firstRects.get(el);
+        const last = el.getBoundingClientRect();
+        const dx = first.left - last.left;
+        if(Math.abs(dx) < 1) return;
+        el.style.transition = 'none';
+        el.style.transform = `translateX(${dx}px)`;
+        void el.offsetWidth;
+        el.style.transition = 'transform .32s cubic-bezier(.2,.8,.2,1)';
+        el.style.transform = 'translateX(0)';
+      });
+    }
+
+    // El dragover nativo puede disparar muchísimas veces por segundo. Para
+    // tarjetas con imágenes, medir posiciones (getBoundingClientRect) en
+    // cada una de esas veces satura el hilo principal y se ve como que la
+    // animación se pausa y retoma. Por eso acá sólo guardamos la última
+    // posición del cursor y dejamos que un solo rAF por frame dispare
+    // reorderAt — como máximo una vez cada ~16ms, igual que el refresco
+    // de pantalla, que es lo mismo que ya hace el loop de auto-scroll.
+    let pendingX = null;
+    let rafScheduled = false;
+    function scheduleReorder(clientX){
+      pendingX = clientX;
+      if(rafScheduled) return;
+      rafScheduled = true;
+      requestAnimationFrame(() => {
+        rafScheduled = false;
+        if(pendingX != null) reorderAt(pendingX);
+      });
+    }
+
+    container.addEventListener('dragover', e => {
+      e.preventDefault();
+      const dragEl = dragElByContainer.get(container);
+      if(!dragEl) return;
+      updateAutoScroll(container, e.clientX, reorderAt);
+      scheduleReorder(e.clientX);
+    });
+
+    // Si el cursor sale por completo del contenedor (por ejemplo porque lo
+    // arrastraron muy rápido más allá del borde, hacia otro elemento de la
+    // página), 'dragover' deja de dispararse ahí — pero el auto-scroll ya
+    // arrancado debe poder seguir corriendo solo, así que no lo tocamos acá.
+    // Sólo se apaga al soltar (dragend) o al volver a entrar a la franja
+    // segura del centro (dir === 0 en updateAutoScroll).
+  }
+
+  function getDragAfterElement(container, x, itemSelector, excludeSelector){
+    const items = [...container.querySelectorAll(itemSelector + ':not(.dragging)')]
+      .filter(i => !excludeSelector || !i.matches(excludeSelector));
+    return items.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = x - box.left - box.width / 2;
+      if(offset < 0 && offset > closest.offset){
+        return { offset, element: child };
+      }
+      return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+
+  const toast = document.getElementById('toast');
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  const saveModal = document.getElementById('saveModal');
+  document.getElementById('btnSave').onclick = () => saveModal.classList.add('open');
+  document.getElementById('btnCloseSave').onclick = () => saveModal.classList.remove('open');
+  document.getElementById('btnCancelSave').onclick = () => saveModal.classList.remove('open');
+  saveModal.addEventListener('click', e => { if(e.target === saveModal) saveModal.classList.remove('open'); });
+  document.getElementById('btnConfirmSave').onclick = () => {
+    // 1) Nuevo orden de fotos: por las dudas, se vuelve a sincronizar acá
+    //    también (ya se sincroniza en vivo con cada arrastre, esto es
+    //    sólo una red de seguridad extra antes de persistir).
+    syncPhotoOrderFromDOM();
+
+    // 2) Nuevo orden de categorías: leo el orden actual de los chips
+    //    (sin "Todas" ni "+ Nueva categoría").
+    const catsEnOrden = [...catsRow.querySelectorAll('.o7-chip')]
+      .map(el => el.dataset.cat)
+      .filter(cat => cat && cat !== '__todas__');
+
+    // 3) Intento guardar también en localStorage de este navegador, como
+    //    respaldo/vista rápida (por ejemplo para volver a abrir el admin
+    //    más tarde). Las fotos pueden pesar bastante y el localStorage
+    //    tiene un límite de unos pocos MB por navegador, así que esto
+    //    puede llegar a fallar si hay MUCHAS fotos cargadas — y está
+    //    bien que falle: lo que de verdad importa (el archivo que se
+    //    publica para todos los visitantes) se genera en el paso 4, que
+    //    no depende de este límite.
+    try {
+      localStorage.setItem(GALLERY_KEY, JSON.stringify(photosData));
+      localStorage.setItem(CATS_ORDER_KEY, JSON.stringify(catsEnOrden));
+    } catch (err) {
+      console.warn('No se pudo guardar una copia local (localStorage lleno). No afecta el archivo descargado.', err);
+    }
+
+    // Ya quedó guardado (o se intentó) con este mismo orden, así que
+    // dejamos de forzarlo "a mano": de acá en más renderCats() puede
+    // volver a leer tranquilo lo guardado.
+    manualCatsOrder = null;
+
+    // 4) Esto es lo que realmente "publica" los cambios: se descarga un
+    //    archivo galeria-datos.json con TODAS las fotos y categorías,
+    //    sin el límite de tamaño del localStorage. Subiendo ese archivo
+    //    junto a galeria.html en el servidor, todos los visitantes ven
+    //    la galería actualizada (galeria.html lo busca automáticamente).
+    const payload = JSON.stringify({ photos: photosData, categorias: catsEnOrden }, null, 2);
+    const blob = new Blob([payload], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'galeria-datos.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    lastSavedStateSnapshot = JSON.stringify({ photos: photosData, cats: catsEnOrden });
+    saveModal.classList.remove('open');
+    showToast('Se descargó galeria-datos.json — subilo junto a galeria.html para publicar los cambios');
+  };
+</script>
+
+</body>
+</html>

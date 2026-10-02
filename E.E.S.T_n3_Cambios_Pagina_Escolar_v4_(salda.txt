@@ -1,0 +1,7 @@
+E.E.S.T_n3_Pagina_Escolar_v4_(saldamando_Lucas)
+
+Galeria: se añadieron algunas fotos de la escuela mas la posibilidad de añadir videos.
+Detalle: las imágenes son las que tomaron la otra vez, no se añadieron videos pero esta la posibilidad de añadirlo. aun no probe peo la función esta añadida.
+
+noticias: se cambio esteticamente las cards y el buscador, y en el apartado admin se añadió un filtro por fecha además de que al borrar las noticias da un plazo de tiempo antes de borrarse permanentemente (ej, borras una noticia y esta va a papelera, tienes un plazo de 30 días para recuperarla si es que te arrepientes). también se añadió tiempo definido en el que quieres que una publicación aparezca y se elimine (ej, quiero que salga mañana y para mañana pasado sea borrada).
+

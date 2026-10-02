@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión Escolar de Integrantes</title>
+    <link rel="stylesheet" href="a1a_style.css">
+</head>
+<body>
+
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
+    <!-- Encabezado Principal -->
+    <header class="main-header">
+        <div class="header-container">
+            <div>
+                <h1 class="brand-title">Gestión Escolar de Integrantes</h1>
+                <p class="brand-subtitle">Panel de Administración y Control Docente / Estudiantil</p>
+            </div>
+            <a href="Index-admin.html" class="btn-back">
+                &#8592; Regresar al Inicio
+            </a>
+        </div>
+    </header>
+
+    <!-- Contenido de Administración -->
+    <main id="main-content" class="admin-container">
+        
+        <!-- FORMULARIO DE ALTA Y EDICIÓN -->
+        <section class="content-section">
+            <h2 class="section-title">Añadir / Editar Integrante</h2>
+            <form action="#" method="POST" onsubmit="event.preventDefault();">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="memberName">Nombre y Apellido</label>
+                        <input type="text" id="memberName" name="memberName" placeholder="Ej. Juan Pérez" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="memberRole">Rol / Cargo Escolar</label>
+                        <input type="text" id="memberRole" name="memberRole" placeholder="Ej. Alumno 5°A, Preceptor, Profesor" required>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="reset" class="btn btn-secondary">Limpiar Formulario</button>
+                    <button type="submit" class="btn btn-primary">Guardar Integrante</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- TABLA DE LISTADO ESCOLAR -->
+        <section class="content-section">
+            <h2 class="section-title">Comunidad Escolar Registrada</h2>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre y Apellido</th>
+                            <th>Rol / Cargo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>#001</td>
+                            <td>Carlos Mendoza</td>
+                            <td>Director</td>
+                            <td>
+                                <div class="table-actions">
+                                    <button class="btn btn-secondary btn-sm">Editar</button>
+                                    <button class="btn btn-danger btn-sm">Eliminar</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#002</td>
+                            <td>Sofía Gómez</td>
+                            <td>Profesora de Biología</td>
+                            <td>
+                                <div class="table-actions">
+                                    <button class="btn btn-secondary btn-sm">Editar</button>
+                                    <button class="btn btn-danger btn-sm">Eliminar</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#003</td>
+                            <td>Lucía Fernández</td>
+                            <td>Estudiante - 4° Año</td>
+                            <td>
+                                <div class="table-actions">
+                                    <button class="btn btn-secondary btn-sm">Editar</button>
+                                    <button class="btn btn-danger btn-sm">Eliminar</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Pie de Página -->
+    <footer class="main-footer">
+        <p>&copy; 2026 Panel de Control General. Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>

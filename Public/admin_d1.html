@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - Editor de Presentación</title>
+    <link rel="stylesheet" href="d1a_style.css">
+</head>
+<body>
+
+    <!-- Encabezado Principal -->
+    <header class="main-header">
+        <div class="header-container">
+            <div>
+                <h1 class="brand-title">Administración de la Presentación</h1>
+                <p class="brand-subtitle">Modifica el título, subtítulo y texto principal de d1.html</p>
+            </div>
+            <a href="Index-admin.html" class="btn-back">
+                &#8592; Regresar al Inicio
+            </a>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="admin-container">
+        <section class="content-section">
+            <h2 class="section-title">Contenido de la Presentación</h2>
+
+            <form id="presentation-form">
+                <div class="form-grid">
+                    <div class="form-group form-group-full">
+                        <label for="titulo">Título</label>
+                        <input
+                            id="titulo"
+                            name="titulo"
+                            type="text"
+                            maxlength="120"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label for="subtitulo">Subtítulo / Slogan</label>
+                        <input
+                            id="subtitulo"
+                            name="subtitulo"
+                            type="text"
+                            maxlength="200"
+                        >
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label for="texto">Texto Principal</label>
+                        <textarea
+                            id="texto"
+                            name="texto"
+                            placeholder="Escribí acá el texto completo de la presentación..."
+                            required
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions" style="justify-content: flex-start; align-items: center;">
+                    <button class="btn btn-primary" type="submit">
+                        Guardar Cambios
+                    </button>
+
+                    <button
+                        class="btn btn-secondary"
+                        type="button"
+                        id="resetear"
+                    >
+                        Restaurar Contenido Original
+                    </button>
+
+                    <span class="status-message" id="estado" aria-live="polite"></span>
+                </div>
+            </form>
+
+            <div class="admin-note">
+                Los cambios de esta versión se guardan localmente en el navegador mediante <strong>localStorage</strong>[cite: 8]. Esto permite que <strong>d1.html</strong> los lea correctamente, pero no constituye un sistema compartido en red entre distintos dispositivos[cite: 8].
+            </div>
+        </section>
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="main-footer">
+        <p>&copy; 2026 Panel de Control General. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Lógica JavaScript -->
+    <script>
+        const STORAGE_KEY = "d1_presentacion";
+
+        const original = {
+            titulo: "Lista Verde",
+            subtitulo: "Subtítulo / slogan de lista",
+            texto: `Somos un grupo de estudiantes comprometidos con la participación,
+el respeto y la construcción de una comunidad educativa cada vez más fuerte.
+
+Nuestro objetivo es representar a los alumnos, escuchar sus necesidades y trabajar
+en propuestas que mejoren la vida escolar, fomentando la integración, el compañerismo
+y el desarrollo de actividades que beneficien a toda la institución.
+
+Creemos que el centro de estudiantes debe ser una herramienta abierta para todos,
+donde cada voz tenga la oportunidad de ser escuchada y cada idea pueda transformarse
+en una acción concreta.`
+        };
+
+        const form = document.getElementById("presentation-form");
+        const titulo = document.getElementById("titulo");
+        const subtitulo = document.getElementById("subtitulo");
+        const texto = document.getElementById("texto");
+        const estado = document.getElementById("estado");
+        const resetear = document.getElementById("resetear");
+
+        function cargarDatos() {
+            let datos = original;
+
+            try {
+                const guardado = localStorage.getItem(STORAGE_KEY);
+                if (guardado) {
+                    datos = { ...original, ...JSON.parse(guardado) };
+                }
+            } catch (error) {
+                console.error("No se pudieron cargar los datos:", error);
+            }
+
+            titulo.value = datos.titulo;
+            subtitulo.value = datos.subtitulo;
+            texto.value = datos.texto;
+        }
+
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const datos = {
+                titulo: titulo.value.trim(),
+                subtitulo: subtitulo.value.trim(),
+                texto: texto.value
+            };
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(datos));
+            estado.textContent = "✓ Cambios guardados exitosamente.";
+            
+            setTimeout(() => {
+                estado.textContent = "";
+            }, 4000);
+        });
+
+        resetear.addEventListener("click", function () {
+            if (!confirm("¿Restaurar el contenido original?")) return;
+
+            localStorage.removeItem(STORAGE_KEY);
+            cargarDatos();
+            estado.textContent = "Contenido original restaurado.";
+            
+            setTimeout(() => {
+                estado.textContent = "";
+            }, 4000);
+        });
+
+        cargarDatos();
+    </script>
+</body>
+</html>

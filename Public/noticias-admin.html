@@ -1,0 +1,3496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administrar noticias — E.E.S.T Nº3 Islas Malvinas</title>
+<link rel="icon" href="Assets/favicon.png" type="image/png">
+<style>
+  :root{
+    --gold:#caa24a; --gold-light:#e8c877; --gold-dark:#8a6a26;
+    --bg:#eef3f8; --ink-soft:#5b6b7c; --line:#dde5ee;
+    --dk-bg:#0b1826; --dk-panel:#101d2e; --dk-card:#152a40; --dk-line:#1d3350;
+    --dk-text:#eaf1f8; --dk-text-soft:#7f93aa;
+  }
+  *{box-sizing:border-box;}
+  /* Sin esto, cualquier elemento oculto con el atributo "hidden" pero que
+     también tenga una clase con display:flex/grid (misma especificidad
+     CSS que el "[hidden]" del navegador) puede terminar mostrándose igual,
+     porque a igual especificidad gana la regla que aparece más abajo en
+     la hoja de estilos. Con esta regla "hidden" siempre gana. */
+  [hidden]{ display:none !important; }
+  /* El degradado va "pegado" al viewport (no al alto total de la página)
+     con background-attachment:fixed + background-size:100vh. Si sus
+     paradas fueran en % puro, se calculan sobre el alto TOTAL de la
+     página (que cambia según cuántas noticias haya en la lista), y la
+     franja oscura de arriba (0%→12%) terminaba ocupando más o menos
+     píxeles reales según hubiera 9 noticias o 1 sola — por eso el
+     encabezado se veía más oscuro con "Noticias totales" que con
+     "Borradores". Fijándolo al viewport, arriba siempre es igual de
+     oscuro sin importar cuántos resultados haya. */
+  body{ margin:0; font-family:'Segoe UI',Arial,sans-serif;
+    background: linear-gradient(180deg, #0b1826 0%, #0e1f30 12%, #0e1f30 78%, #0b1826 100%) #0e1f30;
+    background-attachment:fixed; background-size:100% 100vh; background-repeat:no-repeat;
+    color:#eaf1f8; padding:0; min-height:100vh; display:flex; flex-direction:column; }
+
+  /* ---- Header (igual a galeria-admin.html) ---- */
+  .site-header{ background:linear-gradient(120deg,#0e2c4d 0%,#154573 55%,#3d7ba8 100%); padding:14px 32px;
+    display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap; }
+  .site-header .brand{ display:flex; align-items:center; gap:14px; }
+  .site-header .brand img{ height:52px; width:52px; object-fit:contain; }
+  .site-header .brand h1{ color:#fff; font-size:19px; margin:0; font-family:Georgia,'Times New Roman',serif; font-weight:700; white-space:nowrap; }
+  .site-header nav ul{ list-style:none; display:flex; gap:8px; margin:0; padding:0; flex-wrap:wrap; }
+  .site-header nav a, .site-header nav button{ color:#fff; text-decoration:none; font-size:13.5px; font-weight:600;
+    background:rgba(255,255,255,.12); border:none; border-radius:999px; padding:8px 16px; cursor:pointer;
+    font-family:inherit; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+  .site-header nav a:hover, .site-header nav button:hover{ background:rgba(255,255,255,.22); }
+  .site-header nav button.logout{ background:rgba(163,59,59,.35); }
+  .site-header nav button.logout:hover{ background:rgba(163,59,59,.55); }
+
+  .panel-wrap{ flex:1; display:flex; justify-content:center; padding:40px 24px 80px; }
+  .o7{ background:var(--dk-bg); border-radius:14px; padding:32px; width:100%; max-width:1300px; margin:0 auto; }
+
+  /* ---- Encabezado de sección ---- */
+  .head-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:6px; flex-wrap:wrap; }
+  .head-row h2{ margin:0; font-size:clamp(1.5rem,2.6vw,2rem); font-weight:800; color:var(--dk-text); }
+  .head-sub{ color:var(--dk-text-soft); font-size:.9rem; margin:2px 0 20px; }
+
+  /* ---- Tarjetas de estadísticas ---- */
+  .stats-grid{ display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; margin:0 0 22px; }
+  .stat-card{ background:var(--dk-card); border:1px solid var(--dk-line); border-radius:12px; padding:16px 18px;
+    transition:border-color .15s ease, background .15s ease, transform .12s ease; }
+  .stat-card b{ display:block; font-size:26px; font-weight:800; color:var(--dk-text); line-height:1.1; }
+  .stat-card b.gold{ color:var(--gold-light); }
+  .stat-card b.warn{ color:#e08a8a; }
+  .stat-card span{ display:block; margin-top:6px; font-size:11px; font-weight:700; letter-spacing:.4px;
+    text-transform:uppercase; color:var(--dk-text-soft); }
+  /* Tarjetas "Borradores" y "Programadas": funcionan como filtro rápido,
+     igual que las opciones del dropdown "Ordenar por". */
+  .stat-card.is-clickable{ cursor:pointer; }
+  .stat-card.is-clickable:hover{ border-color:var(--gold-dark); }
+  .stat-card.is-clickable:active{ transform:scale(.97); }
+  .stat-card.is-active{ border-color:var(--gold-dark);
+    /* El fondo de la tarjeta NUNCA cambia entre activa/inactiva (ni el de
+       "Noticias totales" ni el de cualquier otra): antes se le sumaba un
+       tinte dorado semitransparente encima del azul de la tarjeta, pero
+       mezclar un color cálido con el azul frío del fondo lo desatura y da
+       un gris apagado — se veía "más oscuro"/opaco al lado de las demás
+       tarjetas en azul vivo, aunque en rigor fuera un poco más claro. Acá
+       se marca el estado activo solo con el borde dorado y un resplandor
+       sutil hacia adentro (mismo recurso que .flash-highlight más abajo en
+       este archivo), sin tocar el color de fondo para nada. */
+    box-shadow:inset 0 0 0 1px rgba(202,162,74,.3); }
+  /* Resalte dorado temporal: se usa para "señalar" un elemento fuera de
+     pantalla (fila de la última publicación, fila de categorías) al que
+     se llega haciendo click en una tarjeta de estadísticas. Es "inset"
+     (hacia adentro) a propósito: la fila vive dentro de .list y la fila
+     de categorías dentro de un contenedor con scroll horizontal, ambos
+     con overflow:hidden/auto, así que un brillo "hacia afuera" quedaba
+     cortado en los bordes de esos contenedores. El inset nunca se sale
+     de la caja del propio elemento, así que no hay nada que recortar.
+  */
+  @keyframes flashGold{
+    0%,100%{ box-shadow:none; }
+    12%,88%{ box-shadow:inset 0 0 0 2px var(--gold-dark), inset 0 0 22px rgba(202,162,74,.35); }
+  }
+  .flash-highlight{ animation:flashGold 1.8s ease; }
+  @media (max-width:1180px){ .stats-grid{ grid-template-columns:repeat(3, 1fr); } }
+  @media (max-width:520px){ .stats-grid{ grid-template-columns:repeat(2, 1fr); } }
+
+  .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .btn{ border:none; border-radius:7px; font-size:12px; font-weight:700; padding:9px 15px; cursor:pointer; font-family:inherit;
+    transition:filter .15s ease, transform .12s ease; }
+  .btn:active{ transform:scale(.96); }
+  .btn-gold{ background:var(--gold); color:#241a05; }
+  .btn-gold:hover{ background:var(--gold-light); }
+  .btn-line{ background:transparent; border:1px solid var(--dk-line); color:var(--dk-text); }
+  .btn-line:hover{ border-color:var(--gold-dark); color:var(--gold-light); }
+  .btn-line:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn-line:disabled:hover{ border-color:var(--dk-line); color:var(--dk-text); }
+
+  /* ---- Toolbar de búsqueda / filtros ---- */
+  .toolbar{ display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+  .toolbar input[type="text"]{ flex:1; min-width:200px; height:36px; background:var(--dk-panel); border:1px solid var(--dk-line);
+    border-radius:8px; color:#fff; padding:0 12px; font-size:13px; font-family:inherit; }
+  .toolbar input[type="text"]:focus{ outline:none; border-color:var(--gold-dark); }
+  .date-filter{ position:relative; flex:0 0 auto; }
+  .date-filter-btn{ display:flex; align-items:center; gap:8px; height:36px; background:var(--dk-panel); border:1px solid var(--dk-line);
+    border-radius:8px; color:var(--dk-text); padding:0 12px; font-size:12.5px; font-weight:600; font-family:inherit; cursor:pointer;
+    transition:border-color .15s ease, color .15s ease; white-space:nowrap; }
+  .date-filter-btn:hover{ border-color:var(--gold-dark); }
+  .date-filter-btn.is-active{ border-color:var(--gold-dark); color:var(--gold-light); }
+  .date-filter-btn svg.cal-icon{ width:15px; height:15px; color:var(--gold); flex:0 0 auto; }
+  .date-filter-btn svg.chev-icon{ width:12px; height:12px; flex:0 0 auto; transition:transform .15s ease; }
+  .date-filter-btn.is-open svg.chev-icon{ transform:rotate(180deg); }
+  .date-filter-btn-clear{ display:flex; align-items:center; justify-content:center; width:16px; height:16px; margin-left:2px;
+    border-radius:50%; color:var(--dk-text-soft); flex:0 0 auto; }
+  .date-filter-btn-clear:hover{ color:var(--gold-light); background:rgba(202,162,74,.18); }
+  .date-filter-btn-clear svg{ width:10px; height:10px; }
+  .date-filter-panel{ position:absolute; top:calc(100% + 8px); left:0; z-index:20; width:284px; background:var(--dk-panel);
+    border:1px solid var(--dk-line); border-radius:10px; padding:12px; box-shadow:0 14px 30px rgba(0,0,0,.4);
+    opacity:0; visibility:hidden; transform:translateY(-6px); transition:opacity .18s ease, transform .18s ease, visibility .18s ease; }
+  .date-filter-panel.is-open{ opacity:1; visibility:visible; transform:translateY(0); }
+  .date-mode-toggle{ display:flex; gap:4px; background:#0c1826; border:1px solid var(--dk-line); border-radius:8px; padding:3px; margin-bottom:10px; }
+  .date-mode-btn{ flex:1; background:transparent; border:none; color:var(--dk-text-soft); font-size:11.5px; font-weight:700;
+    font-family:inherit; padding:7px 4px; border-radius:6px; cursor:pointer; transition:background .15s ease, color .15s ease; }
+  .date-mode-btn:hover{ color:var(--dk-text); }
+  .date-mode-btn.is-active{ background:var(--gold); color:#241a05; }
+  .date-mode-body{ margin-bottom:8px; }
+  .dpick-manual{ margin-bottom:10px; }
+  .dpick-manual-heading{ display:block; font-size:11px; font-weight:700; letter-spacing:.3px; text-transform:uppercase;
+    color:var(--gold-light); margin-bottom:8px; }
+  .dpick-manual-label{ display:block; font-size:11px; font-weight:700; letter-spacing:.3px; text-transform:uppercase;
+    color:var(--dk-text-soft); margin-bottom:6px; }
+  .date-preset-list{ display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px; }
+  .date-preset{ text-align:left; background:transparent; border:1px solid var(--dk-line); color:var(--dk-text-soft); font-size:11px; font-weight:600;
+    font-family:inherit; padding:6px 9px; border-radius:6px; cursor:pointer; }
+  .date-preset:hover{ background:rgba(202,162,74,.08); color:var(--dk-text); }
+  .date-preset.is-active{ background:rgba(202,162,74,.16); border-color:var(--gold-dark); color:var(--gold-light); }
+  .date-range-tabs{ display:flex; gap:6px; margin-bottom:10px; }
+  .date-range-tab{ flex:1; display:flex; flex-direction:column; align-items:flex-start; gap:2px; background:#0c1826;
+    border:1px solid var(--dk-line); border-radius:8px; padding:6px 9px; font-family:inherit; font-size:10.5px;
+    font-weight:700; color:var(--dk-text-soft); cursor:pointer; text-align:left; }
+  .date-range-tab span{ font-size:12.5px; color:var(--dk-text); font-weight:700; }
+  .date-range-tab.is-active{ border-color:var(--gold-dark); }
+  .date-range-tab.is-active span{ color:var(--gold-light); }
+  .dpick-day.is-range{ background:rgba(202,162,74,.16); border-radius:0; }
+
+  /* ---- Selector de fecha (escribible + calendario propio) ---- */
+  .dpick{ position:relative; }
+  .dpick-text{ width:100%; height:36px; background:#0c1826; border:1px solid var(--dk-line); border-radius:8px;
+    color:#fff; padding:0 34px 0 12px; font-size:13px; font-family:inherit; }
+  .dpick-text::placeholder{ color:var(--dk-text-soft); }
+  .dpick-text:focus{ outline:none; border-color:var(--gold-dark); }
+  .dpick-text.is-invalid{ border-color:#a33b3b; }
+  .dpick-icon{ position:absolute; right:4px; top:50%; transform:translateY(-50%); width:28px; height:28px;
+    display:flex; align-items:center; justify-content:center; background:transparent; border:none; border-radius:6px;
+    color:var(--gold); cursor:pointer; padding:0; }
+  .dpick-icon svg{ width:16px; height:16px; }
+  .dpick-icon:hover{ background:rgba(202,162,74,.15); }
+  .dpick.is-open .dpick-icon{ color:var(--gold-light); background:rgba(202,162,74,.15); }
+  .dpick-panel{ position:fixed; z-index:80; width:264px; background:var(--dk-panel); border:1px solid var(--dk-line);
+    border-radius:12px; padding:14px; box-shadow:0 16px 36px rgba(0,0,0,.45);
+    opacity:0; visibility:hidden; transform:translateY(-6px); pointer-events:none;
+    transition:opacity .16s ease, transform .16s ease, visibility .16s ease; }
+  .dpick-panel.is-open{ opacity:1; visibility:visible; transform:translateY(0); pointer-events:auto; }
+  .dpick-cal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .dpick-nav{ width:26px; height:26px; display:flex; align-items:center; justify-content:center; background:transparent;
+    border:1px solid var(--dk-line); border-radius:7px; color:var(--dk-text); cursor:pointer; padding:0; }
+  .dpick-nav:hover{ border-color:var(--gold-dark); color:var(--gold-light); }
+  .dpick-nav svg{ width:13px; height:13px; }
+  .dpick-month-label{ font-size:13px; font-weight:700; color:var(--dk-text); text-transform:capitalize; }
+  .dpick-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; margin-bottom:4px; }
+  .dpick-weekdays span{ font-size:10px; font-weight:700; color:var(--dk-text-soft); padding:4px 0; }
+  .dpick-days{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+  .dpick-day{ aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;
+    border-radius:7px; background:transparent; border:none; color:var(--dk-text); cursor:pointer; padding:0; font-family:inherit; }
+  .dpick-day:hover{ background:rgba(202,162,74,.14); }
+  .dpick-day.is-muted{ color:var(--dk-text-soft); opacity:.4; }
+  .dpick-day.is-today{ box-shadow:inset 0 0 0 1px var(--gold-dark); }
+  .dpick-day.is-selected{ background:var(--gold); color:#241a05; font-weight:800; box-shadow:none; }
+  .dpick-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px;
+    border-top:1px solid var(--dk-line); }
+  .dpick-foot button{ background:transparent; border:none; font-size:11.5px; font-weight:700; cursor:pointer;
+    padding:5px 8px; border-radius:6px; font-family:inherit; }
+  .dpick-foot .dpick-today-btn{ color:var(--gold-light); }
+  .dpick-foot .dpick-today-btn:hover{ background:rgba(202,162,74,.14); }
+  .dpick-foot .dpick-clear-btn{ color:var(--dk-text-soft); }
+  .dpick-foot .dpick-clear-btn:hover{ color:#e08a8a; background:rgba(163,59,59,.14); }
+  .dpick-confirm-row{ display:flex; gap:8px; margin-top:8px; }
+  .dpick-cancel-btn, .dpick-confirm-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
+    font-size:11.5px; font-weight:700; padding:8px; border-radius:7px; cursor:pointer; font-family:inherit;
+    border:1px solid var(--dk-line); }
+  .dpick-cancel-btn svg, .dpick-confirm-btn svg{ width:12px; height:12px; flex:0 0 auto; }
+  .dpick-cancel-btn{ background:transparent; color:var(--dk-text-soft); }
+  .dpick-cancel-btn:hover{ border-color:#a33b3b; color:#e08a8a; background:rgba(163,59,59,.1); }
+  .dpick-confirm-btn{ background:var(--gold); color:#241a05; border-color:var(--gold); }
+  .dpick-confirm-btn:hover{ background:var(--gold-light); border-color:var(--gold-light); }
+
+  .tab{ background:transparent; border:none; color:var(--dk-text-soft); font-size:12.5px; font-weight:600; padding:9px 6px;
+    cursor:pointer; border-bottom:2px solid transparent; font-family:inherit; }
+
+  /* ---- Dropdown "Ordenar por" ---- */
+  .sort-filter{ position:relative; flex:0 0 auto; }
+  .sort-filter-btn{ display:flex; align-items:center; gap:8px; height:36px; background:var(--dk-panel); border:1px solid var(--dk-line);
+    border-radius:8px; color:var(--dk-text); padding:0 12px; font-size:12.5px; font-weight:600; font-family:inherit; cursor:pointer;
+    transition:border-color .15s ease, color .15s ease; white-space:nowrap;
+    /* Ancho fijo (en vez de ajustarse solo al texto elegido): sin esto, al
+       cambiar entre etiquetas de distinto largo ("Más recientes primero" vs
+       "Borradores", por ejemplo) este botón cambiaba de ancho y, como el
+       buscador de la izquierda tiene flex:1 y absorbe ese cambio, el filtro
+       de fecha (que va entre el buscador y este botón) se corría de lugar
+       cada vez que se elegía un filtro distinto arriba. Con un ancho fijo
+       (suficiente para la etiqueta más larga) el botón nunca cambia de
+       tamaño, así que nada de lo que está a su izquierda se mueve. */
+    width:214px; justify-content:space-between; }
+  .sort-filter-btn span{ overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  .sort-filter-btn:hover{ border-color:var(--gold-dark); }
+  .sort-filter-btn.is-open{ border-color:var(--gold-dark); color:var(--gold-light); }
+  .sort-filter-btn .sort-icon{ width:15px; height:15px; color:var(--gold); flex:0 0 auto; }
+  .sort-filter-btn .chev-icon{ width:12px; height:12px; flex:0 0 auto; transition:transform .15s ease; }
+  .sort-filter-btn.is-open .chev-icon{ transform:rotate(180deg); }
+  .sort-filter-panel{ position:absolute; top:calc(100% + 8px); right:0; z-index:20; width:200px; background:var(--dk-panel);
+    border:1px solid var(--dk-line); border-radius:10px; padding:6px; box-shadow:0 14px 30px rgba(0,0,0,.4);
+    opacity:0; visibility:hidden; transform:translateY(-6px); transition:opacity .18s ease, transform .18s ease, visibility .18s ease; }
+  .sort-filter-panel.is-open{ opacity:1; visibility:visible; transform:translateY(0); }
+  .sort-option{ display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--dk-text-soft);
+    font-size:12.5px; font-weight:600; font-family:inherit; padding:9px 10px; border-radius:6px; cursor:pointer; }
+  .sort-option:hover{ background:rgba(202,162,74,.1); color:var(--dk-text); }
+  .sort-option.is-active{ background:rgba(202,162,74,.16); color:var(--gold-light); }
+  @media (max-width:720px){ .sort-filter-panel{ right:auto; left:0; } }
+  .density-toggle{ display:flex; flex:0 0 auto; background:var(--dk-panel); border:1px solid var(--dk-line); border-radius:8px; overflow:hidden; }
+  .density-btn{ display:flex; align-items:center; justify-content:center; width:36px; height:36px; background:transparent;
+    border:none; color:var(--dk-text-soft); cursor:pointer; }
+  .density-btn svg{ width:15px; height:15px; }
+  .density-btn:hover{ color:var(--dk-text); }
+  .density-btn.is-active{ background:rgba(202,162,74,.15); color:var(--gold-light); }
+  .density-btn:first-child{ border-right:1px solid var(--dk-line); }
+  .list.is-compact .list-row{ padding:5px 14px; gap:10px; }
+  .list.is-compact .row-thumb-wrap{ flex-direction:row; gap:8px; }
+  .list.is-compact .row-thumb{ width:26px; height:26px; border-radius:6px; }
+  .list.is-compact .row-date{ padding:2px 5px; }
+  .list.is-compact .row-meta{ margin-top:1px; }
+
+  .cats-filter-wrap{ margin-bottom:16px; position:relative; border-radius:14px; }
+  /* El resalte de esta fila NO usa el .flash-highlight genérico (inset,
+     pegado al borde exacto) porque los chips son píldoras redondeadas: un
+     inset a ras del contenedor queda "recortado" por los chips y sólo
+     asoma en las esquinas, dando un efecto raro/roto. En su lugar se usa
+     un marco propio (::before), separado unos px hacia afuera y con sus
+     propias esquinas redondeadas, que envuelve toda la fila de forma
+     pareja sin importar la forma de los chips de adentro. */
+  .cats-filter-wrap.flash-highlight{ animation:none; box-shadow:none; }
+  .cats-filter-wrap.flash-highlight::before{
+    content:""; position:absolute; inset:-8px -8px -16px -8px; border-radius:16px;
+    pointer-events:none; animation:flashGoldFrame 1.8s ease;
+  }
+  @keyframes flashGoldFrame{
+    0%,100%{ box-shadow:none; }
+    12%,88%{ box-shadow:0 0 0 2px var(--gold-dark), 0 0 22px rgba(202,162,74,.35); }
+  }
+  .cats-filter{
+    display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; scroll-behavior:smooth;
+    scrollbar-width:thin; scrollbar-color:var(--gold-dark) var(--dk-panel);
+  }
+  .cats-filter::-webkit-scrollbar{ height:6px; }
+  .cats-filter::-webkit-scrollbar-track{ background:var(--dk-panel); border-radius:8px; }
+  .cats-filter::-webkit-scrollbar-thumb{ background:var(--gold-dark); border-radius:8px; }
+  .cats-filter::-webkit-scrollbar-thumb:hover{ background:var(--gold); }
+  .cats-filter .cat-chip{ white-space:nowrap; flex:0 0 auto; cursor:pointer; }
+  .cats-filter .cat-chip[draggable="true"]{ cursor:grab; }
+  .cats-filter .cat-chip.dragging{ opacity:.4; cursor:grabbing; }
+  .tab.active{ color:#fff; border-bottom-color:var(--gold); }
+  .tab:hover{ color:#fff; }
+
+  /* ---- Lista compacta ---- */
+  .list{ border:1px solid var(--dk-line); border-radius:10px; overflow:hidden; }
+  .list-row[draggable="true"]{ cursor:grab; }
+  .list-row.dragging{ opacity:.4; cursor:grabbing; }
+  /* Mientras arrastrás, esta misma fila (la que queda "fantasma" en su
+     lugar en la lista) marca con el color del borde si el cursor está
+     ahora mismo sobre un chip de categoría válido (dorado) o no (rojo). */
+  .list-row.dragging.drop-valid{ outline:2px solid var(--gold-light); outline-offset:-2px; background:rgba(202,162,74,.08); }
+  .list-row.dragging.drop-invalid{ outline:2px solid #c04747; outline-offset:-2px; background:rgba(163,59,59,.08); }
+  .cats-filter .cat-chip.drop-hover{ border-color:var(--gold-light); background:rgba(202,162,74,.28); box-shadow:0 0 0 2px rgba(202,162,74,.35); }
+  /* Mientras se arrastra una noticia, todas las categorías (menos "Todas" y
+     "+ Nueva categoría") quedan marcadas como zona de destino válida con un
+     contorno punteado; al pasar por encima, el dorado sólido (drop-hover, de
+     arriba) confirma en cuál va a quedar si soltás ahí. */
+  .cats-filter.drop-mode .cat-chip:not(.cat-chip-add):not([data-cat="__todas__"]){
+    box-shadow:0 0 0 1px dashed var(--gold-dark); outline:1px dashed var(--gold-dark); outline-offset:2px; }
+
+  /* Ya no se arma una pastilla propia que siga al cursor: se usa el
+     "fantasma" nativo del navegador (la fila arrastrada, semitransparente),
+     mismo espíritu que galeria-admin.html. La fila de origen sigue
+     cambiando de color (dorado/rojo) mediante .drop-valid/.drop-invalid
+     más abajo, para mostrar si soltar ahí guardaría el cambio. */
+
+
+  .list-row{ display:flex; align-items:center; gap:14px; padding:10px 14px; border-bottom:1px solid var(--dk-line);
+    background:var(--dk-panel); }
+  .list-row:last-child{ border-bottom:none; }
+  .list-row:hover{ background:#132234; }
+  .row-thumb-wrap{ display:flex; flex-direction:column; align-items:center; gap:5px; flex:0 0 auto; }
+  .row-thumb{ width:46px; height:46px; border-radius:8px; flex:0 0 auto; background:linear-gradient(135deg,#1d3854,#122238) center/cover no-repeat; cursor:zoom-in; }
+  .row-date{ flex:0 0 auto; display:flex; align-items:center; gap:3px; white-space:nowrap; font-size:9.5px; font-weight:600;
+    color:var(--dk-text-soft); background:#0c1826; border:1px solid var(--dk-line); border-radius:6px; padding:3px 6px; }
+  .row-date svg{ width:10px; height:10px; flex:0 0 auto; }
+  .row-info{ flex:1; min-width:0; }
+  .row-title{ font-size:13.5px; font-weight:700; display:flex; align-items:center; gap:6px; min-width:0; }
+  .row-title-text{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .row-title-text mark.search-hit{ background:rgba(202,162,74,.35); color:var(--gold-light); border-radius:3px; padding:0 1px; }
+  .row-meta{ font-size:11px; color:var(--dk-text-soft); margin-top:4px; display:flex; align-items:center; min-width:0; flex-wrap:nowrap; overflow:hidden; }
+  .row-cat-item{ white-space:nowrap; }
+  .row-cat-item[hidden]{ display:none; }
+  .row-cats-more{ flex:0 0 auto; font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:999px; margin-left:6px;
+    background:rgba(202,162,74,.2); color:var(--gold-light); white-space:nowrap; cursor:default; }
+  .row-badge{ font-size:9.5px; font-weight:700; padding:2px 8px; border-radius:999px; text-transform:uppercase; white-space:nowrap; flex:0 0 auto; }
+  .row-badge.draft{ background:rgba(163,59,59,.25); color:#e08a8a; }
+  .row-badge.scheduled{ background:rgba(202,162,74,.2); color:var(--gold-light); }
+  .row-badge.until{ background:rgba(202,162,74,.2); color:var(--gold-light); }
+  .row-badge.trash-countdown{ background:rgba(163,59,59,.16); color:#e08a8a; }
+  .row-actions{ display:flex; gap:6px; flex:0 0 auto; }
+  .mini-btn{ background:rgba(255,255,255,.05); border:1px solid var(--dk-line); color:var(--dk-text); border-radius:6px;
+    font-size:11px; font-weight:600; padding:7px 11px; cursor:pointer; font-family:inherit; white-space:nowrap;
+    display:flex; align-items:center; gap:6px; }
+  .mini-btn svg{ width:14px; height:14px; flex:0 0 auto; }
+  .mini-btn:hover{ border-color:var(--gold); color:var(--gold-light); }
+  .mini-btn.danger:hover{ border-color:#a33b3b; color:#e08a8a; }
+
+  /* ---- Selección múltiple ---- */
+  .selection-bar{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    background:var(--dk-card); border:1px solid var(--dk-line); border-radius:10px; padding:10px 14px; margin-bottom:12px; }
+  .selection-bar[hidden]{ display:none; }
+  .sel-all-label{ display:flex; align-items:center; gap:9px; font-size:12.5px; font-weight:700; color:var(--dk-text); user-select:none; }
+  .selection-bar-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .btn-line.is-active{ border-color:var(--gold-dark); color:var(--gold-light); background:rgba(202,162,74,.1); }
+  .bulk-move{ position:relative; }
+  .bulk-move-panel{ position:absolute; top:calc(100% + 8px); left:0; z-index:20; width:220px; max-height:280px; overflow-y:auto;
+    background:var(--dk-panel); border:1px solid var(--dk-line); border-radius:10px; padding:6px; box-shadow:0 10px 24px rgba(0,0,0,.4);
+    opacity:0; visibility:hidden; transform:translateY(-6px); transition:opacity .12s ease, transform .12s ease, visibility .12s;
+    scrollbar-width:thin; scrollbar-color:var(--gold-dark) var(--dk-panel); }
+  .bulk-move-panel::-webkit-scrollbar{ width:8px; }
+  .bulk-move-panel::-webkit-scrollbar-track{ background:var(--dk-panel); border-radius:8px; }
+  .bulk-move-panel::-webkit-scrollbar-thumb{ background:var(--gold-dark); border-radius:8px; }
+  .bulk-move-panel::-webkit-scrollbar-thumb:hover{ background:var(--gold); }
+  .bulk-move-panel.is-open{ opacity:1; visibility:visible; transform:translateY(0); }
+  .bulk-move-opt{ display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--dk-text-soft);
+    font:600 12.5px "Segoe UI",Arial,sans-serif; padding:8px 10px; border-radius:6px; cursor:pointer; }
+  .bulk-move-opt:hover{ background:rgba(202,162,74,.1); color:var(--dk-text); }
+  #btnBulkMove .chev-icon{ transition:transform .15s ease; }
+  #btnBulkMove.is-open .chev-icon{ transform:rotate(180deg); }
+  .btn-danger{ background:#a33b3b; color:#fff; }
+  .btn-danger:hover{ background:#c04747; }
+  .btn-danger:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn-danger:disabled:hover{ background:#a33b3b; }
+  .row-select{ display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .row-select input[type="checkbox"]{ width:18px; height:18px; accent-color:var(--gold); pointer-events:none; }
+  .list-row.is-selectable{ cursor:pointer; }
+  .list-row.is-selected{ background:rgba(202,162,74,.10); }
+
+  .add-row{ display:flex; align-items:center; gap:14px; padding:10px 14px;
+    border-bottom:1px solid var(--dk-line); background:transparent; cursor:pointer; color:var(--dk-text-soft);
+    font-size:12.5px; font-weight:600; transition:background .2s ease, color .2s ease; }
+  .add-row:hover{ background:rgba(202,162,74,.07); color:var(--gold-light); }
+  .add-row .plus-box{ width:46px; height:46px; border-radius:8px; border:1.5px dashed var(--dk-text-soft); flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:300; color:var(--dk-text-soft);
+    transition:border-color .2s ease, color .2s ease, box-shadow .2s ease, transform .2s ease; }
+  .add-row:hover .plus-box{ border-color:var(--gold); color:var(--gold-light); border-style:solid;
+    box-shadow:0 0 0 4px rgba(202,162,74,.18), 0 0 14px rgba(202,162,74,.35);
+    animation:addPulse 1.4s ease-in-out infinite; }
+  @keyframes addPulse{
+    0%,100%{ box-shadow:0 0 0 4px rgba(202,162,74,.18), 0 0 14px rgba(202,162,74,.35); }
+    50%{ box-shadow:0 0 0 7px rgba(202,162,74,.08), 0 0 20px rgba(202,162,74,.55); }
+  }
+
+  .empty-state{ text-align:center; padding:50px 20px; color:var(--dk-text-soft); background:var(--dk-panel); border:1px solid var(--dk-line); border-radius:10px; }
+
+  /* ---- Modales (mismo lenguaje que galeria-admin.html) ---- */
+  .modal-bg{ position:fixed; inset:0; background:rgba(6,14,28,.72); display:flex; align-items:center; justify-content:center;
+    z-index:50; padding:24px; opacity:0; visibility:hidden; pointer-events:none;
+    transition:opacity .18s ease, visibility 0s linear .18s; }
+  .modal-bg.open{ opacity:1; visibility:visible; pointer-events:auto; transition:opacity .18s ease, visibility 0s linear 0s; }
+  .modal-bg > *{ transform:translateY(14px) scale(.97); opacity:0; transition:transform .22s cubic-bezier(.2,.8,.2,1), opacity .18s ease; }
+  .modal-bg.open > *{ transform:translateY(0) scale(1); opacity:1; }
+
+  .modal{ background:var(--dk-panel); border:1px solid var(--dk-line); border-radius:14px; width:100%; max-width:700px;
+    max-height:90vh; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5); display:flex; flex-direction:column;
+    border-top:3px solid var(--gold); }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; padding:15px 20px; border-bottom:1px solid var(--dk-line); flex:0 0 auto; }
+  .modal-head .t{ font-size:14.5px; font-weight:700; color:#fff; }
+  .modal-head .x{ width:27px; height:27px; border-radius:7px; border:1px solid var(--dk-line); background:transparent;
+    color:var(--dk-text); cursor:pointer; font-size:13px; }
+  .modal-head .x:hover{ border-color:var(--gold); color:var(--gold-light); }
+  .modal-scroll{ padding:18px 20px; overflow-y:hidden; flex:1 1 auto;
+    scrollbar-width:thin; scrollbar-color:var(--gold-dark) var(--dk-panel); }
+  /* Por defecto sin scroll (overflow:hidden). Se activa (.can-scroll) sólo
+     cuando JS mide que el contenido de verdad no entra, así la barra no
+     queda ahí mostrando "espacio de sobra" cuando en realidad se ve todo. */
+  .modal-scroll.can-scroll{ overflow-y:auto; }
+  .modal-scroll::-webkit-scrollbar{ width:8px; height:8px; }
+  .modal-scroll::-webkit-scrollbar-track{ background:var(--dk-panel); border-radius:8px; }
+  .modal-scroll::-webkit-scrollbar-thumb{ background:var(--gold-dark); border-radius:8px; }
+  .modal-scroll::-webkit-scrollbar-thumb:hover{ background:var(--gold); }
+  .modal-foot{ display:flex; justify-content:flex-end; gap:8px; padding:13px 20px; border-top:1px solid var(--dk-line); flex:0 0 auto; }
+  .btn-cancel{ background:transparent; color:var(--dk-text-soft); border:1px solid var(--dk-line); border-radius:8px; font-size:12.5px;
+    font-weight:600; padding:9px 16px; cursor:pointer; font-family:inherit; }
+  .btn-cancel:hover{ border-color:var(--gold); color:var(--gold-light); }
+  .btn-confirm{ background:var(--gold); color:#241a05; border:none; border-radius:8px; font-size:12.5px;
+    font-weight:700; padding:9px 16px; cursor:pointer; font-family:inherit; }
+  .btn-confirm:hover{ background:var(--gold-light); }
+  .btn-confirm.danger{ background:#a33b3b; color:#fff; }
+  .btn-confirm.danger:hover{ background:#822f2f; }
+
+  .form-grid{ display:flex; gap:16px; }
+  .form-col-img{ flex:0 0 210px; display:flex; flex-direction:column; gap:8px; }
+  .form-col-fields{ flex:1; min-width:0; display:flex; flex-direction:column; gap:12px; }
+  .img-drop{ position:relative; width:210px; height:160px; border-radius:10px; background:#0c1826; overflow:hidden;
+    display:flex; align-items:center; justify-content:center; box-sizing:border-box; border:1px solid var(--dk-line);
+    cursor:pointer; margin:0 auto;
+    transition:width .35s cubic-bezier(.2,.8,.3,1), height .35s cubic-bezier(.2,.8,.3,1), border-color .15s ease, box-shadow .15s ease; }
+  .img-drop:hover{ border-color:var(--gold-dark); }
+  .img-drop.dragover{ border-color:var(--gold-light); box-shadow:0 0 0 3px rgba(202,162,74,.45); }
+  .img-drop .ph{ color:var(--dk-text-soft); font-size:42px; font-weight:300; line-height:1; user-select:none; }
+  .img-drop img{ width:100%; height:100%; object-fit:contain; cursor:zoom-in; animation:img-drop-in .3s ease; }
+  @keyframes img-drop-in{ from{ opacity:0; transform:scale(.94); } to{ opacity:1; transform:scale(1); } }
+  .img-drop .img-expand-hint{ position:absolute; top:8px; right:8px; z-index:3; width:26px; height:26px;
+    border-radius:50%; background:rgba(16,59,102,.75); color:#fff; display:flex; align-items:center;
+    justify-content:center; opacity:0; transform:scale(.9); pointer-events:none;
+    transition:opacity .15s ease, transform .15s ease; }
+  .img-drop .img-expand-hint svg{ width:14px; height:14px; }
+  .img-drop:has(img:not([hidden])):hover .img-expand-hint{ opacity:1; transform:scale(1); }
+  .img-upload-btn{ border:1.5px dashed var(--dk-line); border-radius:8px; padding:9px 8px; display:flex;
+    align-items:center; justify-content:center; gap:6px; font-size:12px; font-weight:600; color:var(--dk-text-soft);
+    cursor:pointer; background:#0c1826; position:relative;
+    transition:border-color .15s ease, color .15s ease, background-color .15s ease, transform .12s ease; }
+  .img-upload-btn:hover{ border-color:var(--gold-dark); color:var(--gold-light); background:rgba(202,162,74,.08); }
+  .img-upload-btn:active{ transform:scale(.97); }
+  .img-upload-btn svg{ width:14px; height:14px; flex:0 0 auto; }
+  .img-upload-btn input[type="file"]{ position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
+  .img-note{ font-size:10.5px; color:var(--dk-text-soft); margin:0; }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field-label{ font-size:11.5px; font-weight:700; color:var(--gold-light); }
+  .field-hint{ margin:0; font-size:11px; color:var(--dk-text-soft); line-height:1.4; }
+  .field-hint.warn{ color:#e08a8a; }
+  /* ---- Toggle "Simple" / "Programada" del modal de noticia: define si la
+     noticia tiene una única fecha (comportamiento de siempre) o un rango
+     "disponible desde -> hasta" que la manda sola a la papelera al vencer. */
+  .mode-toggle{ display:flex; gap:6px; background:#0c1826; border:1px solid var(--dk-line); border-radius:9px; padding:3px; }
+  .mode-toggle-btn{ flex:1; background:transparent; border:none; color:var(--dk-text-soft); font-size:12px; font-weight:700;
+    padding:7px 8px; border-radius:6px; cursor:pointer; font-family:inherit; transition:background-color .15s ease, color .15s ease; }
+  .mode-toggle-btn:hover{ color:var(--dk-text); }
+  .mode-toggle-btn.is-active{ background:rgba(202,162,74,.18); color:var(--gold-light); }
+  .date-range-fields{ display:flex; gap:10px; }
+  .date-range-fields .field{ flex:1; min-width:0; }
+  .field input[type="text"], .field input[type="date"], .field textarea{
+    border:1px solid var(--dk-line); border-radius:7px; padding:8px 10px; font-size:13px; color:var(--dk-text);
+    background:#0c1826; font-family:inherit; resize:vertical; }
+  .field input:focus, .field textarea:focus{ outline:none; border-color:var(--gold-dark); }
+  /* El textarea de "Texto" ya no se agranda a mano: crece solo con el
+     contenido (ver autoGrowTextarea en el script), así que se le saca
+     el tirador de resize manual y el overflow queda oculto. */
+  #fieldBody{ resize:none; overflow:hidden; min-height:90px; max-height:420px; }
+  #fieldBody.at-max{ overflow-y:auto; }
+  .cat-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .cat-chip{ background:#0c1826; border:1px solid var(--dk-line); border-radius:999px; font-size:11px; font-weight:600;
+    padding:6px 12px; cursor:pointer; color:var(--dk-text-soft); font-family:inherit;
+    display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex:0 0 auto; max-width:240px; }
+  .cat-chip .cat-chip-label{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .cat-chip.is-active{ background:rgba(202,162,74,.18); border-color:var(--gold-dark); color:var(--gold-light); }
+  .cat-chip-add{ border-style:dashed; color:var(--dk-text-soft); }
+  .cat-chip-add:hover{ border-color:var(--gold); color:var(--gold-light); background:rgba(202,162,74,.08); }
+
+  /* ---- Editar / eliminar categoría directo desde el chip (igual que galeria-admin.html) ---- */
+  .cat-chip .cat-chip-label{ cursor:pointer; }
+  .cat-chip .cat-chip-ic{ display:flex; align-items:center; justify-content:center; width:18px; height:18px;
+    border-radius:6px; cursor:pointer; opacity:.6; line-height:1; flex:0 0 auto; color:inherit;
+    transition:background-color .15s ease, color .15s ease, opacity .15s ease, transform .12s ease; }
+  .cat-chip .cat-chip-ic:active{ transform:scale(.9); }
+  .cat-chip .cat-chip-ic svg{ width:12px; height:12px; display:block; }
+  .cat-chip .cat-chip-ic:hover{ opacity:1; background:rgba(202,162,74,.18); color:var(--gold-light); }
+  .cat-chip .cat-chip-ic.del:hover{ background:rgba(163,59,59,.25); color:#e78888; }
+  .cat-chip.editing{ cursor:default; }
+  .cat-chip-edit-input{ background:#0c1826; border:1px solid var(--gold-dark); border-radius:6px;
+    color:var(--dk-text); font-size:11px; font-family:inherit; padding:4px 8px; outline:none;
+    transition:width .12s ease; }
+  .toggle-row{ display:flex; gap:18px; flex-wrap:wrap; }
+  .toggle-field{ display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600; color:var(--dk-text); cursor:pointer; }
+  .toggle-field input{ width:16px; height:16px; accent-color:var(--gold-dark); cursor:pointer; }
+  .form-error{ font-size:11.5px; color:#e08a8a; font-weight:600; min-height:16px; }
+
+  .delete-card{ display:flex; align-items:center; gap:14px; background:rgba(163,59,59,.1); border:1px solid rgba(163,59,59,.35); border-radius:12px; padding:12px; }
+  .delete-thumb{ width:88px; height:88px; border-radius:9px; flex:0 0 auto; background:#0c1826 center/cover no-repeat; }
+  .delete-info{ min-width:0; }
+  .delete-cat{ display:inline-block; font-size:10px; font-weight:700; color:var(--gold-light); background:rgba(202,162,74,.15); border-radius:999px; padding:2px 8px; margin-bottom:6px; }
+  .delete-title{ color:#fff; font-size:13.5px; font-weight:700; margin:0 0 5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .delete-warn{ color:#e08a8a; font-size:11.5px; margin:0; }
+
+  .toast{ position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); opacity:0;
+    background:#103b66; color:#fff; font-size:13px; font-weight:600; padding:10px 20px; border-radius:999px;
+    box-shadow:0 10px 24px rgba(0,0,0,.25); transition:.25s; pointer-events:none; z-index:60;
+    max-width:min(90vw,440px); text-align:center; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.error{ background:#7a2d2d; }
+
+  /* ---- Visor de imagen con zoom (mismo mecanismo que galeria-admin.html) ----
+     Se abre por encima de cualquier otro modal (p. ej. "Editar noticia"),
+     así que necesita más z-index que el resto de .modal-bg. */
+  #photoViewModalBg{ z-index:70; }
+  .photo-viewer{ position:relative; max-width:92vw; max-height:92vh; display:flex; align-items:center; justify-content:center; }
+  .viewer-img{ max-width:92vw; max-height:92vh; width:auto; height:auto; object-fit:contain;
+    border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,.5); background:#0c1826; cursor:zoom-in;
+    transform-origin:center center; transition:transform .18s ease; touch-action:none; will-change:transform; }
+  .viewer-img.is-zoomed{ cursor:grab; }
+  .viewer-img.is-panning{ cursor:grabbing; transition:none; }
+  .viewer-close{ position:absolute; top:-6px; right:-6px; width:38px; height:38px; border-radius:50%;
+    border:1.5px solid rgba(234,241,248,.18); background:rgba(11,24,38,.92); color:#eaf1f8; cursor:pointer;
+    font-size:15px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(0,0,0,.4);
+    transition:border-color .2s ease, color .2s ease, background-color .2s ease, box-shadow .2s ease, transform .2s ease, opacity .2s ease;
+    z-index:3; }
+  .viewer-close:hover, .viewer-close:focus-visible{
+    border-color:var(--gold); color:var(--gold-light); background:rgba(11,24,38,.98);
+    box-shadow:0 8px 22px rgba(0,0,0,.45), 0 0 0 3px rgba(202,162,74,.18); transform:scale(1.07); }
+  .viewer-close:active{ transform:scale(.96); }
+  .photo-viewer:has(.viewer-img.is-zoomed) .viewer-close{ opacity:0; pointer-events:none; }
+
+  @media (max-width:620px){
+    .form-grid{ flex-direction:column; }
+    .form-col-img{ flex:0 0 auto; }
+    .list-row{ flex-wrap:wrap; }
+    .row-actions{ margin-left:auto; }
+    .mini-btn{ padding:8px; }
+    .mini-btn-text{ display:none; }
+    .mini-btn svg{ width:16px; height:16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <img src="Assets/tecnica3.png" alt="Logo del colegio">
+    <h1>E.E.S.T Nº3 "Islas Malvinas"</h1>
+  </div>
+  <nav>
+    <ul>
+      <li><a href="index-admin.html">Panel principal</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="panel-wrap">
+  <div class="o7">
+
+    <div class="head-row">
+      <div>
+        <h2>Administrar noticias</h2>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-line" id="btnPreview">Ver página pública</button>
+        <button type="button" class="btn btn-line" id="btnSelectMode">Seleccionar</button>
+        <button type="button" class="btn btn-line" id="btnTrash">Papelera</button>
+        <button type="button" class="btn btn-danger" id="btnEmptyTrash" hidden>Vaciar papelera</button>
+        <button type="button" class="btn btn-line" id="btnRestore" disabled>Descartar cambios</button>
+        <button type="button" class="btn btn-line" id="btnNew">+ Nueva noticia</button>
+        <button type="button" class="btn btn-gold" id="btnSave">Guardar cambios</button>
+      </div>
+    </div>
+    <p class="head-sub" id="headSub">0 noticias en total · se ordenan automáticamente por fecha</p>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card is-clickable" id="statCardTotal" title="Ver todas las noticias, sin filtros">
+        <b id="statTotal">0</b><span>Noticias totales</span>
+      </div>
+      <div class="stat-card is-clickable" id="statCardBorradores" data-status-filter="borrador" title="Ver solo borradores">
+        <b class="warn" id="statBorradores">0</b><span>Borradores</span>
+      </div>
+      <div class="stat-card is-clickable" id="statCardProgramadas" data-status-filter="programada" title="Ver solo programadas">
+        <b class="gold" id="statProgramadas">0</b><span>Programadas</span>
+      </div>
+      <div class="stat-card is-clickable" id="statCardCategorias" title="Ver las categorías">
+        <b id="statCategorias">0</b><span>Categorías totales</span>
+      </div>
+      <div class="stat-card is-clickable" id="statCardUltima" title="Ir a la última publicación">
+        <b id="statUltima">—</b><span>Última publicación</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="Buscar por título...">
+      <div class="date-filter">
+        <button type="button" class="date-filter-btn" id="dateFilterBtn">
+          <svg class="cal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+          <span id="dateFilterLabel">Cualquier fecha</span>
+          <span class="date-filter-btn-clear" id="dateFilterBtnClear" title="Quitar filtro de fecha" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+          </span>
+          <svg class="chev-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="date-filter-panel" id="dateFilterPanel">
+          <div class="date-mode-toggle" id="dateModeToggle">
+            <button type="button" class="date-mode-btn" data-mode="specific">Fecha específica</button>
+            <button type="button" class="date-mode-btn" data-mode="range">Rango de fechas</button>
+          </div>
+
+          <div class="dpick-manual">
+            <span class="dpick-manual-heading">Fecha manual</span>
+            <label class="dpick-manual-label" id="dfManualLabel">Fecha</label>
+            <input type="text" class="dpick-text" id="dfManualInput" placeholder="dd/mm/aaaa" autocomplete="off" inputmode="numeric" maxlength="10">
+          </div>
+
+          <div class="date-mode-body" id="dateModeRange" hidden>
+            <div class="date-preset-list" id="datePresetList">
+              <button type="button" class="date-preset" data-preset="hoy">Hoy</button>
+              <button type="button" class="date-preset" data-preset="semana">Esta semana</button>
+              <button type="button" class="date-preset" data-preset="mes">Este mes</button>
+              <button type="button" class="date-preset" data-preset="mesPasado">Mes pasado</button>
+            </div>
+            <div class="date-range-tabs" id="dateRangeTabs">
+              <button type="button" class="date-range-tab" data-side="from">Desde<span id="rangeFromLabel">—</span></button>
+              <button type="button" class="date-range-tab" data-side="to">Hasta<span id="rangeToLabel">—</span></button>
+            </div>
+          </div>
+
+          <div class="dpick-cal-head" id="filterCalHead">
+            <button type="button" class="dpick-nav" data-act="prev" aria-label="Mes anterior">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <span class="dpick-month-label" id="filterMonthLabel"></span>
+            <button type="button" class="dpick-nav" data-act="next" aria-label="Mes siguiente">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="dpick-weekdays" id="filterWeekdays"></div>
+          <div class="dpick-days" id="filterDays"></div>
+
+          <div class="dpick-foot">
+            <button type="button" class="dpick-today-btn" id="filterTodayBtn">Hoy</button>
+            <button type="button" class="dpick-clear-btn" id="filterClearBtn">Borrar</button>
+          </div>
+          <div class="dpick-confirm-row">
+            <button type="button" class="dpick-cancel-btn" id="dateFilterCancelBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+              Cancelar
+            </button>
+            <button type="button" class="dpick-confirm-btn" id="dateFilterApplyBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              Aplicar
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="sort-filter">
+        <button type="button" class="sort-filter-btn" id="sortFilterBtn">
+          <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5h10"/><path d="M11 9h7"/><path d="M11 13h4"/><path d="m3 17 3 3 3-3"/><path d="M6 18V4"/></svg>
+          <span id="sortFilterLabel">Todas</span>
+          <svg class="chev-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="sort-filter-panel" id="sortFilterPanel">
+          <button type="button" class="sort-option" data-sort="recientes">Más recientes primero</button>
+          <button type="button" class="sort-option" data-sort="borrador">Borradores</button>
+          <button type="button" class="sort-option" data-sort="programada">Programadas</button>
+          <button type="button" class="sort-option" data-sort="antiguas">Más antiguas primero</button>
+        </div>
+      </div>
+      <div class="density-toggle" id="densityToggle" role="group" aria-label="Densidad de la lista">
+        <button type="button" class="density-btn is-active" data-density="comfortable" title="Vista cómoda">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/></svg>
+        </button>
+        <button type="button" class="density-btn" data-density="compact" title="Vista compacta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="news-drop-zone" id="newsDropZone">
+      <div class="cats-filter-wrap">
+        <div class="cats-filter" id="catsFilterRow"></div>
+      </div>
+
+      <div class="selection-bar" id="selectionBar" hidden>
+        <span class="sel-all-label" id="selectionCountLabel">0 seleccionadas</span>
+        <div class="selection-bar-actions">
+          <div class="bulk-move" id="bulkMove">
+            <button type="button" class="btn btn-line" id="btnBulkMove">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>
+              Mover a categoría
+              <svg class="chev-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="bulk-move-panel" id="bulkMovePanel"></div>
+          </div>
+          <button type="button" class="btn btn-line" id="btnCancelSelect">Cancelar</button>
+          <button type="button" class="btn btn-danger" id="btnBulkDelete" disabled>Eliminar seleccionadas</button>
+        </div>
+      </div>
+
+      <div class="list" id="newsList"></div>
+      <div class="empty-state" id="emptyState" hidden>No hay noticias que coincidan con la búsqueda.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Añadir/Editar -->
+<div class="modal-bg" id="editModalBg">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="t" id="editModalTitle">Nueva noticia</span>
+      <button class="x" id="editModalClose" type="button">✕</button>
+    </div>
+    <div class="modal-scroll" id="editModalScroll">
+      <div class="form-grid">
+        <div class="form-col-img">
+          <div class="img-drop" id="imgDrop">
+            <span class="ph" id="imgPh">+</span>
+            <img id="imgPreview" hidden alt="" title="Ver imagen más grande">
+            <div class="img-expand-hint" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+            </div>
+          </div>
+          <label class="img-upload-btn">
+            <input type="file" id="imgFile" accept="image/*">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Subir imagen
+          </label>
+          <p class="img-note" id="imgNote"></p>
+          <div class="field">
+            <span class="field-label">Ruta / URL de imagen</span>
+            <input type="text" id="fieldImagePath" placeholder="Assets/imagen.jpg">
+          </div>
+        </div>
+        <div class="form-col-fields">
+          <div class="field">
+            <span class="field-label">Título</span>
+            <input type="text" id="fieldTitle" placeholder="Título de la noticia">
+          </div>
+          <div class="field">
+            <span class="field-label">Modo de publicación</span>
+            <div class="mode-toggle" id="modeToggle">
+              <button type="button" class="mode-toggle-btn is-active" data-mode="simple">Simple</button>
+              <button type="button" class="mode-toggle-btn" data-mode="programada">Programada</button>
+            </div>
+            <p class="field-hint" id="modeHint">Una sola fecha de publicación.</p>
+          </div>
+          <div class="date-range-fields" id="dateRangeFields">
+            <div class="field">
+              <span class="field-label" id="fieldDateLabel">Fecha</span>
+              <div class="dpick" id="fieldDateWrap">
+                <input type="text" class="dpick-text" id="fieldDateText" placeholder="dd/mm/aaaa" autocomplete="off" inputmode="numeric" maxlength="10">
+                <button type="button" class="dpick-icon" id="fieldDateIcon" aria-label="Abrir calendario" title="Abrir calendario">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+                </button>
+                <input type="hidden" id="fieldDate">
+                <div class="dpick-panel" id="fieldDatePanel"></div>
+              </div>
+            </div>
+            <div class="field" id="fieldDateUntilGroup" hidden>
+              <span class="field-label">Disponible hasta</span>
+              <div class="dpick" id="fieldDateUntilWrap">
+                <input type="text" class="dpick-text" id="fieldDateUntilText" placeholder="dd/mm/aaaa" autocomplete="off" inputmode="numeric" maxlength="10">
+                <button type="button" class="dpick-icon" id="fieldDateUntilIcon" aria-label="Abrir calendario" title="Abrir calendario">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+                </button>
+                <input type="hidden" id="fieldDateUntil">
+                <div class="dpick-panel" id="fieldDateUntilPanel"></div>
+              </div>
+            </div>
+          </div>
+          <p class="field-hint" id="untilHint" hidden>Al llegar esa fecha, la noticia se manda sola a la papelera (se puede restaurar hasta 30 días después, como cualquier eliminada).</p>
+          <div class="field">
+            <span class="field-label">Categorías</span>
+            <div class="cat-chips" id="catChips"></div>
+          </div>
+          <div class="field">
+            <span class="field-label">Texto</span>
+            <textarea id="fieldBody" rows="4" placeholder="Cuerpo de la noticia..."></textarea>
+          </div>
+          <div class="toggle-row">
+            <label class="toggle-field"><input type="checkbox" id="fieldBorrador"> Guardar como borrador</label>
+          </div>
+          <p class="head-sub" id="scheduleHint" style="margin:2px 0 0; font-size:12px;" hidden></p>
+          <div class="form-error" id="formError"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" id="editModalCancel" type="button">Cancelar</button>
+      <button class="btn-confirm" id="editModalSave" type="button">Guardar noticia</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Confirmar borrado múltiple -->
+<div class="modal-bg" id="bulkDeleteModalBg">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-head">
+      <span class="t">Eliminar noticias</span>
+      <button class="x" id="bulkDeleteModalClose" type="button">✕</button>
+    </div>
+    <div class="modal-scroll" id="bulkDeleteModalScroll">
+      <p id="bulkDeleteMsg" style="color:var(--dk-text); font-size:13.5px; line-height:1.5; margin:0;"></p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" id="bulkDeleteModalCancel" type="button">Cancelar</button>
+      <button class="btn-confirm danger" id="bulkDeleteModalConfirm" type="button">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Vaciar papelera -->
+<div class="modal-bg" id="emptyTrashModalBg">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-head">
+      <span class="t">Vaciar papelera</span>
+      <button class="x" id="emptyTrashModalClose" type="button">✕</button>
+    </div>
+    <div class="modal-scroll" id="emptyTrashModalScroll">
+      <p id="emptyTrashMsg" style="color:var(--dk-text); font-size:13.5px; line-height:1.5; margin:0;"></p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" id="emptyTrashModalCancel" type="button">Cancelar</button>
+      <button class="btn-confirm danger" id="emptyTrashModalConfirm" type="button">Vaciar papelera</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Confirmar borrado -->
+<div class="modal-bg" id="deleteModalBg">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-head">
+      <span class="t" id="deleteModalTitle">Eliminar noticia</span>
+      <button class="x" id="deleteModalClose" type="button">✕</button>
+    </div>
+    <div class="modal-scroll" id="deleteModalScroll">
+      <div class="delete-card">
+        <div class="delete-thumb" id="deleteThumb"></div>
+        <div class="delete-info">
+          <span class="delete-cat" id="deleteCat"></span>
+          <p class="delete-title" id="deleteTitle"></p>
+          <p class="delete-warn" id="deleteWarn">Esta acción no se puede deshacer.</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" id="deleteModalCancel" type="button">Cancelar</button>
+      <button class="btn-confirm danger" id="deleteModalConfirm" type="button">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nueva categoría -->
+<div class="modal-bg" id="catModalBg">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-head">
+      <span class="t">Nueva categoría</span>
+      <button class="x" id="catModalClose" type="button">✕</button>
+    </div>
+    <div class="modal-scroll" id="catModalScroll">
+      <div class="field">
+        <label class="field-label" for="catModalInput">Nombre de la nueva categoría</label>
+        <input type="text" id="catModalInput" autocomplete="off">
+        <p class="form-error" id="catModalError"></p>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" id="catModalCancel" type="button">Cancelar</button>
+      <button class="btn-confirm" id="catModalConfirm" type="button">Crear categoría</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Eliminar categoría -->
+<div class="modal-bg" id="deleteCategoryModalBg">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-head">
+      <span class="t">Eliminar categoría</span>
+      <button class="x" id="deleteCategoryModalClose" type="button">✕</button>
+    </div>
+    <div class="modal-scroll" id="deleteCategoryModalScroll">
+      <p id="deleteCategoryMsg" style="color:var(--dk-text); font-size:13.5px; line-height:1.5; margin:0;"></p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" id="deleteCategoryModalCancel" type="button">Cancelar</button>
+      <button class="btn-confirm danger" id="deleteCategoryModalConfirm" type="button">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Visor de imagen con zoom -->
+<div class="modal-bg" id="photoViewModalBg">
+  <div class="photo-viewer">
+    <button class="viewer-close" id="btnCloseImgViewer" type="button" aria-label="Cerrar">✕</button>
+    <img class="viewer-img" id="viewerImg" src="" alt="">
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // =====================================================================
+  // Máscara de texto compartida para escribir fechas dd/mm/aaaa a mano.
+  // Procesa día/mes/año como segmentos independientes (en vez de aplanar
+  // todo a una tira de dígitos) para que borrar un dígito de un segmento
+  // no corra los dígitos de los demás segmentos. La usan tanto el campo
+  // de fecha del formulario como el campo manual del filtro superior.
+  // =====================================================================
+  function applyDateTextMask(inputEl){
+    inputEl.classList.remove('is-invalid');
+    const caret = inputEl.selectionStart;
+    const raw = inputEl.value;
+    const digitsBeforeCaret = raw.slice(0, caret).replace(/\D/g, '').length;
+
+    const segments = raw.split('/');
+    let day = (segments[0] || '').replace(/\D/g, '');
+    let month = (segments[1] || '').replace(/\D/g, '');
+    let year = (segments[2] || '').replace(/\D/g, '');
+    if(day.length > 2){ month = day.slice(2) + month; day = day.slice(0, 2); }
+    if(month.length > 2){ year = month.slice(2) + year; month = month.slice(0, 2); }
+    year = year.slice(0, 4);
+
+    let out = day;
+    // La barra de mes solo se muestra si el mes ya tiene dígitos, o si el
+    // usuario la escribió a mano teniendo ya algo en el día (para poder
+    // "avanzar" de segmento mientras escribe). Si el día quedó vacío (por
+    // ejemplo al borrar todo de una vez) no se conserva ninguna barra
+    // suelta, aunque en el texto crudo todavía hubiera una.
+    const showMonth = month.length > 0 || (day.length > 0 && segments.length > 1);
+    if(showMonth) out += '/' + month;
+    // Ojo: acá se chequea "month.length > 0" (que el mes tenga dígitos de
+    // verdad), no "showMonth" — si se usara showMonth alcanzaba con que el
+    // día tuviera contenido para arrastrar también la barra del año,
+    // dejando "22//" con las dos barras vacías.
+    const showYear = year.length > 0 || (month.length > 0 && segments.length > 2);
+    if(showYear) out += '/' + year;
+    inputEl.value = out;
+
+    if(digitsBeforeCaret === 0){
+      inputEl.setSelectionRange(0, 0);
+    } else {
+      let seen = 0, newPos = out.length;
+      for(let i = 0; i < out.length; i++){
+        if(/\d/.test(out[i])){
+          seen++;
+          if(seen === digitsBeforeCaret){ newPos = i + 1; break; }
+        }
+      }
+      inputEl.setSelectionRange(newPos, newPos);
+    }
+  }
+  function dateTextToISO(str){
+    const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((str || '').trim());
+    if(!m) return null;
+    const d = +m[1], mo = +m[2], y = +m[3];
+    const dt = new Date(y, mo - 1, d);
+    if(dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+    return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+  function dateISOToText(iso){
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+  }
+
+  // =====================================================================
+  // Selector de fecha personalizado: se puede escribir (dd/mm/aaaa) o
+  // elegir con un calendario propio, con estética acorde al resto del
+  // panel (antes se usaba el <input type="date"> nativo del navegador,
+  // que abre una ventanita fuera de estilo y no siempre deja escribir
+  // la fecha directamente).
+  // =====================================================================
+  function createDatePicker({ wrap, text, icon, hidden, panel, alignRight, confirm, onChange }){
+    const DP_MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const DP_DIAS = ['LU','MA','MI','JU','VI','SA','DO'];
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+
+    function parseISO(iso){
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if(!m) return null;
+      const y = +m[1], mo = +m[2], d = +m[3];
+      const dt = new Date(y, mo - 1, d);
+      if(dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+      return { y, m: mo, d };
+    }
+    function toDisplay(iso){
+      const p = parseISO(iso);
+      return p ? `${pad2(p.d)}/${pad2(p.m)}/${p.y}` : '';
+    }
+    function textToISO(str){
+      const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((str || '').trim());
+      if(!m) return null;
+      const d = +m[1], mo = +m[2], y = +m[3];
+      const dt = new Date(y, mo - 1, d);
+      if(dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+      return `${y}-${pad2(mo)}-${pad2(d)}`;
+    }
+
+    let viewY, viewM, openedValue = '';
+    const setView = (iso) => {
+      const p = parseISO(iso) || parseISO(todayISO());
+      viewY = p.y; viewM = p.m;
+    };
+    setView(hidden.value);
+
+    function renderCalendar(){
+      const selected = parseISO(hidden.value);
+      const today = parseISO(todayISO());
+      let startOffset = new Date(viewY, viewM - 1, 1).getDay() - 1; // lunes = 0
+      if(startOffset < 0) startOffset = 6;
+      const daysInMonth = new Date(viewY, viewM, 0).getDate();
+      const daysInPrevMonth = new Date(viewY, viewM - 1, 0).getDate();
+
+      let cells = '';
+      for(let i = 0; i < startOffset; i++){
+        const dayNum = daysInPrevMonth - startOffset + i + 1;
+        cells += `<button type="button" class="dpick-day is-muted" data-nav="-1" data-day="${dayNum}">${dayNum}</button>`;
+      }
+      for(let d = 1; d <= daysInMonth; d++){
+        const isToday = today && today.y === viewY && today.m === viewM && today.d === d;
+        const isSelected = selected && selected.y === viewY && selected.m === viewM && selected.d === d;
+        cells += `<button type="button" class="dpick-day${isToday ? ' is-today' : ''}${isSelected ? ' is-selected' : ''}" data-day="${d}">${d}</button>`;
+      }
+      const trailing = (7 - ((startOffset + daysInMonth) % 7)) % 7;
+      for(let i = 1; i <= trailing; i++){
+        cells += `<button type="button" class="dpick-day is-muted" data-nav="1" data-day="${i}">${i}</button>`;
+      }
+
+      panel.innerHTML = `
+        <div class="dpick-cal-head">
+          <button type="button" class="dpick-nav" data-act="prev" aria-label="Mes anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <span class="dpick-month-label">${DP_MESES[viewM - 1]} de ${viewY}</span>
+          <button type="button" class="dpick-nav" data-act="next" aria-label="Mes siguiente">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+        <div class="dpick-weekdays">${DP_DIAS.map(d => `<span>${d}</span>`).join('')}</div>
+        <div class="dpick-days">${cells}</div>
+        <div class="dpick-foot">
+          <button type="button" class="dpick-today-btn" data-act="today">Hoy</button>
+          <button type="button" class="dpick-clear-btn" data-act="clear">Borrar</button>
+        </div>
+        ${confirm ? `<div class="dpick-confirm-row">
+          <button type="button" class="dpick-cancel-btn" data-act="cancel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+            Cancelar
+          </button>
+          <button type="button" class="dpick-confirm-btn" data-act="confirm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Guardar
+          </button>
+        </div>` : ''}`;
+    }
+
+    function setValue(iso, opts){
+      const silent = opts && opts.silent;
+      hidden.value = iso || '';
+      text.value = toDisplay(iso);
+      text.classList.remove('is-invalid');
+      setView(iso || todayISO());
+      if(wrap.classList.contains('is-open')) renderCalendar();
+      if(!silent && typeof onChange === 'function') onChange(hidden.value);
+    }
+
+    function positionPanel(){
+      const r = wrap.getBoundingClientRect();
+      let left = alignRight ? r.right - panel.offsetWidth : r.left;
+      left = Math.max(8, Math.min(left, window.innerWidth - panel.offsetWidth - 8));
+      let top = r.bottom + 8;
+      const approxHeight = panel.offsetHeight || 320;
+      if(top + approxHeight > window.innerHeight - 8 && r.top - approxHeight - 8 > 0){
+        top = r.top - approxHeight - 8;
+      }
+      panel.style.left = left + 'px';
+      panel.style.top = top + 'px';
+    }
+    function reposition(){ if(wrap.classList.contains('is-open')) positionPanel(); }
+
+    function open(){
+      openedValue = hidden.value;
+      setView(hidden.value || todayISO());
+      renderCalendar();
+      document.body.appendChild(panel);
+      wrap.classList.add('is-open');
+      panel.classList.add('is-open');
+      positionPanel();
+      window.addEventListener('scroll', reposition, true);
+      window.addEventListener('resize', reposition);
+    }
+    function close(){
+      wrap.classList.remove('is-open');
+      panel.classList.remove('is-open');
+      window.removeEventListener('scroll', reposition, true);
+      window.removeEventListener('resize', reposition);
+    }
+    // Confirma el valor elegido (dispara onChange) y cierra.
+    function commit(){
+      openedValue = hidden.value;
+      if(typeof onChange === 'function') onChange(hidden.value);
+      close();
+    }
+    // Descarta lo elegido desde que se abrió el panel y cierra sin avisar.
+    function cancelPending(){
+      if(confirm && hidden.value !== openedValue) setValue(openedValue, { silent: true });
+      close();
+    }
+    function dismiss(){ confirm ? cancelPending() : close(); }
+    function toggle(){ wrap.classList.contains('is-open') ? dismiss() : open(); }
+
+    icon.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+    text.addEventListener('focus', open);
+    text.addEventListener('input', () => applyDateTextMask(text));
+    text.addEventListener('blur', () => {
+      const raw = text.value.trim();
+      if(!raw){ setValue('', { silent: confirm }); return; }
+      const iso = textToISO(raw);
+      if(iso) setValue(iso, { silent: confirm });
+      else text.classList.add('is-invalid');
+    });
+    text.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){ e.preventDefault(); text.blur(); confirm ? commit() : close(); }
+      else if(e.key === 'Escape'){ dismiss(); text.blur(); }
+    });
+    panel.addEventListener('click', (e) => {
+      const dayBtn = e.target.closest('.dpick-day');
+      if(dayBtn){
+        if(dayBtn.dataset.nav === '-1'){ viewM--; if(viewM < 1){ viewM = 12; viewY--; } }
+        else if(dayBtn.dataset.nav === '1'){ viewM++; if(viewM > 12){ viewM = 1; viewY++; } }
+        const iso = `${viewY}-${pad2(viewM)}-${pad2(+dayBtn.dataset.day)}`;
+        if(confirm){ setValue(iso, { silent: true }); positionPanel(); }
+        else { setValue(iso); close(); }
+        return;
+      }
+      const actBtn = e.target.closest('[data-act]');
+      if(!actBtn) return;
+      const act = actBtn.dataset.act;
+      if(act === 'prev'){ viewM--; if(viewM < 1){ viewM = 12; viewY--; } renderCalendar(); positionPanel(); }
+      else if(act === 'next'){ viewM++; if(viewM > 12){ viewM = 1; viewY++; } renderCalendar(); positionPanel(); }
+      else if(act === 'today'){ if(confirm){ setValue(todayISO(), { silent: true }); positionPanel(); } else { setValue(todayISO()); close(); } }
+      else if(act === 'clear'){ if(confirm){ setValue('', { silent: true }); positionPanel(); } else { setValue(''); close(); } }
+      else if(act === 'confirm'){ commit(); }
+      else if(act === 'cancel'){ cancelPending(); }
+    });
+    document.addEventListener('click', (e) => {
+      if(!wrap.contains(e.target) && !panel.contains(e.target)) dismiss();
+    });
+
+    setValue(hidden.value, { silent: true });
+
+    return { get value(){ return hidden.value; }, setValue, focusInput(){ text.focus(); }, close: dismiss };
+  }
+
+  const NEWS_KEY = 'eest3Noticias';
+  const SESSION_KEY = 'eest3NoticiasAdmin';
+
+  // --- Guard de sesión: sin login válido, de vuelta a noticias.html ---
+  if (sessionStorage.getItem(SESSION_KEY) !== 'true') {
+    window.location.replace('noticias.html');
+  }
+
+  document.getElementById('btnLogout')?.addEventListener('click', () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    window.location.replace('noticias.html');
+  });
+  document.getElementById('btnPreview').addEventListener('click', () => {
+    window.open('noticias.html', '_blank');
+  });
+
+  // CATEGORIES_KEY es la clave "vieja" (sólo las categorías creadas a mano,
+  // sin las de base) que usaban las versiones anteriores. Se conserva nada
+  // más que para migrar esos datos una única vez a la lista nueva de abajo.
+  const CATEGORIES_KEY = 'eest3NoticiasCategoriasExtra';
+  // CATEGORIES_LIST_KEY guarda la lista COMPLETA (base + creadas a mano),
+  // ya con cualquier edición de nombre o eliminación aplicada. Al guardar
+  // siempre acá, editar o borrar una categoría queda persistido de verdad
+  // en vez de "revivir" desde BASE_CATEGORIES en la próxima carga.
+  const CATEGORIES_LIST_KEY = 'eest3NoticiasCategoriasLista';
+  const BASE_CATEGORIES = [
+    { value: 'institucional', label: 'Institucional' },
+    { value: 'programacion', label: 'Programación' },
+    { value: 'construcciones', label: 'Construcción' },
+    { value: 'turismo', label: 'Turismo' },
+    { value: 'talleres', label: 'Talleres' },
+    { value: 'laboratorios', label: 'Laboratorios' },
+    { value: 'proyectos', label: 'Proyectos' },
+    { value: 'eventos', label: 'Eventos' },
+    { value: 'otros', label: 'Otros' }
+  ];
+
+  function readCategories(){
+    try {
+      const stored = JSON.parse(localStorage.getItem(CATEGORIES_LIST_KEY));
+      if(Array.isArray(stored) && stored.length){
+        const limpio = stored.filter(c => c && typeof c.value === 'string' && typeof c.label === 'string');
+        if(limpio.length) return limpio;
+      }
+    } catch {}
+    // Primera vez que se abre esta versión (o el dato guardado estaba
+    // corrupto): armamos la lista inicial con las categorías de base más
+    // las que ya se hubieran creado a mano con el sistema anterior.
+    let legacyExtra = [];
+    try {
+      const stored = JSON.parse(localStorage.getItem(CATEGORIES_KEY));
+      if(Array.isArray(stored)) legacyExtra = stored.filter(c => c && typeof c.value === 'string' && typeof c.label === 'string');
+    } catch {}
+    const merged = [...BASE_CATEGORIES];
+    legacyExtra.forEach((c) => { if(!merged.some((m) => m.value === c.value)) merged.push(c); });
+    return merged;
+  }
+  function saveCategories(){
+    localStorage.setItem(CATEGORIES_LIST_KEY, JSON.stringify(CATEGORIES));
+  }
+
+  // Las categorías (con cualquier edición o borrado ya aplicado) se
+  // guardan en localStorage y noticias.html las lee también, así que
+  // aparecen igual en los filtros de la página pública.
+  let CATEGORIES = readCategories();
+  const getCategoryLabel = (value) => (CATEGORIES.find(c => c.value === value) || {}).label || value;
+
+  // ---- Modal Nueva categoría ----
+  const catModalBg = document.getElementById('catModalBg');
+  const catModalInput = document.getElementById('catModalInput');
+  const catModalError = document.getElementById('catModalError');
+
+  function addNewCategory(){
+    catModalInput.value = '';
+    catModalError.textContent = '';
+    catModalBg.classList.add('open');
+    setTimeout(() => catModalInput.focus(), 50);
+  }
+  function closeCatModal(){
+    catModalBg.classList.remove('open');
+  }
+  function confirmNewCategory(){
+    const label = catModalInput.value.trim();
+    if(!label){
+      catModalError.textContent = 'Ingresá un nombre para la categoría.';
+      catModalInput.focus();
+      return;
+    }
+    let value = slugify(label);
+    if(CATEGORIES.some(c => c.value === value)){
+      catModalError.textContent = `La categoría "${label}" ya existe.`;
+      const chip = catChips.querySelector(`.cat-chip[data-cat="${CSS.escape(value)}"]`);
+      if(chip){ selectedCats.add(value); renderCatChips(); }
+      return;
+    }
+    const newCat = { value, label };
+    CATEGORIES = [...CATEGORIES, newCat];
+    saveCategories();
+    selectedCats.add(value);
+    renderCatChips();
+    renderCatsFilterRow();
+    showToast(`Categoría "${label}" creada`);
+    closeCatModal();
+  }
+  document.getElementById('catModalClose').addEventListener('click', closeCatModal);
+  document.getElementById('catModalCancel').addEventListener('click', closeCatModal);
+  document.getElementById('catModalConfirm').addEventListener('click', confirmNewCategory);
+  catModalBg.addEventListener('click', (e) => { if(e.target === catModalBg) closeCatModal(); });
+  catModalInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ e.preventDefault(); confirmNewCategory(); }
+  });
+  catModalInput.addEventListener('input', () => { catModalError.textContent = ''; });
+
+  const defaultNews = [
+    { id:'programacion', title:'Taller de Programación', date:'2026-06-23', categories:['programacion'],
+      body:'Los estudiantes desarrollan proyectos utilizando HTML, CSS y JavaScript, creando interfaces modernas y resolviendo problemas mediante programación.',
+      image:'Assets/imagen1.jpg', published:true },
+    { id:'practicas', title:'Prácticas Profesionalizantes', date:'2026-06-23', categories:['laboratorios','proyectos'],
+      body:'Las prácticas permiten aplicar conocimientos en situaciones reales, fortaleciendo habilidades técnicas, responsabilidad y trabajo en equipo.',
+      image:'Assets/imagen2.jpg', published:true },
+    { id:'laboratorio', title:'Laboratorio y Proyectos', date:'2026-06-23', categories:['laboratorios'],
+      body:'En los espacios técnicos se integran teoría y práctica a través de proyectos institucionales, científicos y comunitarios.',
+      image:'Assets/imagen3.jpg', published:true },
+    { id:'institucional', title:'Comunidad Islas Malvinas', date:'2026-06-23', categories:['institucional'],
+      body:'La escuela impulsa actividades que fomentan creatividad, innovación y compromiso con la comunidad educativa.',
+      image:'Assets/Malvinas.jpg', published:true }
+  ];
+
+  function readNews(){
+    try {
+      const stored = JSON.parse(localStorage.getItem(NEWS_KEY));
+      return Array.isArray(stored) ? stored : JSON.parse(JSON.stringify(defaultNews));
+    } catch { return JSON.parse(JSON.stringify(defaultNews)); }
+  }
+  const getItemCategories = (item) => (Array.isArray(item.categories) && item.categories.length) ? item.categories : (item.category ? [item.category] : [CATEGORIES[0].value]);
+
+  // "programada": tiene fecha futura y está publicada, se va a mostrar sola
+  // en noticias.html cuando llegue el día (si esa página respeta la fecha).
+  // "borrador": el checkbox "Guardar como borrador" del formulario, no se
+  // muestra en la página pública pase lo que pase.
+  // "publicada": ninguna de las anteriores, ya está visible para todos.
+  function getItemStatus(item){
+    if(!item.published) return 'borrador';
+    if(item.date > toISO(new Date())) return 'programada';
+    return 'publicada';
+  }
+
+  // ---- Papelera: "eliminar" no borra de una, solo marca deletedAt y la
+  // noticia se saca de la vista normal. Se puede restaurar desde la
+  // papelera; si nadie la restaura, a los 30 días se borra sola de verdad. ----
+  const TRASH_RETENTION_DAYS = 30;
+  function purgeOldTrash(){
+    const cutoff = Date.now() - TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+    newsData = newsData.filter((n) => !n.deletedAt || new Date(n.deletedAt).getTime() > cutoff);
+  }
+
+  // Noticias en modo "Programada" (con fecha "hasta") se mandan solas a la
+  // papelera apenas esa fecha queda en el pasado. No usa toISO() porque esta
+  // función corre antes de que esa función se defina más abajo en el script.
+  function autoTrashExpired(){
+    const now = new Date();
+    const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    newsData.forEach((item) => {
+      if(!item.deletedAt && item.availableUntil && item.availableUntil < todayISO){
+        item.deletedAt = now.toISOString();
+      }
+    });
+  }
+
+  let newsData = readNews();
+  purgeOldTrash();
+  autoTrashExpired();
+  let lastSavedSnapshot = JSON.stringify(newsData);
+  let searchTerm = '';
+  let sortMode = 'recientes'; // 'recientes' | 'antiguas' | 'borrador' | 'programada'
+  const SORT_LABELS = { recientes:'Más recientes primero', antiguas:'Más antiguas primero', borrador:'Borradores', programada:'Programadas' };
+  let categoryFilter = '__todas__';
+  let dateFrom = '';
+  let dateTo = '';
+
+  const escapeHtml = (v) => String(v || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+
+  // Mide el ancho que ocuparía un texto con determinada tipografía, sin
+  // tocar el DOM visible (usa un canvas oculto). Se usa para que el input
+  // de "editar categoría" arranque con el mismo ancho que tenía el chip y
+  // se vaya agrandando a medida que se escribe, en vez de saltar a un
+  // ancho fijo.
+  function measureTextWidth(text, font){
+    if(!measureTextWidth._ctx){
+      measureTextWidth._ctx = document.createElement('canvas').getContext('2d');
+    }
+    measureTextWidth._ctx.font = font;
+    return measureTextWidth._ctx.measureText(text).width;
+  }
+
+  // --- Utilidades de imagen: comprimir fotos grandes antes de guardarlas ---
+  // Umbral bajado (antes 1.2 MB) y compresión más fuerte: localStorage tiene
+  // un límite total de unos 5-10 MB por sitio, así que si se cargan varias
+  // fotos "pesadas" sin comprimir bien, "Guardar cambios" puede fallar (el
+  // navegador tira QuotaExceededError) y la noticia con imagen queda sin
+  // guardarse de verdad, aunque en la lista se vea bien hasta que recargás
+  // la página — por eso antes parecía que "algunas imágenes se ocultaban".
+  const COMPRESS_THRESHOLD_BYTES = 350_000;
+  function estimateBytesFromDataUrl(dataUrl){
+    if(!dataUrl) return 0;
+    const comma = dataUrl.indexOf(',');
+    const base64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+    const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+    return Math.max(0, Math.round(base64.length * 3 / 4 - padding));
+  }
+  function formatBytes(bytes){
+    if(bytes >= 1024*1024) return (bytes/(1024*1024)).toFixed(1)+' MB';
+    if(bytes >= 1024) return Math.round(bytes/1024)+' KB';
+    return bytes+' B';
+  }
+  function resizeDataUrl(dataUrl, maxDim, quality){
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if(!w || !h){ resolve(dataUrl); return; }
+        if(w > maxDim || h > maxDim){
+          if(w >= h){ h = Math.round(h*maxDim/w); w = maxDim; } else { w = Math.round(w*maxDim/h); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        try { resolve(canvas.toDataURL('image/jpeg', quality)); } catch { resolve(dataUrl); }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  function slugify(text){
+    return String(text || '').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'noticia';
+  }
+  function uniqueId(base){
+    let id = base, n = 2;
+    const taken = new Set(newsData.map(n2 => n2.id));
+    while(taken.has(id)){ id = `${base}-${n++}`; }
+    return id;
+  }
+
+  // ---- Render de la lista ----
+  const newsList = document.getElementById('newsList');
+
+  // ---- Densidad de la lista (cómoda/compacta): solo cambia el alto de
+  // fila, no filtra ni ordena nada, así que se puede aplicar con una clase
+  // en el contenedor sin pasar por render(). Se recuerda entre sesiones. ----
+  const densityToggle = document.getElementById('densityToggle');
+  function applyDensity(mode){
+    newsList.classList.toggle('is-compact', mode === 'compact');
+    densityToggle.querySelectorAll('.density-btn').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.density === mode);
+    });
+    try{ localStorage.setItem('noticiasAdminDensity', mode); }catch(err){}
+  }
+  densityToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('.density-btn');
+    if(btn) applyDensity(btn.dataset.density);
+  });
+  let savedDensity = 'comfortable';
+  try{ savedDensity = localStorage.getItem('noticiasAdminDensity') || 'comfortable'; }catch(err){}
+  applyDensity(savedDensity);
+  const emptyState = document.getElementById('emptyState');
+  const headSub = document.getElementById('headSub');
+  const statTotal = document.getElementById('statTotal');
+  const statCardTotal = document.getElementById('statCardTotal');
+  const statBorradores = document.getElementById('statBorradores');
+  const statProgramadas = document.getElementById('statProgramadas');
+  const statCardBorradores = document.getElementById('statCardBorradores');
+  const statCardProgramadas = document.getElementById('statCardProgramadas');
+  const statCategorias = document.getElementById('statCategorias');
+  const statCardCategorias = document.getElementById('statCardCategorias');
+  const statUltima = document.getElementById('statUltima');
+  const statCardUltima = document.getElementById('statCardUltima');
+  const STAT_MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  function updateStats(){
+    // Cuando hay una categoría seleccionada en el filtro, las tarjetas de
+    // "Borradores" y "Programadas" reflejan solo esa
+    // categoría en vez del total general (son atajos de filtro). "Noticias
+    // totales" y "Última publicación" en cambio son puramente informativas
+    // y siempre muestran el dato global, sin importar la categoría elegida
+    // — si no, con una categoría vacía "Última publicación" mostraría "—"
+    // dando la sensación (falsa) de que la última noticia desapareció.
+    // Las que están en la papelera no cuentan para nada de esto.
+    const activas = newsData.filter((n) => !n.deletedAt);
+    const enCategoria = categoryFilter !== '__todas__';
+    const base = enCategoria
+      ? activas.filter(n => getItemCategories(n).includes(categoryFilter))
+      : activas;
+
+    statTotal.textContent = activas.length;
+    statBorradores.textContent = base.filter(n => getItemStatus(n) === 'borrador').length;
+    statProgramadas.textContent = base.filter(n => getItemStatus(n) === 'programada').length;
+    // "Categorías totales" es siempre el total de categorías existentes,
+    // no solo las que están en uso.
+    statCategorias.textContent = CATEGORIES.length;
+
+    // Las tarjetas de Borradores/Programadas funcionan como atajo de
+    // filtro: se marcan como "activas" cuando ese es el filtro puesto.
+    statCardBorradores.classList.toggle('is-active', sortMode === 'borrador');
+    statCardProgramadas.classList.toggle('is-active', sortMode === 'programada');
+    // "Noticias totales" se marca como activa cuando no hay ningún filtro
+    // puesto (ni de categoría ni de estado): queda con el orden por defecto.
+    statCardTotal.classList.toggle('is-active', !enCategoria && sortMode === 'recientes');
+
+    if(!activas.length){ statUltima.textContent = '—'; return; }
+    const ultima = activas.reduce((max, n) => (n.date > max ? n.date : max), activas[0].date);
+    const [, mo, d] = ultima.split('-');
+    statUltima.textContent = `${+d} ${STAT_MESES[+mo - 1]}`;
+  }
+
+  function matchesFilters(item){
+    if(item.deletedAt) return false;
+    if(searchTerm && !item.title.toLowerCase().includes(searchTerm)) return false;
+    if(sortMode === 'borrador' && getItemStatus(item) !== 'borrador') return false;
+    if(sortMode === 'programada' && getItemStatus(item) !== 'programada') return false;
+    if(categoryFilter !== '__todas__' && !getItemCategories(item).includes(categoryFilter)) return false;
+    // Con las dos fechas puestas es un rango; con una sola, se filtra
+    // por ese día exacto (antes "Desde" solo dejaba pasar todo lo
+    // posterior, lo cual no era lo esperado si no se ponía un "Hasta").
+    if(dateFrom && dateTo){
+      if(item.date < dateFrom || item.date > dateTo) return false;
+    } else if(dateFrom){
+      if(item.date !== dateFrom) return false;
+    } else if(dateTo){
+      if(item.date !== dateTo) return false;
+    }
+    return true;
+  }
+
+  // Mismo criterio que noticias.html: invierto el orden de carga y ordeno
+  // por fecha descendente (sort es estable, así que a igualdad de fecha
+  // se respeta el orden de carga invertido, o sea la más nueva agregada primero).
+  function sortedByDate(list){
+    const dir = sortMode === 'antiguas' ? -1 : 1;
+    return [...list].reverse().sort((a, b) => dir * (new Date(b.date) - new Date(a.date)));
+  }
+
+  const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  const ICON_DEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+  const ICON_RESTORE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>';
+  const ICON_PUBLISH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-8-8 18-2-8-8-2Z"/></svg>';
+
+  const catsFilterRow = document.getElementById('catsFilterRow');
+  const newsDropZone = document.getElementById('newsDropZone');
+  function selectCategoryFilter(value){
+    categoryFilter = value;
+    renderCatsFilterRow();
+    render();
+  }
+  function renderCatsFilterRow(){
+    catsFilterRow.innerHTML = '';
+    // Papelera aparte: una noticia eliminada no cuenta para el número de
+    // ninguna categoría (mismo criterio que "activas" se usa en el resto
+    // del panel para las estadísticas).
+    const activas = newsData.filter((n) => !n.deletedAt);
+
+    const todas = document.createElement('button');
+    todas.type = 'button';
+    todas.className = 'cat-chip' + (categoryFilter === '__todas__' ? ' is-active' : '');
+    todas.dataset.cat = '__todas__';
+    todas.textContent = `Todas · ${activas.length}`;
+    todas.onclick = () => selectCategoryFilter('__todas__');
+    catsFilterRow.appendChild(todas);
+
+    CATEGORIES.forEach((c) => {
+      const count = activas.filter((n) => getItemCategories(n).includes(c.value)).length;
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'cat-chip' + (categoryFilter === c.value ? ' is-active' : '');
+      chip.draggable = true;
+      chip.dataset.cat = c.value;
+      chip.title = c.label;
+      chip.innerHTML = `
+        <span class="cat-chip-label">${escapeHtml(c.label)} · ${count}</span>
+        <span class="cat-chip-ic edit" title="Editar nombre">${ICON_EDIT}</span>
+        <span class="cat-chip-ic del" title="Eliminar categoría">${ICON_DEL}</span>`;
+      chip.querySelector('.cat-chip-label').onclick = (e) => {
+        e.stopPropagation();
+        if(chip.classList.contains('editing') || chip.classList.contains('dragging')) return;
+        selectCategoryFilter(c.value);
+      };
+      chip.onclick = () => {
+        if(chip.classList.contains('editing') || chip.classList.contains('dragging')) return;
+        selectCategoryFilter(c.value);
+      };
+      chip.querySelector('.edit').onclick = (e) => { e.stopPropagation(); startEditCategoryName(c, chip); };
+      chip.querySelector('.del').onclick = (e) => { e.stopPropagation(); deleteCategory(c.value); };
+      catsFilterRow.appendChild(chip);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'cat-chip cat-chip-add';
+    addBtn.id = 'catsFilterAdd';
+    addBtn.textContent = '+ Nueva categoría';
+    addBtn.onclick = () => addNewCategory();
+    catsFilterRow.appendChild(addBtn);
+
+    // "Todas" no es una categoría real (es el botón "ver todo") y "+ Nueva
+    // categoría" tampoco, así que ninguna de las dos puede arrastrarse ni
+    // recibir chips soltados delante suyo.
+    makeSortable(catsFilterRow, '.cat-chip', '.cat-chip-add, [data-cat="__todas__"]', persistCategoryOrder, '.cat-chip-add');
+  }
+
+  // --- Arrastrar una noticia y soltarla sobre un chip para agregarle esa
+  // categoría (una noticia puede tener varias). No reemplaza las categorías
+  // que ya tenía, solo suma la del chip donde se soltó si todavía no la tenía.
+  let draggingNewsId = null;
+  // Si arrancás el arrastre desde una noticia tildada (y hay más de una
+  // tildada), viajan todas juntas: acá se guardan sus ids. Si no, es un
+  // arrastre de una sola noticia y esta lista solo tiene ese id. Mismo
+  // criterio que galeria-admin.html.
+  let draggingIds = [];
+  let hoverCatChip = null;
+  let categoryOpenTimer = null;
+  // Para qué chip hay ahora mismo un timer corriendo o ya disparado. A
+  // diferencia de hoverCatChip (que se mantiene con vida entre huecos para
+  // que 'drop' sepa qué usar si soltás fuera de un chip), este se limpia
+  // cada vez que el timer se cancela sin llegar a disparar. Así, si salís
+  // de un chip antes de que se abra y volvés a entrar en el mismo chip,
+  // "chipEl === hoverCatChip" ya no alcanza para decidir si hay que volver
+  // a armar el timer: hay que fijarse en armedForChip.
+  let armedForChip = null;
+  let filterBeforeDrag = null;
+  let dropHandledThisDrag = false;
+  let draggingRowEl = null;
+  // Qué hay que guardar cuando el arrastre termine de verdad. 'drop'
+  // dispara ANTES de que el navegador dé por cerrada la sesión de
+  // arrastre nativa (eso pasa recién en 'dragend'); si mutamos newsData y
+  // llamamos a render() ahí mismo, la fila arrastrada se desconecta del
+  // documento mientras el navegador todavía la considera "en vuelo", y
+  // eso corta el arrastre nativo a mitad de camino — rompiendo, para el
+  // próximo arrastre, que la categoría se "abra" al pasar el cursor. Por
+  // eso 'drop' solo anota acá qué guardar, y 'dragend' es quien de verdad
+  // aplica el cambio (ver ambos handlers más abajo).
+  let pendingDrop = null;
+
+  // Categoría a la que se asignaría la noticia si soltás ahora mismo en
+  // (x, y): la prioridad es 1) el chip que tenés justo debajo del cursor,
+  // 2) el último chip resaltado en este arrastre (hoverCatChip), y si
+  // ninguna de esas dos aplica (nunca pasaste por ningún chip), 3) la
+  // categoría que ya estás viendo/filtrando (categoryFilter), siempre que
+  // no sea "Todas" (eso no es una categoría real a la que asignar nada).
+  // Esta función es la ÚNICA fuente de verdad para "qué se guardaría": la
+  // usan tanto el indicador visual (isDropInRange) como el guardado real
+  // (ver 'drop' más abajo), así que nunca deberían desincronizarse.
+  function resolveDropCategoryValue(x, y){
+    const chipEl = chipUnderPoint(x, y) || hoverCatChip;
+    if(chipEl) return chipEl.dataset.cat;
+    if(categoryFilter && categoryFilter !== '__todas__') return categoryFilter;
+    return null;
+  }
+
+  // Un arrastre está "en rango" (va a guardar si soltás ahí) cuando el
+  // cursor sigue dentro de newsDropZone (chips + lista) Y hay una categoría
+  // Antes esto exigía además tener una categoría resuelta
+  // (resolveDropCategoryValue(x,y) !== null), lo que en la práctica
+  // significaba: si arrancabas el arrastre sin tocar ningún chip, se veía
+  // rojo hasta que pasaras por uno — justo lo que no se quería. Ahora es
+  // más simple y directo: dorado en cualquier punto dentro del cuadrado,
+  // sin condición extra; rojo solo al salir de él.
+  function isDropInRange(x, y){
+    const r = newsDropZone.getBoundingClientRect();
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+  }
+
+  // Se fija, en cada 'dragover' (dispara en todo el documento mientras dura
+  // el arrastre, no solo dentro de la zona de noticias), si soltar ahí
+  // guardaría el cambio o no, y le cambia el borde a la fila "fantasma"
+  // que queda en la lista según eso: dorado si guardaría, rojo si no. El
+  // fantasma que sigue al cursor ahora es el nativo del navegador (la
+  // fila completa semitransparente, mismo espíritu que galeria-admin.html),
+  // así que acá no hace falta reposicionar nada propio.
+  // lastKnownInRange guarda el último resultado calculado acá mismo: el
+  // handler de 'drop' lo usa TAL CUAL en vez de volver a calcular
+  // getBoundingClientRect() en el instante de soltar. Antes lo recalculaba
+  // de cero ahí, y con selecciones múltiples (o cualquier redibujado justo
+  // antes de soltar) esa segunda medición podía dar un resultado distinto
+  // por un corrimiento mínimo de layout, así que a veces se veía dorado
+  // pero al soltar el chequeo decía "estás afuera" y la noticia se perdía
+  // en silencio. Usando siempre el mismo valor que pintó el borde, lo que
+  // ves es exactamente lo que se guarda.
+  let lastKnownInRange = true;
+  let __lastLoggedInRange = null;
+  function followDragGhost(e){
+    const inRange = isDropInRange(e.clientX, e.clientY);
+    lastKnownInRange = inRange;
+    if(inRange !== __lastLoggedInRange){
+      __lastLoggedInRange = inRange;
+      console.log('[DEBUG]', performance.now().toFixed(0), 'inRange cambió a:', inRange,
+        '| chipUnderPoint:', chipUnderPoint(e.clientX, e.clientY) && chipUnderPoint(e.clientX, e.clientY).dataset.cat,
+        '| hoverCatChip:', hoverCatChip && hoverCatChip.dataset.cat,
+        '| categoryFilter:', JSON.stringify(categoryFilter),
+        '| resolveDropCategoryValue:', resolveDropCategoryValue(e.clientX, e.clientY));
+    }
+    if(draggingRowEl){
+      draggingRowEl.classList.toggle('drop-valid', inRange);
+      draggingRowEl.classList.toggle('drop-invalid', !inRange);
+    }
+  }
+
+  newsList.addEventListener('dragstart', (e) => {
+    const rowEl = e.target.closest('.list-row[draggable="true"]');
+    if(!rowEl) return;
+    draggingNewsId = rowEl.dataset.id;
+    draggingRowEl = rowEl;
+    // Si estás en modo selección y la noticia que empezás a arrastrar es
+    // una de las tildadas (y hay más de una tildada), viajan todas juntas;
+    // si no, se arrastra solo esa (comportamiento de siempre).
+    draggingIds = (selectMode && selectedIds.has(draggingNewsId) && selectedIds.size > 1)
+      ? [...selectedIds]
+      : [draggingNewsId];
+    // Marca visualmente (opacidad reducida) al resto de las noticias que
+    // viajan junto con la que el navegador está arrastrando de verdad.
+    if(draggingIds.length > 1){
+      draggingIds.forEach((id) => {
+        if(id === draggingNewsId) return;
+        const el = newsList.querySelector(`.list-row[data-id="${CSS.escape(id)}"]`);
+        if(el) el.classList.add('dragging');
+      });
+    }
+    filterBeforeDrag = categoryFilter;
+    console.log('[DEBUG]', performance.now().toFixed(0), 'dragstart. categoryFilter:', JSON.stringify(categoryFilter));
+    dropHandledThisDrag = false;
+    lastKnownInRange = true;
+    rowEl.classList.add('dragging', 'drop-invalid');
+    catsFilterRow.classList.add('drop-mode');
+    if(e.dataTransfer){
+      e.dataTransfer.effectAllowed = 'move';
+    }
+    document.addEventListener('dragover', followDragGhost);
+  });
+  // Saca del medio todo lo "flotante" del arrastre: el listener global que
+  // vigila si estás en rango, y las clases que se le pusieron a las filas
+  // de origen (la arrastrada de verdad y las que viajaban tildadas con
+  // ella). Hace falta llamarla en dos lugares (ver más abajo por qué) pero
+  // es segura de llamar dos veces: si ya se limpió, no hace nada.
+  function cleanupDragVisuals(){
+    clearTimeout(categoryOpenTimer);
+    document.removeEventListener('dragover', followDragGhost);
+    if(draggingRowEl){ draggingRowEl.classList.remove('dragging', 'drop-valid', 'drop-invalid'); }
+    newsList.querySelectorAll('.list-row.dragging').forEach((el) => el.classList.remove('dragging'));
+    catsFilterRow.classList.remove('drop-mode');
+  }
+  newsList.addEventListener('dragend', (e) => {
+    cleanupDragVisuals();
+    draggingNewsId = null;
+    draggingIds = [];
+    draggingRowEl = null;
+    if(hoverCatChip){ hoverCatChip.classList.remove('drop-hover'); hoverCatChip = null; }
+    armedForChip = null;
+    // Acá, y recién acá, el arrastre nativo ya terminó de verdad, así que
+    // ya es seguro mutar newsData y renderizar (ver el comentario grande
+    // en pendingDrop y en 'drop', más arriba, sobre por qué no se hace
+    // antes). Si 'drop' anotó un cambio, se aplica ahora.
+    if(pendingDrop){
+      const { value, ids } = pendingDrop;
+      pendingDrop = null;
+      // Se agrega la categoría a cada noticia que viajaba en el arrastre
+      // (una sola si no había selección múltiple involucrada). Las que ya
+      // la tenían se cuentan aparte para el mensaje, no se tocan de nuevo.
+      const items = ids.map((id) => newsData.find((n) => n.id === id)).filter(Boolean);
+      const nuevas = [];
+      const yaEstaban = [];
+      items.forEach((item) => {
+        const cats = getItemCategories(item);
+        if(cats.includes(value)){
+          yaEstaban.push(item);
+        } else {
+          item.categories = [...cats, value];
+          nuevas.push(item);
+        }
+      });
+      if(items.length > 1 && selectMode){
+        selectedIds.clear();
+        updateSelectionBar();
+      }
+      render();
+      const label = getCategoryLabel(value);
+      if(items.length === 1){
+        const item = items[0];
+        showToast(nuevas.length
+          ? `"${item.title}" agregada a "${label}"`
+          : `"${item.title}" ya está en "${label}"`);
+      } else if(!nuevas.length){
+        showToast(`Ya estaban todas en "${label}"`);
+      } else if(!yaEstaban.length){
+        showToast(`${nuevas.length} noticias agregadas a "${label}"`);
+      } else {
+        showToast(`${nuevas.length} noticias agregadas a "${label}" (${yaEstaban.length} ya estaban)`);
+      }
+    } else if(!dropHandledThisDrag){
+      // Antes acá se llamaba a closeCategoryPreview() para devolver la
+      // vista a la categoría que tenías activa antes de empezar a
+      // arrastrar (por ejemplo si soltaste afuera en zona roja, o
+      // cancelaste con Escape). Ahora, a pedido, ya no se hace: si la
+      // vista quedó abierta en otra categoría como previsualización, se
+      // queda ahí tal cual — lo único que pasa es que la noticia no se
+      // guarda en ninguna categoría nueva.
+      // OJO: aunque no se guarde nada, hace falta volver a renderizar.
+      // Mientras arrastrabas, render() mantenía la fila pegada al final
+      // de la lista como previsualización aunque no perteneciera todavía
+      // a la categoría que se estaba mirando (ver comentario grande
+      // dentro de render()). Ahora que draggingNewsId ya es null, ese
+      // "aunque no pertenezca, se muestra igual" ya no debería aplicar,
+      // pero sin este render() la fila queda ahí colgada, sin haberse
+      // guardado, hasta el próximo redibujado por otro motivo (por eso
+      // "desaparecía recién al cambiar de categoría y volver").
+      render();
+    }
+    filterBeforeDrag = null;
+  });
+
+  // Devuelve el chip (si lo hay) sobre el que está el cursor en este
+  // instante, exigiendo que el punto (clientX, clientY) caiga realmente
+  // DENTRO de su rectángulo — no alcanza con que closest() lo encuentre
+  // por herencia del contenedor. "Todas" queda afuera siempre: no es una
+  // categoría real, así que nunca se resalta ni se "abre" al arrastrar.
+  function chipUnderPoint(x, y){
+    const chips = catsFilterRow.querySelectorAll('.cat-chip:not(.cat-chip-add):not([data-cat="__todas__"])');
+    for(const chip of chips){
+      const r = chip.getBoundingClientRect();
+      if(x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return chip;
+    }
+    return null;
+  }
+
+  // Pasar el arrastre por encima de un chip un ratito muestra ahí mismo,
+  // en la lista, cómo quedaría la noticia si la soltás (la "previsualización":
+  // no confundir con el fantasma semitransparente que dibuja el navegador
+  // pegado al cursor, eso es aparte). Esa previsualización se queda mientras
+  // sigas arrastrando (aunque el cursor pase por un hueco entre chips o baje
+  // hasta la lista): recién se deshace cuando soltás afuera de un chip
+  // válido o cancelás el arrastre del todo (ver el 'dragend' de arriba).
+  // Todavía no se asigna nada: eso recién pasa al soltar sobre el chip (ver
+  // 'drop' más abajo).
+  // Antes esto solo escuchaba en catsFilterRow: si soltabas la noticia
+  // apenas un pelo afuera de la fila de chips (por ejemplo ya sobre la
+  // lista de noticias), no pasaba nada. Ahora escucha en newsDropZone, que
+  // envuelve tanto los chips como la lista de abajo, así que cualquier
+  // suelte dentro de esa zona (el "cuadrado" completo) cuenta. Fuera de
+  // newsDropZone (por ejemplo sobre el header o la barra de búsqueda) sigue
+  // sin guardar nada.
+  newsDropZone.addEventListener('dragover', (e) => {
+    if(!draggingNewsId) return;
+    e.preventDefault();
+    const chipEl = chipUnderPoint(e.clientX, e.clientY);
+    if(!chipEl){
+      // No hay chip bajo el cursor (hueco entre chips, o ya afuera de la
+      // fila): apagamos el resaltado visual del último chip tocado para
+      // que no quede "prendido" sin motivo. OJO: no tocamos hoverCatChip
+      // en sí (sigue vivo para que 'drop' sepa qué usar si soltás en un
+      // hueco), solo le sacamos la clase que lo pinta dorado.
+      if(hoverCatChip) hoverCatChip.classList.remove('drop-hover');
+      clearTimeout(categoryOpenTimer);
+      armedForChip = null;
+      return;
+    }
+    console.log('[DEBUG]', performance.now().toFixed(0), 'dragover sobre chip:', chipEl.dataset.cat, '| hoverCatChip:', hoverCatChip && hoverCatChip.dataset.cat, '| armedForChip:', armedForChip && armedForChip.dataset.cat, '| categoryFilter:', categoryFilter);
+    if(chipEl === hoverCatChip && armedForChip === chipEl) return;
+    if(hoverCatChip) hoverCatChip.classList.remove('drop-hover');
+    hoverCatChip = chipEl;
+    hoverCatChip.classList.add('drop-hover');
+    clearTimeout(categoryOpenTimer);
+    const nombre = chipEl.dataset.cat;
+    armedForChip = chipEl;
+    console.log('[DEBUG]', performance.now().toFixed(0), 'timer ARMADO para:', nombre);
+    categoryOpenTimer = setTimeout(() => {
+      console.log('[DEBUG]', performance.now().toFixed(0), 'timer DISPARÓ para:', nombre, '| categoryFilter antes de abrir:', categoryFilter);
+      openCategoryDuringDrag(nombre);
+    }, 450);
+  });
+  newsDropZone.addEventListener('dragleave', (e) => {
+    // Antes, al salir de TODA la zona (chips + lista), se olvidaba la
+    // categoría resaltada (hoverCatChip = null). Eso hacía que, si volvías
+    // a entrar sin pasar de nuevo justo por un chip, el suelte ya no
+    // guardaba nada. Ahora esa memoria se mantiene mientras el arrastre
+    // siga vivo: solo se limpia al soltar (ver 'drop') o al cancelar el
+    // arrastre del todo (ver 'dragend', más arriba). Acá solo se cancela el
+    // temporizador de apertura de categoría, para que no se dispare la
+    // previsualización estando ya afuera.
+    if(newsDropZone.contains(e.relatedTarget)) return;
+    console.log('[DEBUG]', performance.now().toFixed(0), 'dragleave: salió de TODA la zona (relatedTarget:', e.relatedTarget, ')');
+    // Mismo apagado visual que en 'dragover' sin chip: al salir de toda la
+    // zona tampoco tiene sentido dejar un chip pintado como si el cursor
+    // siguiera ahí. hoverCatChip se mantiene igual (memoria para 'drop').
+    if(hoverCatChip) hoverCatChip.classList.remove('drop-hover');
+    clearTimeout(categoryOpenTimer);
+    armedForChip = null;
+  });
+  newsDropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropHandledThisDrag = true;
+    // OJO: acá NO se toca newsData, no se llama a render() ni a
+    // cleanupDragVisuals(), y la fila arrastrada NO se desconecta del
+    // documento. El navegador todavía no terminó de cerrar la sesión de
+    // arrastre nativa en este punto (eso pasa en 'dragend', más abajo);
+    // hacer cualquiera de esas cosas acá corta el arrastre a mitad de
+    // camino y deja cosas a medio romper para el próximo intento (por
+    // ejemplo: la categoría deja de "abrirse" al pasar el cursor la vez
+    // siguiente). Por eso acá solo anotamos en pendingDrop qué hay que
+    // guardar; 'dragend' es quien de verdad lo aplica.
+    // Chequeo extra de seguridad: si el punto donde soltaste está afuera
+    // de la zona (lo mismo que decide si la fila se pinta roja o dorada),
+    // no se guarda nada, aunque el evento 'drop' nativo haya llegado a
+    // dispararse igual. Así "en rojo" y "no se agrega" van siempre juntos.
+    if(!lastKnownInRange){ pendingDrop = null; dropHandledThisDrag = false; return; }
+    // Misma resolución que usa el indicador de color (resolveDropCategoryValue):
+    // 1) chip bajo el cursor, 2) último chip resaltado, 3) la categoría que
+    // ya estabas viendo si no tocaste ningún chip. Así el color que ve el
+    // usuario mientras arrastra siempre coincide con lo que se guarda acá.
+    const value = resolveDropCategoryValue(e.clientX, e.clientY);
+    const newsId = draggingNewsId;
+    // value viene en null cuando ni siquiera la categoría que estabas
+    // viendo sirve como destino (estabas en "Todas" y nunca tocaste un
+    // chip real): ahí no se anota nada y la vista vuelve a la categoría
+    // original (el dragend se encarga, ya que acá no marcamos nada como
+    // resuelto).
+    if(!value || !newsId){ pendingDrop = null; dropHandledThisDrag = false; return; }
+    pendingDrop = { newsId, value, ids: [...draggingIds] };
+  });
+
+  // Cambia el filtro activo a "nombre" en pleno arrastre, reutilizando el
+  // mismo nodo DOM de la noticia arrastrada (en vez de dejar que render()
+  // lo reemplace por uno nuevo) para que el arrastre nativo del navegador
+  // no se corte al cambiar de vista.
+  function switchFilterDuringDrag(nombre){
+    if(categoryFilter === nombre) return;
+    categoryFilter = nombre;
+    // OJO: acá NO se puede llamar a renderCatsFilterRow(), porque esa función
+    // destruye y recrea todos los chips (innerHTML = ''), incluido el chip
+    // que en este mismo instante tenés bajo el cursor en pleno arrastre. Si
+    // el navegador pierde de golpe el elemento que está debajo del puntero
+    // durante un drag nativo, a veces cancela la sesión de arrastre sin
+    // disparar 'drop' (va directo a 'dragend'), y la vista te devuelve a la
+    // categoría de la que arrancaste aunque hayas soltado bien sobre el chip.
+    // Alcanza con mover la clase "is-active" al chip nuevo sin tocar el DOM.
+    catsFilterRow.querySelectorAll('.cat-chip').forEach((chip) => {
+      chip.classList.toggle('is-active', chip.dataset.cat === nombre);
+    });
+    // render() ya se encarga de reconstruir la lista sin desconectar en
+    // ningún momento la fila que se está arrastrando (ver comentario ahí
+    // dentro) — por eso no hace falta (y sería contraproducente) volver a
+    // tocarla acá después.
+    render();
+  }
+  // "Todas" nunca se "abre" así: no tiene sentido, no es una categoría a la
+  // que se pueda asignar una noticia.
+  function openCategoryDuringDrag(nombre){
+    if(nombre === '__todas__') return;
+    switchFilterDuringDrag(nombre);
+    const chip = catsFilterRow.querySelector(`.cat-chip[data-cat="${CSS.escape(nombre)}"]`);
+    if(chip){ chip.classList.add('drop-hover'); hoverCatChip = chip; }
+  }
+  // Deshace la previsualización: vuelve al filtro que tenías activo antes
+  // de empezar a arrastrar.
+  function closeCategoryPreview(){
+    if(filterBeforeDrag === null || categoryFilter === filterBeforeDrag) return;
+    switchFilterDuringDrag(filterBeforeDrag);
+  }
+
+  // El orden en el que quedan los chips en el DOM después de soltar es
+  // el mismo orden con el que noticias.html arma sus propios filtros (lee
+  // CATEGORIES_LIST_KEY tal cual quedó guardado acá), así que mover un chip
+  // en este panel cambia directamente cómo se ven las categorías en la
+  // página pública.
+  function persistCategoryOrder(){
+    const nuevoOrden = [...catsFilterRow.querySelectorAll('.cat-chip')]
+      .map((el) => el.dataset.cat)
+      .filter((value) => value && value !== '__todas__');
+    const porValor = new Map(CATEGORIES.map((c) => [c.value, c]));
+    const reordenadas = nuevoOrden.map((value) => porValor.get(value)).filter(Boolean);
+    // Red de seguridad: si por algún motivo faltara alguna categoría en el
+    // recorrido del DOM, la agregamos al final para no perderla.
+    CATEGORIES.forEach((c) => { if(!reordenadas.includes(c)) reordenadas.push(c); });
+    CATEGORIES = reordenadas;
+    saveCategories();
+    showToast('Orden de categorías actualizado');
+  }
+
+  // --- Motor genérico de arrastrar-y-soltar para reordenar los chips de
+  // categoría (mismo mecanismo que usa galeria-admin.html para sus
+  // secciones). catsFilterRow es un contenedor fijo: nunca se recrea, solo
+  // se le vacía el innerHTML en cada render, así que sortableContainers
+  // evita registrar el listener de 'dragover' más de una vez sobre él. ---
+  const sortableContainers = new WeakSet();
+  const sortableItems = new WeakSet();
+  const dragElByContainer = new WeakMap();
+  const autoScrollState = new WeakMap();
+  const lastAfterByContainer = new WeakMap();
+  const ANCHOR_END = Symbol('end');
+  const AUTOSCROLL_EDGE = 72;
+  const AUTOSCROLL_MAX_SPEED = 16;
+
+  function updateAutoScroll(container, clientX, reorderAt){
+    const rect = container.getBoundingClientRect();
+    const distFromLeft = clientX - rect.left;
+    const distFromRight = rect.right - clientX;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+
+    let dir = 0, speed = 0;
+    if(distFromLeft < AUTOSCROLL_EDGE && container.scrollLeft > 0){
+      dir = -1;
+      speed = AUTOSCROLL_MAX_SPEED * (1 - Math.max(distFromLeft, 0) / AUTOSCROLL_EDGE);
+    } else if(distFromRight < AUTOSCROLL_EDGE && container.scrollLeft < maxScroll - 1){
+      dir = 1;
+      speed = AUTOSCROLL_MAX_SPEED * (1 - Math.max(distFromRight, 0) / AUTOSCROLL_EDGE);
+    }
+
+    let state = autoScrollState.get(container);
+    if(dir === 0){
+      if(state){ cancelAnimationFrame(state.raf); autoScrollState.delete(container); }
+      return;
+    }
+
+    if(!state){
+      state = { raf: 0, clientX, dir, speed };
+      autoScrollState.set(container, state);
+      const step = () => {
+        const st = autoScrollState.get(container);
+        if(!st) return;
+        container.scrollLeft += st.dir * st.speed;
+        reorderAt(st.clientX);
+        st.raf = requestAnimationFrame(step);
+      };
+      state.raf = requestAnimationFrame(step);
+    } else {
+      state.clientX = clientX;
+      state.dir = dir;
+      state.speed = speed;
+    }
+  }
+
+  function stopAutoScroll(container){
+    const state = autoScrollState.get(container);
+    if(state){ cancelAnimationFrame(state.raf); autoScrollState.delete(container); }
+  }
+
+  function makeSortable(container, itemSelector, excludeSelector, onReorder, endAnchorSelector){
+    container.querySelectorAll(itemSelector).forEach(el => {
+      if(excludeSelector && el.matches(excludeSelector)) return;
+      if(sortableItems.has(el)) return;
+      sortableItems.add(el);
+      el.addEventListener('dragstart', () => {
+        dragElByContainer.set(container, el);
+        el.classList.add('dragging');
+      });
+      el.addEventListener('dragend', () => {
+        el.classList.remove('dragging');
+        dragElByContainer.delete(container);
+        lastAfterByContainer.delete(container);
+        stopAutoScroll(container);
+        if (typeof onReorder === 'function') onReorder();
+      });
+    });
+
+    if(sortableContainers.has(container)) return;
+    sortableContainers.add(container);
+
+    function reorderAt(clientX){
+      const dragEl = dragElByContainer.get(container);
+      if(!dragEl) return;
+      const after = getDragAfterElement(container, clientX, itemSelector, excludeSelector);
+
+      const afterKey = after || ANCHOR_END;
+      if(lastAfterByContainer.get(container) === afterKey) return;
+      lastAfterByContainer.set(container, afterKey);
+
+      const items = [...container.querySelectorAll(itemSelector)];
+      const firstRects = new Map(items.map(el => [el, el.getBoundingClientRect()]));
+
+      if(after == null){
+        const visibles = items.filter(i => !excludeSelector || !i.matches(excludeSelector));
+        const last = visibles[visibles.length - 1];
+        const anchor = endAnchorSelector
+          ? container.querySelector(endAnchorSelector)
+          : (excludeSelector ? container.querySelector(excludeSelector) : null);
+        if(last && last !== dragEl) container.insertBefore(dragEl, anchor);
+      } else {
+        container.insertBefore(dragEl, after);
+      }
+
+      items.forEach(el => {
+        if(el === dragEl) return;
+        const first = firstRects.get(el);
+        const last = el.getBoundingClientRect();
+        const dx = first.left - last.left;
+        if(Math.abs(dx) < 1) return;
+        el.style.transition = 'none';
+        el.style.transform = `translateX(${dx}px)`;
+        void el.offsetWidth;
+        el.style.transition = 'transform .32s cubic-bezier(.2,.8,.2,1)';
+        el.style.transform = 'translateX(0)';
+      });
+    }
+
+    let pendingX = null;
+    let rafScheduled = false;
+    function scheduleReorder(clientX){
+      pendingX = clientX;
+      if(rafScheduled) return;
+      rafScheduled = true;
+      requestAnimationFrame(() => {
+        rafScheduled = false;
+        if(pendingX != null) reorderAt(pendingX);
+      });
+    }
+
+    container.addEventListener('dragover', e => {
+      e.preventDefault();
+      const dragEl = dragElByContainer.get(container);
+      if(!dragEl) return;
+      updateAutoScroll(container, e.clientX, reorderAt);
+      scheduleReorder(e.clientX);
+    });
+  }
+
+  function getDragAfterElement(container, x, itemSelector, excludeSelector){
+    const items = [...container.querySelectorAll(itemSelector + ':not(.dragging)')]
+      .filter(i => !excludeSelector || !i.matches(excludeSelector));
+    return items.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = x - box.left - box.width / 2;
+      if(offset < 0 && offset > closest.offset){
+        return { offset, element: child };
+      }
+      return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+
+  // ---- Editar nombre de categoría en línea (mismo mecanismo que
+  // galeria-admin.html: el texto del chip se convierte en un input ahí
+  // mismo; Enter o perder el foco guarda, Escape cancela) ----
+  function startEditCategoryName(catObj, chip){
+    if(chip.classList.contains('editing')) return;
+    const labelEl = chip.querySelector('.cat-chip-label');
+    if(!labelEl) return;
+
+    chip.classList.add('editing');
+
+    // Ancho y tipografía del texto tal como se veía antes de convertirlo
+    // en input, para arrancar exactamente con ese tamaño (medido mientras
+    // labelEl todavía está en el DOM).
+    const labelStyle = window.getComputedStyle(labelEl);
+    const font = `${labelStyle.fontWeight} ${labelStyle.fontSize} ${labelStyle.fontFamily}`;
+    const minWidth = labelEl.getBoundingClientRect().width;
+    const EXTRA = 28; // padding + borde del input + margen para el cursor
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'cat-chip-edit-input';
+    input.value = catObj.label;
+
+    function resizeInput(){
+      const textWidth = measureTextWidth(input.value || catObj.label, font);
+      input.style.width = Math.max(minWidth, textWidth + EXTRA) + 'px';
+    }
+    resizeInput();
+    input.addEventListener('input', resizeInput);
+
+    labelEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    let resolved = false;
+
+    const commit = () => {
+      if(resolved) return;
+      resolved = true;
+      const nuevoLabel = input.value.trim();
+      if(!nuevoLabel || nuevoLabel === catObj.label){ renderCatsFilterRow(); return; }
+      const target = CATEGORIES.find((c) => c.value === catObj.value);
+      if(target) target.label = nuevoLabel;
+      saveCategories();
+      renderCatsFilterRow();
+      renderCatChips();
+      render();
+      showToast(`Categoría renombrada a "${nuevoLabel}"`);
+    };
+    const cancel = () => {
+      if(resolved) return;
+      resolved = true;
+      renderCatsFilterRow();
+    };
+
+    input.addEventListener('click', (e) => e.stopPropagation());
+    input.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if(e.key === 'Enter'){ e.preventDefault(); commit(); }
+      else if(e.key === 'Escape'){ e.preventDefault(); cancel(); }
+    });
+    input.addEventListener('blur', commit);
+  }
+
+  // ---- Eliminar categoría (mismo modal de confirmación que
+  // galeria-admin.html) ----
+  const deleteCategoryModalBg = document.getElementById('deleteCategoryModalBg');
+  const deleteCategoryMsgEl = document.getElementById('deleteCategoryMsg');
+  let pendingDeleteCategoryValue = null;
+
+  function deleteCategory(value){
+    const cat = CATEGORIES.find((c) => c.value === value);
+    if(!cat) return;
+    const cantidad = newsData.filter((n) => getItemCategories(n).includes(value)).length;
+    deleteCategoryMsgEl.textContent = cantidad > 0
+      ? `La categoría "${cat.label}" se usa en ${cantidad} noticia(s). Se va a quitar de esas noticias (si era la única que tenían, van a pasar a otra categoría). ¿Eliminar la categoría de todos modos?`
+      : `¿Eliminar la categoría "${cat.label}"?`;
+    pendingDeleteCategoryValue = value;
+    deleteCategoryModalBg.classList.add('open');
+  }
+  function closeDeleteCategoryModal(){
+    deleteCategoryModalBg.classList.remove('open');
+    pendingDeleteCategoryValue = null;
+  }
+  document.getElementById('deleteCategoryModalClose').addEventListener('click', closeDeleteCategoryModal);
+  document.getElementById('deleteCategoryModalCancel').addEventListener('click', closeDeleteCategoryModal);
+  deleteCategoryModalBg.addEventListener('click', (e) => { if(e.target === deleteCategoryModalBg) closeDeleteCategoryModal(); });
+  document.getElementById('deleteCategoryModalConfirm').addEventListener('click', () => {
+    const value = pendingDeleteCategoryValue;
+    if(!value) return;
+    const cat = CATEGORIES.find((c) => c.value === value);
+    CATEGORIES = CATEGORIES.filter((c) => c.value !== value);
+    // Salvaguarda: nunca dejar la lista de categorías completamente
+    // vacía, o el formulario de noticias se quedaría sin ninguna opción.
+    if(!CATEGORIES.length) CATEGORIES = [{ value: 'otros', label: 'Otros' }];
+    saveCategories();
+    const fallback = CATEGORIES[0].value;
+    newsData.forEach((item) => {
+      const cats = getItemCategories(item).filter((c) => c !== value);
+      item.categories = cats.length ? cats : [fallback];
+      delete item.category;
+    });
+    if(categoryFilter === value) categoryFilter = '__todas__';
+    if(selectedCats.has(value)) selectedCats.delete(value);
+    closeDeleteCategoryModal();
+    renderCatsFilterRow();
+    renderCatChips();
+    render();
+    showToast(cat ? `Categoría "${cat.label}" eliminada` : 'Categoría eliminada');
+  });
+
+  const ICON_CALENDAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 9.5h18"/></svg>';
+
+  // Cada categoría se renderiza como un span aparte (en vez de un único
+  // bloque de texto) para poder medir, después de insertarlas en el DOM,
+  // cuántas entran realmente en el ancho disponible de esa fila. Las que
+  // no entran se ocultan y se resumen en la etiquetita dorada "+N" — no
+  // hay un límite fijo de cantidad, depende del espacio real en pantalla
+  // (ver fitRowCats más abajo).
+  function renderRowCats(item){
+    const labels = getItemCategories(item).map(getCategoryLabel);
+    const items = labels.map((label, i) => `<span class="row-cat-item">${i > 0 ? ' · ' : ''}${escapeHtml(label)}</span>`).join('');
+    return `${items}<span class="row-cats-more" hidden></span>`;
+  }
+
+  // Después de insertar las filas en el DOM (donde ya conocemos el ancho
+  // real disponible), oculta de a una las últimas categorías de cada fila
+  // hasta que el resto entre en una sola línea, y muestra "+N" con el
+  // detalle de las ocultas en el tooltip. Se vuelve a llamar en cada
+  // render() y también si la ventana cambia de tamaño (la fila puede pasar
+  // de caber 5 categorías a caber sólo 2, por ejemplo).
+  function fitRowCats(){
+    newsList.querySelectorAll('.row-meta').forEach((meta) => {
+      const items = [...meta.querySelectorAll('.row-cat-item')];
+      const more = meta.querySelector('.row-cats-more');
+      if(!items.length) return;
+      items.forEach((el) => { el.hidden = false; });
+      if(more) more.hidden = true;
+      if(meta.scrollWidth <= meta.clientWidth + 1) return;
+      let oculto = 0;
+      for(let i = items.length - 1; i >= 1; i--){
+        items[i].hidden = true;
+        oculto++;
+        if(more){
+          more.hidden = false;
+          more.textContent = `+${oculto}`;
+          const nombres = items.slice(items.length - oculto).map((el) => el.textContent.replace(/^\s*·\s*/, ''));
+          more.title = nombres.join(', ');
+        }
+        if(meta.scrollWidth <= meta.clientWidth + 1) break;
+      }
+    });
+  }
+  window.addEventListener('resize', () => {
+    clearTimeout(window.__fitRowCatsTimer);
+    window.__fitRowCatsTimer = setTimeout(fitRowCats, 120);
+  });
+
+  // Envuelve, dentro de un texto ya escapado para HTML, la primera
+  // coincidencia (sin distinguir mayúsculas/acentos ya vienen normalizados
+  // por searchTerm) del término buscado en un <mark> propio. Si no hay
+  // término o no matchea, devuelve el texto tal cual.
+  function highlightSearchTerm(text){
+    if(!searchTerm) return escapeHtml(text);
+    const idx = text.toLowerCase().indexOf(searchTerm);
+    if(idx === -1) return escapeHtml(text);
+    const before = text.slice(0, idx);
+    const match = text.slice(idx, idx + searchTerm.length);
+    const after = text.slice(idx + searchTerm.length);
+    return `${escapeHtml(before)}<mark class="search-hit">${escapeHtml(match)}</mark>${escapeHtml(after)}`;
+  }
+
+  // Arma el HTML de una sola fila. Separado de render() para poder
+  // reconstruir la lista sin tener que tocar la fila que en este momento
+  // se está arrastrando (ver comentario dentro de render()).
+  function rowHtml(item){
+    return `
+      <div class="list-row${selectMode ? ' is-selectable' : ''}${selectMode && selectedIds.has(item.id) ? ' is-selected' : ''}" data-id="${escapeHtml(item.id)}" draggable="true">
+        ${selectMode ? `
+        <div class="row-select">
+          <input type="checkbox" ${selectedIds.has(item.id) ? 'checked' : ''} aria-label="Seleccionar noticia">
+        </div>` : ''}
+        <div class="row-thumb-wrap">
+          <div class="row-thumb" title="${item.image ? 'Ver imagen más grande' : ''}" style="${item.image ? `background-image:url('${escapeHtml(item.image)}')` : ''}"></div>
+          <div class="row-date">${ICON_CALENDAR}<span>${escapeHtml(item.date)}</span></div>
+        </div>
+        <div class="row-info">
+          <div class="row-title">
+            <span class="row-title-text">${highlightSearchTerm(item.title)}</span>
+            ${getItemStatus(item) === 'borrador' ? '<span class="row-badge draft">Borrador</span>' : ''}
+            ${getItemStatus(item) === 'programada' ? '<span class="row-badge scheduled">Programada</span>' : ''}
+            ${item.availableUntil ? `<span class="row-badge until">Hasta ${escapeHtml(item.availableUntil.split('-').reverse().join('/'))}</span>` : ''}
+          </div>
+          <div class="row-meta">${renderRowCats(item)}</div>
+        </div>
+        ${selectMode ? '' : `
+        <div class="row-actions">
+          ${getItemStatus(item) !== 'publicada' ? `<button type="button" class="mini-btn" data-action="publish-now" data-id="${escapeHtml(item.id)}" title="Publicar ya, sin esperar borrador/fecha">${ICON_PUBLISH}<span class="mini-btn-text">Publicar ahora</span></button>` : ''}
+          <button type="button" class="mini-btn" data-action="edit" data-id="${escapeHtml(item.id)}">${ICON_EDIT}<span class="mini-btn-text">Editar</span></button>
+          <button type="button" class="mini-btn danger" data-action="delete" data-id="${escapeHtml(item.id)}">${ICON_DEL}<span class="mini-btn-text">Eliminar</span></button>
+        </div>`}
+      </div>
+    `;
+  }
+
+  function render(){
+    if(trashView){ renderTrash(); return; }
+    autoTrashExpired();
+    const activas = newsData.filter((n) => !n.deletedAt);
+    headSub.textContent = `${activas.length} noticia${activas.length === 1 ? '' : 's'} en total · se ordenan automáticamente por fecha`;
+    updateStats();
+    const visible = sortedByDate(newsData.filter(matchesFilters));
+    emptyState.textContent = 'No hay noticias que coincidan con la búsqueda.';
+
+    // Si hay una noticia en pleno arrastre, su fila NO se puede desconectar
+    // del documento ni por un instante (ni siquiera dentro del mismo tick de
+    // JS): el navegador da por terminado el arrastre nativo apenas el
+    // elemento "origen" sale del DOM, aunque el código lo vuelva a insertar
+    // enseguida con el mismo objeto. Reconstruir todo con innerHTML (como se
+    // hacía antes) saca a esa fila del árbol durante ese reemplazo, y eso es
+    // lo que hacía que soltar sobre una categoría a veces "no guardara" y
+    // hubiera que arrastrar dos veces. Por eso, mientras se arrastra algo,
+    // en vez de tirar toda la lista y reconstruirla de cero, se arma aparte
+    // y se hace un swap que deja a la fila arrastrada siempre puesta:
+    // se la mueve (con appendChild, que es un solo movimiento atómico
+    // dentro del mismo padre) en vez de sacarla y volver a ponerla.
+    // Mismo criterio que en galeria-admin.html: mientras se previsualiza la
+    // categoría sobre la que estás pasando, la noticia aparece igual que
+    // cualquier otra fila (nada de insignias ni bordes de más), nomás que
+    // semitransparente por el propio arrastre — si todavía no pertenece a
+    // esa categoría, se agrega al final del grupo.
+    const dragEl = draggingNewsId ? newsList.querySelector(`.list-row[data-id="${CSS.escape(draggingNewsId)}"]`) : null;
+    const visibleWithoutDragged = visible.filter((item) => item.id !== draggingNewsId);
+    // Si la noticia arrastrada existe pero todavía no entra en el filtro
+    // actual (por eso mismo la estás arrastrando ahí), igual va a terminar
+    // apareciendo al final como previsualización, así que la lista nunca
+    // queda realmente vacía mientras dragEl exista.
+    emptyState.hidden = visibleWithoutDragged.length > 0 || !!dragEl;
+
+    const bodyHtml = (selectMode ? '' : `
+      <div class="add-row" id="addRow">
+        <span class="plus-box">+</span>
+        <span>Añadir noticia nueva</span>
+      </div>
+    `) + visibleWithoutDragged.map(rowHtml).join('');
+
+    if(!dragEl){
+      newsList.innerHTML = bodyHtml;
+    } else {
+      const temp = document.createElement('div');
+      temp.innerHTML = bodyHtml;
+      const newNodes = [...temp.childNodes];
+      // Esto sí desconecta nodos del documento, pero ninguno de ellos es
+      // dragEl (lo dejamos afuera del bodyHtml a propósito), así que no hay
+      // ningún origen de arrastre activo entre los que se sacan.
+      [...newsList.childNodes].forEach((n) => { if(n !== dragEl) n.remove(); });
+      newNodes.forEach((n) => newsList.appendChild(n));
+      // Vuelve a poner (mover, no sacar-y-reponer) la fila arrastrada al
+      // final, como previsualización de "acá quedaría si soltás".
+      newsList.appendChild(dragEl);
+      dragEl.classList.add('dragging');
+    }
+
+    updateRestoreBtn();
+    if(selectMode) updateSelectionBar();
+    requestAnimationFrame(fitRowCats);
+  }
+
+  // ---- Papelera ----
+  let trashView = false;
+  const btnTrash = document.getElementById('btnTrash');
+  const btnEmptyTrash = document.getElementById('btnEmptyTrash');
+  const statsGridEl = document.getElementById('statsGrid');
+  const toolbarEl = document.querySelector('.toolbar');
+  const catsFilterWrapEl = document.querySelector('.cats-filter-wrap');
+
+  function trashedItems(){
+    return newsData.filter((n) => n.deletedAt).sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
+  }
+  // Cuántos días le quedan a una noticia en la papelera antes de que se
+  // borre sola de verdad (ver purgeOldTrash / TRASH_RETENTION_DAYS).
+  function daysUntilPurge(item){
+    const purgeAt = new Date(item.deletedAt).getTime() + TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+    return Math.max(0, Math.ceil((purgeAt - Date.now()) / (24 * 60 * 60 * 1000)));
+  }
+  function updateTrashButtonLabel(){
+    const n = trashedItems().length;
+    btnTrash.textContent = trashView ? '← Volver' : (n ? `Papelera (${n})` : 'Papelera');
+    btnEmptyTrash.hidden = !trashView || n === 0;
+  }
+  function setTrashView(on){
+    trashView = on;
+    if(on && selectMode) exitSelectMode();
+    statsGridEl.hidden = on;
+    toolbarEl.hidden = on;
+    catsFilterWrapEl.hidden = on;
+    document.getElementById('btnSelectMode').hidden = on;
+    document.getElementById('btnNew').hidden = on;
+    updateTrashButtonLabel();
+    render();
+  }
+  btnTrash.addEventListener('click', () => setTrashView(!trashView));
+
+  function renderTrash(){
+    const trashed = trashedItems();
+    emptyState.hidden = trashed.length > 0;
+    emptyState.textContent = 'La papelera está vacía.';
+    headSub.textContent = trashed.length
+      ? `${trashed.length} noticia${trashed.length === 1 ? '' : 's'} en la papelera · se elimina${trashed.length === 1 ? '' : 'n'} definitivamente a los ${TRASH_RETENTION_DAYS} días`
+      : 'La papelera está vacía.';
+    newsList.innerHTML = trashed.map((item) => `
+      <div class="list-row" data-id="${escapeHtml(item.id)}">
+        <div class="row-thumb-wrap">
+          <div class="row-thumb" title="${item.image ? 'Ver imagen más grande' : ''}" style="${item.image ? `background-image:url('${escapeHtml(item.image)}')` : ''}"></div>
+          <div class="row-date">${ICON_CALENDAR}<span>${escapeHtml(item.date)}</span></div>
+        </div>
+        <div class="row-info">
+          <div class="row-title">
+            <span class="row-title-text">${escapeHtml(item.title)}</span>
+            <span class="row-badge trash-countdown">${daysUntilPurge(item) === 0 ? 'Se borra hoy' : `Se borra en ${daysUntilPurge(item)} día${daysUntilPurge(item) === 1 ? '' : 's'}`}</span>
+          </div>
+          <div class="row-meta">${renderRowCats(item)}</div>
+        </div>
+        <div class="row-actions">
+          <button type="button" class="mini-btn" data-action="restore" data-id="${escapeHtml(item.id)}">${ICON_RESTORE}<span class="mini-btn-text">Restaurar</span></button>
+          <button type="button" class="mini-btn danger" data-action="delete-forever" data-id="${escapeHtml(item.id)}">${ICON_DEL}<span class="mini-btn-text">Eliminar definitivamente</span></button>
+        </div>
+      </div>
+    `).join('');
+    requestAnimationFrame(fitRowCats);
+  }
+
+  // ---- Selección múltiple ----
+  let selectMode = false;
+  let selectedIds = new Set();
+  const btnSelectMode = document.getElementById('btnSelectMode');
+  const selectionBar = document.getElementById('selectionBar');
+  const selectionCountLabel = document.getElementById('selectionCountLabel');
+  const btnBulkDelete = document.getElementById('btnBulkDelete');
+  const btnCancelSelect = document.getElementById('btnCancelSelect');
+  const bulkMove = document.getElementById('bulkMove');
+  const btnBulkMove = document.getElementById('btnBulkMove');
+  const bulkMovePanel = document.getElementById('bulkMovePanel');
+
+  function enterSelectMode(){
+    selectMode = true;
+    selectedIds.clear();
+    btnSelectMode.hidden = true;
+    selectionBar.hidden = false;
+    render();
+  }
+  function exitSelectMode(){
+    selectMode = false;
+    selectedIds.clear();
+    btnSelectMode.hidden = false;
+    selectionBar.hidden = true;
+    render();
+  }
+  function updateSelectionBar(){
+    selectionCountLabel.textContent = `${selectedIds.size} seleccionada${selectedIds.size === 1 ? '' : 's'}`;
+    btnBulkDelete.disabled = selectedIds.size === 0;
+    btnBulkMove.disabled = selectedIds.size === 0;
+  }
+  btnSelectMode.addEventListener('click', enterSelectMode);
+  btnCancelSelect.addEventListener('click', exitSelectMode);
+
+  // ---- Mover a categoría en bloque (mismo resultado que arrastrar varias
+  // noticias tildadas sobre un chip, pero sin tener que arrastrar) ----
+  function closeBulkMovePanel(){ bulkMovePanel.classList.remove('is-open'); btnBulkMove.classList.remove('is-open'); }
+  function toggleBulkMovePanel(){
+    if(!selectedIds.size) return;
+    const isOpen = bulkMovePanel.classList.contains('is-open');
+    if(isOpen){ closeBulkMovePanel(); return; }
+    bulkMovePanel.innerHTML = CATEGORIES.map((c) => `<button type="button" class="bulk-move-opt" data-cat="${escapeHtml(c.value)}">${escapeHtml(c.label)}</button>`).join('');
+    bulkMovePanel.querySelectorAll('.bulk-move-opt').forEach((opt) => {
+      opt.addEventListener('click', () => {
+        const value = opt.dataset.cat;
+        const seleccionadas = newsData.filter((n) => selectedIds.has(n.id));
+        let nuevas = 0;
+        seleccionadas.forEach((item) => {
+          const cats = getItemCategories(item);
+          if(!cats.includes(value)){ item.categories = [...cats, value]; nuevas++; }
+        });
+        closeBulkMovePanel();
+        render();
+        const label = getCategoryLabel(value);
+        showToast(nuevas
+          ? `${nuevas} noticia${nuevas === 1 ? '' : 's'} agregada${nuevas === 1 ? '' : 's'} a "${label}"`
+          : `Ya estaban todas en "${label}"`);
+      });
+    });
+    bulkMovePanel.classList.add('is-open');
+    btnBulkMove.classList.add('is-open');
+  }
+  btnBulkMove.addEventListener('click', toggleBulkMovePanel);
+  document.addEventListener('click', (e) => { if(!e.target.closest('#bulkMove')) closeBulkMovePanel(); });
+
+  const bulkDeleteModalBg = document.getElementById('bulkDeleteModalBg');
+  const bulkDeleteMsg = document.getElementById('bulkDeleteMsg');
+  function openBulkDeleteModal(){
+    if(!selectedIds.size) return;
+    const n = selectedIds.size;
+    bulkDeleteMsg.textContent = `¿Eliminar ${n} noticia${n === 1 ? '' : 's'} seleccionada${n === 1 ? '' : 's'}? Se mueven a la papelera y se pueden restaurar hasta dentro de ${TRASH_RETENTION_DAYS} días.`;
+    bulkDeleteModalBg.classList.add('open');
+  }
+  function closeBulkDeleteModal(){ bulkDeleteModalBg.classList.remove('open'); }
+  document.getElementById('bulkDeleteModalClose').addEventListener('click', closeBulkDeleteModal);
+  document.getElementById('bulkDeleteModalCancel').addEventListener('click', closeBulkDeleteModal);
+  bulkDeleteModalBg.addEventListener('click', (e) => { if(e.target === bulkDeleteModalBg) closeBulkDeleteModal(); });
+  document.getElementById('bulkDeleteModalConfirm').addEventListener('click', () => {
+    const n = selectedIds.size;
+    const now = new Date().toISOString();
+    newsData.forEach((item) => { if(selectedIds.has(item.id)) item.deletedAt = now; });
+    closeBulkDeleteModal();
+    exitSelectMode();
+    updateTrashButtonLabel();
+    showToast(`${n} noticia${n === 1 ? '' : 's'} movida${n === 1 ? '' : 's'} a la papelera`);
+  });
+  btnBulkDelete.addEventListener('click', openBulkDeleteModal);
+
+  // ---- Modal Vaciar papelera ----
+  const emptyTrashModalBg = document.getElementById('emptyTrashModalBg');
+  const emptyTrashMsg = document.getElementById('emptyTrashMsg');
+  function closeEmptyTrashModal(){ emptyTrashModalBg.classList.remove('open'); }
+  btnEmptyTrash.addEventListener('click', () => {
+    const n = trashedItems().length;
+    if(!n) return;
+    emptyTrashMsg.textContent = `¿Eliminar definitivamente ${n} noticia${n === 1 ? '' : 's'} de la papelera? Esta acción no se puede deshacer.`;
+    emptyTrashModalBg.classList.add('open');
+  });
+  document.getElementById('emptyTrashModalClose').addEventListener('click', closeEmptyTrashModal);
+  document.getElementById('emptyTrashModalCancel').addEventListener('click', closeEmptyTrashModal);
+  emptyTrashModalBg.addEventListener('click', (e) => { if(e.target === emptyTrashModalBg) closeEmptyTrashModal(); });
+  document.getElementById('emptyTrashModalConfirm').addEventListener('click', () => {
+    const n = trashedItems().length;
+    newsData = newsData.filter((n2) => !n2.deletedAt);
+    closeEmptyTrashModal();
+    updateTrashButtonLabel();
+    render();
+    showToast(`Papelera vaciada: ${n} noticia${n === 1 ? '' : 's'} eliminada${n === 1 ? '' : 's'} definitivamente`);
+  });
+
+  function updateRestoreBtn(){
+    document.getElementById('btnRestore').disabled = (JSON.stringify(newsData) === lastSavedSnapshot);
+  }
+
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchTerm = e.target.value.trim().toLowerCase();
+    render();
+  });
+  const dateFilterBtn = document.getElementById('dateFilterBtn');
+  const dateFilterLabel = document.getElementById('dateFilterLabel');
+  const dateFilterBtnClear = document.getElementById('dateFilterBtnClear');
+  const dateFilterPanel = document.getElementById('dateFilterPanel');
+  const datePresetList = document.getElementById('datePresetList');
+
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const toISO = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  const formatShort = (iso) => { const [, m, d] = iso.split('-'); return `${d}/${m}`; };
+
+  function presetRange(key){
+    const now = new Date();
+    if(key === 'hoy'){ const iso = toISO(now); return [iso, iso]; }
+    if(key === 'semana'){
+      const day = now.getDay();
+      const diff = (day === 0 ? -6 : 1) - day;
+      const mon = new Date(now); mon.setDate(now.getDate() + diff);
+      const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+      return [toISO(mon), toISO(sun)];
+    }
+    if(key === 'mes'){
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return [toISO(first), toISO(last)];
+    }
+    if(key === 'mesPasado'){
+      const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const last = new Date(now.getFullYear(), now.getMonth(), 0);
+      return [toISO(first), toISO(last)];
+    }
+    return [null, null];
+  }
+  const PRESET_LABELS = { hoy: 'Hoy', semana: 'Esta semana', mes: 'Este mes', mesPasado: 'Mes pasado' };
+
+  function matchingPreset(){
+    if(!dateFrom || !dateTo) return null;
+    for(const key of Object.keys(PRESET_LABELS)){
+      const [from, to] = presetRange(key);
+      if(from === dateFrom && to === dateTo) return key;
+    }
+    return null;
+  }
+
+  function updateDateFilterUI(){
+    const active = !!(dateFrom || dateTo);
+    dateFilterBtn.classList.toggle('is-active', active);
+    dateFilterBtnClear.hidden = !active;
+    const preset = matchingPreset();
+    datePresetList.querySelectorAll('.date-preset').forEach(btn => {
+      btn.classList.toggle('is-active', preset === btn.dataset.preset);
+    });
+    if(!active){ dateFilterLabel.textContent = 'Cualquier fecha'; }
+    else if(preset){ dateFilterLabel.textContent = PRESET_LABELS[preset]; }
+    else if(dateFrom && dateTo && dateFrom === dateTo){ dateFilterLabel.textContent = formatShort(dateFrom); }
+    else if(dateFrom && dateTo){ dateFilterLabel.textContent = `${formatShort(dateFrom)} – ${formatShort(dateTo)}`; }
+    else if(dateFrom){ dateFilterLabel.textContent = formatShort(dateFrom); }
+    else { dateFilterLabel.textContent = formatShort(dateTo); }
+  }
+
+  // ---- Panel de filtro de fecha: "Fecha específica" o "Rango de fechas",
+  // con calendario embebido (mismo grid para ambos modos) y Aplicar/Cancelar
+  // que confirman o descartan lo elegido antes de tocar el filtro real. ----
+  const DF_MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const DF_DIAS = ['LU','MA','MI','JU','VI','SA','DO'];
+  const dateModeToggle = document.getElementById('dateModeToggle');
+  const dateModeRange = document.getElementById('dateModeRange');
+  const dateRangeTabs = document.getElementById('dateRangeTabs');
+  const rangeFromLabel = document.getElementById('rangeFromLabel');
+  const rangeToLabel = document.getElementById('rangeToLabel');
+  const filterCalHead = document.getElementById('filterCalHead');
+  const filterMonthLabel = document.getElementById('filterMonthLabel');
+  const filterWeekdays = document.getElementById('filterWeekdays');
+  const filterDays = document.getElementById('filterDays');
+  const filterTodayBtn = document.getElementById('filterTodayBtn');
+  const filterClearBtn = document.getElementById('filterClearBtn');
+  const dateFilterApplyBtn = document.getElementById('dateFilterApplyBtn');
+  const dateFilterCancelBtn = document.getElementById('dateFilterCancelBtn');
+  const dfManualInput = document.getElementById('dfManualInput');
+  const dfManualLabel = document.getElementById('dfManualLabel');
+  filterWeekdays.innerHTML = DF_DIAS.map(d => `<span>${d}</span>`).join('');
+
+  const dfTodayISO = () => toISO(new Date());
+  function dfParseISO(iso){
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    if(!m) return null;
+    return { y: +m[1], m: +m[2], d: +m[3] };
+  }
+
+  let dfMode = 'specific';   // 'specific' | 'range'
+  let dfSide = 'from';       // lado activo en modo rango
+  let dfDate = '';           // selección en modo específico
+  let dfFrom = '';
+  let dfTo = '';
+  let dfViewY, dfViewM;
+
+  function dfSetView(iso){ const p = dfParseISO(iso) || dfParseISO(dfTodayISO()); dfViewY = p.y; dfViewM = p.m; }
+  function dfActiveSelection(){ return dfMode === 'specific' ? dfDate : (dfSide === 'from' ? dfFrom : dfTo); }
+
+  function dfRenderCalendar(){
+    filterMonthLabel.textContent = `${DF_MESES[dfViewM - 1]} de ${dfViewY}`;
+    const selected = dfParseISO(dfActiveSelection());
+    const today = dfParseISO(dfTodayISO());
+    const rFrom = dfMode === 'range' ? dfParseISO(dfFrom) : null;
+    const rTo = dfMode === 'range' ? dfParseISO(dfTo) : null;
+    let startOffset = new Date(dfViewY, dfViewM - 1, 1).getDay() - 1;
+    if(startOffset < 0) startOffset = 6;
+    const daysInMonth = new Date(dfViewY, dfViewM, 0).getDate();
+    const daysInPrevMonth = new Date(dfViewY, dfViewM - 1, 0).getDate();
+    let cells = '';
+    for(let i = 0; i < startOffset; i++){
+      const dayNum = daysInPrevMonth - startOffset + i + 1;
+      cells += `<button type="button" class="dpick-day is-muted" data-nav="-1" data-day="${dayNum}">${dayNum}</button>`;
+    }
+    for(let d = 1; d <= daysInMonth; d++){
+      const isToday = today && today.y === dfViewY && today.m === dfViewM && today.d === d;
+      const isSelected = selected && selected.y === dfViewY && selected.m === dfViewM && selected.d === d;
+      let inRange = false;
+      if(dfMode === 'range' && rFrom && rTo){
+        const cur = new Date(dfViewY, dfViewM - 1, d).getTime();
+        const f = new Date(rFrom.y, rFrom.m - 1, rFrom.d).getTime();
+        const t = new Date(rTo.y, rTo.m - 1, rTo.d).getTime();
+        inRange = cur > Math.min(f, t) && cur < Math.max(f, t);
+      }
+      const cls = ['dpick-day'];
+      if(isToday) cls.push('is-today');
+      if(isSelected) cls.push('is-selected');
+      if(inRange) cls.push('is-range');
+      cells += `<button type="button" class="${cls.join(' ')}" data-day="${d}">${d}</button>`;
+    }
+    const trailing = (7 - ((startOffset + daysInMonth) % 7)) % 7;
+    for(let i = 1; i <= trailing; i++){
+      cells += `<button type="button" class="dpick-day is-muted" data-nav="1" data-day="${i}">${i}</button>`;
+    }
+    filterDays.innerHTML = cells;
+    dfSyncManualInput();
+  }
+
+  // Mantiene el campo de texto "Fecha manual" reflejando la selección
+  // activa (la fecha específica, o el lado Desde/Hasta según corresponda).
+  // No pisa lo que el usuario está escribiendo en ese momento.
+  function dfSyncManualInput(){
+    if(document.activeElement === dfManualInput) return;
+    if(dfMode === 'specific'){
+      dfManualLabel.textContent = 'Fecha';
+      dfManualInput.value = dateISOToText(dfDate);
+    } else {
+      dfManualLabel.textContent = dfSide === 'from' ? 'Desde' : 'Hasta';
+      dfManualInput.value = dateISOToText(dfSide === 'from' ? dfFrom : dfTo);
+    }
+    dfManualInput.classList.remove('is-invalid');
+  }
+
+  // Aplica lo escrito a mano en el campo de fecha manual a la selección
+  // activa (mismo destino que tocaría un click en el calendario).
+  function dfCommitManualInput(){
+    const raw = dfManualInput.value.trim();
+    if(!raw){
+      if(dfMode === 'specific'){ dfDate = ''; }
+      else if(dfSide === 'from'){ dfFrom = ''; dfRefreshRangeLabels(); }
+      else { dfTo = ''; dfRefreshRangeLabels(); }
+      dfRenderCalendar();
+      return;
+    }
+    const iso = dateTextToISO(raw);
+    if(!iso){ dfManualInput.classList.add('is-invalid'); return; }
+    if(dfMode === 'specific'){
+      dfDate = iso;
+    } else if(dfSide === 'from'){
+      dfFrom = iso;
+      if(dfTo && dfFrom > dfTo) dfTo = iso;
+      dfSide = 'to';
+      dfRefreshRangeLabels();
+    } else {
+      dfTo = iso;
+      if(dfFrom && dfTo < dfFrom) dfFrom = iso;
+      dfRefreshRangeLabels();
+    }
+    dfSetView(iso);
+    dfRenderCalendar();
+  }
+  dfManualInput.addEventListener('input', () => applyDateTextMask(dfManualInput));
+  dfManualInput.addEventListener('blur', dfCommitManualInput);
+  dfManualInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ e.preventDefault(); dfManualInput.blur(); }
+  });
+
+  function dfRefreshRangeLabels(){
+    rangeFromLabel.textContent = dfFrom ? formatShort(dfFrom) : '—';
+    rangeToLabel.textContent = dfTo ? formatShort(dfTo) : '—';
+    dateRangeTabs.querySelectorAll('.date-range-tab').forEach(btn => {
+      btn.classList.toggle('is-active', btn.dataset.side === dfSide);
+    });
+    datePresetList.querySelectorAll('.date-preset').forEach(btn => {
+      const [f, t] = presetRange(btn.dataset.preset);
+      btn.classList.toggle('is-active', !!dfFrom && f === dfFrom && t === dfTo);
+    });
+  }
+
+  function dfSetMode(mode){
+    dfMode = mode;
+    dateModeToggle.querySelectorAll('.date-mode-btn').forEach(b => b.classList.toggle('is-active', b.dataset.mode === mode));
+    dateModeRange.hidden = mode !== 'range';
+    if(mode === 'range'){
+      dfSide = 'from';
+      dfRefreshRangeLabels();
+      dfSetView(dfFrom || dfTo || dfTodayISO());
+    } else {
+      dfSetView(dfDate || dfTodayISO());
+    }
+    dfRenderCalendar();
+  }
+
+  function dfResetPendingFromApplied(){
+    if(dateFrom && dateTo && dateFrom === dateTo){
+      dfMode = 'specific'; dfDate = dateFrom; dfFrom = ''; dfTo = '';
+    } else if(dateFrom || dateTo){
+      dfMode = 'range'; dfFrom = dateFrom; dfTo = dateTo; dfDate = '';
+    } else {
+      dfMode = 'specific'; dfDate = ''; dfFrom = ''; dfTo = '';
+    }
+  }
+
+  dateModeToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('.date-mode-btn');
+    if(!btn) return;
+    dfSetMode(btn.dataset.mode);
+  });
+  dateRangeTabs.addEventListener('click', (e) => {
+    const btn = e.target.closest('.date-range-tab');
+    if(!btn) return;
+    dfSide = btn.dataset.side;
+    dfRefreshRangeLabels();
+    dfSetView(dfActiveSelection() || dfTodayISO());
+    dfRenderCalendar();
+  });
+  datePresetList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.date-preset');
+    if(!btn) return;
+    const [f, t] = presetRange(btn.dataset.preset);
+    dfFrom = f; dfTo = t; dfSide = 'to';
+    dfRefreshRangeLabels();
+    dfSetView(t);
+    dfRenderCalendar();
+  });
+  filterCalHead.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-act]');
+    if(!btn) return;
+    if(btn.dataset.act === 'prev'){ dfViewM--; if(dfViewM < 1){ dfViewM = 12; dfViewY--; } dfRenderCalendar(); }
+    else if(btn.dataset.act === 'next'){ dfViewM++; if(dfViewM > 12){ dfViewM = 1; dfViewY++; } dfRenderCalendar(); }
+  });
+  filterDays.addEventListener('click', (e) => {
+    const dayBtn = e.target.closest('.dpick-day');
+    if(!dayBtn) return;
+    if(dayBtn.dataset.nav === '-1'){ dfViewM--; if(dfViewM < 1){ dfViewM = 12; dfViewY--; } dfRenderCalendar(); return; }
+    if(dayBtn.dataset.nav === '1'){ dfViewM++; if(dfViewM > 12){ dfViewM = 1; dfViewY++; } dfRenderCalendar(); return; }
+    const iso = `${dfViewY}-${pad2(dfViewM)}-${pad2(+dayBtn.dataset.day)}`;
+    if(dfMode === 'specific'){
+      dfDate = iso;
+    } else if(dfSide === 'from'){
+      dfFrom = iso;
+      if(dfTo && dfFrom > dfTo) dfTo = iso;
+      dfSide = 'to';
+      dfRefreshRangeLabels();
+    } else {
+      dfTo = iso;
+      if(dfFrom && dfTo < dfFrom) dfFrom = iso;
+      dfRefreshRangeLabels();
+    }
+    dfRenderCalendar();
+  });
+  filterTodayBtn.addEventListener('click', () => {
+    const iso = dfTodayISO();
+    if(dfMode === 'specific'){ dfDate = iso; }
+    else if(dfSide === 'from'){ dfFrom = iso; if(dfTo && dfFrom > dfTo) dfTo = iso; dfRefreshRangeLabels(); }
+    else { dfTo = iso; if(dfFrom && dfTo < dfFrom) dfFrom = iso; dfRefreshRangeLabels(); }
+    dfSetView(iso);
+    dfRenderCalendar();
+  });
+  filterClearBtn.addEventListener('click', () => {
+    if(dfMode === 'specific'){ dfDate = ''; }
+    else if(dfSide === 'from'){ dfFrom = ''; dfRefreshRangeLabels(); }
+    else { dfTo = ''; dfRefreshRangeLabels(); }
+    dfRenderCalendar();
+  });
+  dateFilterApplyBtn.addEventListener('click', () => {
+    if(dfMode === 'specific'){ dateFrom = dfDate; dateTo = dfDate; }
+    else { dateFrom = dfFrom; dateTo = dfTo; }
+    updateDateFilterUI();
+    render();
+    closeDateFilterPanel();
+  });
+  dateFilterCancelBtn.addEventListener('click', () => { closeDateFilterPanel(); });
+
+  function openDateFilterPanel(){
+    dfResetPendingFromApplied();
+    dfSetMode(dfMode);
+    dateFilterPanel.classList.add('is-open');
+    dateFilterBtn.classList.add('is-open');
+  }
+  function closeDateFilterPanel(){
+    dateFilterPanel.classList.remove('is-open');
+    dateFilterBtn.classList.remove('is-open');
+  }
+
+  dateFilterBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dateFilterPanel.classList.contains('is-open') ? closeDateFilterPanel() : openDateFilterPanel();
+  });
+  document.addEventListener('click', (e) => {
+    // Se usa composedPath() en vez de closest(e.target) porque al elegir un
+    // día el calendario se vuelve a dibujar (innerHTML) y el botón clickeado
+    // queda desconectado del documento; closest() ya no puede subir hasta
+    // .date-filter en ese caso y cerraba el panel por error. composedPath()
+    // conserva la ruta real del click tal como era en el momento del clic.
+    const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+    const insideFilter = path.some(el => el.classList && el.classList.contains('date-filter'));
+    if(!insideFilter) closeDateFilterPanel();
+  });
+  dateFilterBtnClear.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dateFrom = ''; dateTo = '';
+    updateDateFilterUI();
+    render();
+  });
+  updateDateFilterUI();
+
+  // ---- Dropdown "Ordenar por" ----
+  const sortFilterBtn = document.getElementById('sortFilterBtn');
+  const sortFilterLabel = document.getElementById('sortFilterLabel');
+  const sortFilterPanel = document.getElementById('sortFilterPanel');
+  function updateSortFilterUI(){
+    sortFilterLabel.textContent = SORT_LABELS[sortMode];
+    sortFilterPanel.querySelectorAll('.sort-option').forEach(opt => {
+      opt.classList.toggle('is-active', opt.dataset.sort === sortMode);
+    });
+  }
+  function openSortFilterPanel(){
+    sortFilterPanel.classList.add('is-open');
+    sortFilterBtn.classList.add('is-open');
+  }
+  function closeSortFilterPanel(){
+    sortFilterPanel.classList.remove('is-open');
+    sortFilterBtn.classList.remove('is-open');
+  }
+  sortFilterBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    sortFilterPanel.classList.contains('is-open') ? closeSortFilterPanel() : openSortFilterPanel();
+  });
+  function setSortMode(mode){
+    sortMode = mode;
+    updateSortFilterUI();
+    closeSortFilterPanel();
+    render();
+  }
+  sortFilterPanel.querySelectorAll('.sort-option').forEach(opt => {
+    opt.addEventListener('click', () => setSortMode(opt.dataset.sort));
+  });
+  document.addEventListener('click', (e) => {
+    if(!e.target.closest('.sort-filter')) closeSortFilterPanel();
+  });
+  updateSortFilterUI();
+
+  // Las tarjetas "Borradores" / "Programadas" son un atajo al
+  // mismo filtro que el dropdown "Ordenar por"; un segundo click sobre la
+  // misma vuelve al orden por defecto ("Más recientes primero").
+  document.querySelectorAll('.stat-card[data-status-filter]').forEach(card => {
+    card.addEventListener('click', () => {
+      setSortMode(sortMode === card.dataset.statusFilter ? 'recientes' : card.dataset.statusFilter);
+    });
+  });
+
+  // "Noticias totales" es el botón de "reset": saca el filtro de categoría
+  // y el de estado (borrador/programada) y muestra todo.
+  statCardTotal.addEventListener('click', () => {
+    sortMode = 'recientes';
+    updateSortFilterUI();
+    selectCategoryFilter('__todas__');
+  });
+
+  // Resalte dorado temporal sobre un elemento: se usa para "señalarlo"
+  // después de hacer scroll hasta él (p. ej. desde las tarjetas de
+  // Categorías totales o Última publicación).
+  function flashHighlight(el){
+    if(!el) return;
+    el.classList.remove('flash-highlight');
+    void el.offsetWidth; // fuerza reflow para poder re-disparar la animación en clicks seguidos
+    el.classList.add('flash-highlight');
+    setTimeout(() => el.classList.remove('flash-highlight'), 1800);
+  }
+
+  // "Categorías totales" lleva la vista hasta la fila de chips de
+  // categorías (si está oculta por estar en la papelera, sale de ahí primero)
+  // y la resalta un instante.
+  statCardCategorias.addEventListener('click', () => {
+    if(trashView) setTrashView(false);
+    catsFilterWrapEl.scrollIntoView({ behavior:'smooth', block:'center' });
+    flashHighlight(catsFilterWrapEl);
+  });
+
+  // "Última publicación" saca cualquier filtro que la pueda estar
+  // ocultando y hace scroll hasta esa fila, resaltándola. Si el orden
+  // actual es "Más antiguas primero" se respeta tal cual (la más nueva
+  // queda al final de la lista, así que se hace scroll hasta abajo); para
+  // cualquier otro orden/filtro (borrador, programada) se
+  // vuelve a "Más recientes primero" para garantizar que la última
+  // publicación esté visible, y se hace scroll hasta arriba.
+  statCardUltima.addEventListener('click', () => {
+    const activas = newsData.filter(n => !n.deletedAt);
+    if(!activas.length) return;
+    if(trashView) setTrashView(false);
+    if(selectMode) exitSelectMode();
+    searchTerm = '';
+    document.getElementById('searchInput').value = '';
+    dateFrom = ''; dateTo = '';
+    updateDateFilterUI();
+    if(sortMode !== 'antiguas') sortMode = 'recientes';
+    updateSortFilterUI();
+    selectCategoryFilter('__todas__'); // ya vuelve a renderizar la lista
+    requestAnimationFrame(() => {
+      const rows = newsList.querySelectorAll('.list-row');
+      const targetRow = sortMode === 'antiguas' ? rows[rows.length - 1] : rows[0];
+      if(targetRow){
+        targetRow.scrollIntoView({ behavior:'smooth', block:'center' });
+        flashHighlight(targetRow);
+      }
+    });
+  });
+
+  // ---- Acciones sobre cada fila ----
+  newsList.addEventListener('click', (e) => {
+    if(selectMode){
+      const rowEl = e.target.closest('.list-row');
+      if(!rowEl) return;
+      const id = rowEl.dataset.id;
+      if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+      render();
+      return;
+    }
+    if(e.target.closest('#addRow')){
+      openEditModal(null);
+      return;
+    }
+    const thumbEl = e.target.closest('.row-thumb');
+    if(thumbEl){
+      const rowEl = thumbEl.closest('.list-row');
+      const item = rowEl ? newsData.find(n => n.id === rowEl.dataset.id) : null;
+      if(item && item.image) openPhotoViewer(item.image, item.title);
+      return;
+    }
+    const btn = e.target.closest('button[data-action]');
+    if(!btn) return;
+    const id = btn.dataset.id;
+    const item = newsData.find(n => n.id === id);
+    if(!item) return;
+    if(btn.dataset.action === 'edit'){
+      openEditModal(item);
+    } else if(btn.dataset.action === 'delete'){
+      openDeleteModal(item, 'soft');
+    } else if(btn.dataset.action === 'restore'){
+      delete item.deletedAt;
+      render();
+      showToast(`"${item.title}" restaurada`);
+    } else if(btn.dataset.action === 'delete-forever'){
+      openDeleteModal(item, 'hard');
+    } else if(btn.dataset.action === 'publish-now'){
+      // Saca la noticia de "borrador" y, si su fecha era futura ("programada"),
+      // la adelanta a hoy para que se vea ya mismo en la página pública.
+      item.published = true;
+      if(item.date > toISO(new Date())) item.date = toISO(new Date());
+      render();
+      showToast(`"${item.title}" publicada`);
+    }
+  });
+
+  // ---- Modal Añadir/Editar ----
+  const editModalBg = document.getElementById('editModalBg');
+  const editModalTitle = document.getElementById('editModalTitle');
+  const fieldTitle = document.getElementById('fieldTitle');
+  const fieldDate = document.getElementById('fieldDate');
+  const fieldDateLabel = document.getElementById('fieldDateLabel');
+  const fieldDateUntil = document.getElementById('fieldDateUntil');
+  const fieldDateUntilGroup = document.getElementById('fieldDateUntilGroup');
+  const untilHint = document.getElementById('untilHint');
+  const modeToggle = document.getElementById('modeToggle');
+  const modeHint = document.getElementById('modeHint');
+  const dateRangeFields = document.getElementById('dateRangeFields');
+  const scheduleHint = document.getElementById('scheduleHint');
+  // "simple" = sin campo de fecha visible: se asigna sola (hoy al crear, o
+  // se conserva la que ya tenía al editar). "programada" = rango "desde ->
+  // hasta" editable a mano; al llegar "hasta" se manda sola a la papelera
+  // (ver autoTrashExpired).
+  let editMode = 'simple';
+  function setEditMode(mode){
+    editMode = mode;
+    modeToggle.querySelectorAll('.mode-toggle-btn').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.mode === mode);
+    });
+    const programada = mode === 'programada';
+    dateRangeFields.hidden = !programada;
+    fieldDateUntilGroup.hidden = !programada;
+    fieldDateLabel.textContent = 'Disponible desde';
+    untilHint.hidden = !programada;
+    modeHint.textContent = programada
+      ? 'Elegís vos las fechas: queda visible entre "desde" y "hasta"; al pasar "hasta" se manda sola a la papelera.'
+      : 'La fecha se completa sola (el día en que la creaste) — no hay que elegirla.';
+    if(!programada) fieldDateUntilPicker.setValue('', { silent:true });
+    updateScheduleHint();
+  }
+  modeToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('.mode-toggle-btn');
+    if(!btn) return;
+    setEditMode(btn.dataset.mode);
+  });
+  function updateScheduleHint(){
+    const dateVal = fieldDatePicker.value;
+    const isFuture = dateVal && dateVal > toISO(new Date());
+    scheduleHint.hidden = !isFuture || fieldBorrador.checked;
+    if(isFuture) scheduleHint.textContent = `Fecha futura: queda "Programada" y se va a ver en la página recién ese día.`;
+  }
+  const fieldDatePicker = createDatePicker({
+    wrap: document.getElementById('fieldDateWrap'),
+    text: document.getElementById('fieldDateText'),
+    icon: document.getElementById('fieldDateIcon'),
+    hidden: fieldDate,
+    panel: document.getElementById('fieldDatePanel'),
+    onChange: () => updateScheduleHint()
+  });
+  const fieldDateUntilPicker = createDatePicker({
+    wrap: document.getElementById('fieldDateUntilWrap'),
+    text: document.getElementById('fieldDateUntilText'),
+    icon: document.getElementById('fieldDateUntilIcon'),
+    hidden: fieldDateUntil,
+    panel: document.getElementById('fieldDateUntilPanel')
+  });
+  const fieldBody = document.getElementById('fieldBody');
+  const fieldImagePath = document.getElementById('fieldImagePath');
+  const fieldBorrador = document.getElementById('fieldBorrador');
+  fieldBorrador.addEventListener('change', updateScheduleHint);
+  const catChips = document.getElementById('catChips');
+  const imgDrop = document.getElementById('imgDrop');
+  const imgFile = document.getElementById('imgFile');
+  const imgPreview = document.getElementById('imgPreview');
+  const imgPh = document.getElementById('imgPh');
+  const imgNote = document.getElementById('imgNote');
+  const formError = document.getElementById('formError');
+
+  let editingId = null;
+  let selectedCats = new Set();
+  let currentImageValue = '';
+
+  catChips.addEventListener('click', (e) => {
+    const addBtn = e.target.closest('#catChipAdd');
+    if(addBtn){ addNewCategory(); return; }
+    const chip = e.target.closest('.cat-chip');
+    if(!chip) return;
+    const cat = chip.dataset.cat;
+    if(selectedCats.has(cat)) selectedCats.delete(cat); else selectedCats.add(cat);
+    renderCatChips();
+  });
+  function renderCatChips(){
+    catChips.innerHTML = CATEGORIES.map(c => `<button type="button" class="cat-chip${selectedCats.has(c.value) ? ' is-active' : ''}" data-cat="${c.value}" title="${escapeHtml(c.label)}"><span class="cat-chip-label">${escapeHtml(c.label)}</span></button>`).join('')
+      + `<button type="button" class="cat-chip cat-chip-add" id="catChipAdd">+ Nueva categoría</button>`;
+  }
+
+  // Ajusta el recuadro (ancho y alto) a la proporción real de la imagen,
+  // igual que el recuadro de "Añadir foto" en galeria-admin.html: nunca
+  // supera el tamaño máximo de la columna, y si la imagen es muy vertical
+  // se recorta el alto para no desbordar el modal.
+  const IMG_DROP_MAX_W = 210;
+  const IMG_DROP_MAX_H = 280;
+  function sizeImgDrop(natW, natH){
+    if(!imgDrop) return;
+    let w = IMG_DROP_MAX_W, h = 160;
+    if(natW && natH){
+      const ratio = natW / natH;
+      w = IMG_DROP_MAX_W; h = w / ratio;
+      if(h > IMG_DROP_MAX_H){ h = IMG_DROP_MAX_H; w = h * ratio; }
+    }
+    imgDrop.style.width = `${Math.round(w)}px`;
+    imgDrop.style.height = `${Math.round(h)}px`;
+  }
+  function probeAndSizeImgDrop(src){
+    if(!src){ sizeImgDrop(0, 0); return; }
+    const probe = new Image();
+    probe.onload = () => sizeImgDrop(probe.naturalWidth, probe.naturalHeight);
+    probe.onerror = () => sizeImgDrop(0, 0);
+    probe.src = src;
+  }
+
+  function setImagePreview(value){
+    currentImageValue = value || '';
+    fieldImagePath.value = currentImageValue;
+    if(currentImageValue){
+      imgPreview.src = currentImageValue;
+      imgPreview.hidden = false;
+      imgPh.hidden = true;
+    } else {
+      imgPreview.hidden = true;
+      imgPh.hidden = false;
+    }
+    probeAndSizeImgDrop(currentImageValue);
+  }
+
+  // ---- Texto que se agranda solo: en vez del tirador manual de resize,
+  // el textarea mide su propio contenido y ajusta su alto en cada tecla,
+  // hasta un máximo (definido en CSS) a partir del cual aparece scroll. ----
+  const FIELD_BODY_MAX_HEIGHT = 420;
+  function autoGrowTextarea(el){
+    el.style.height = 'auto';
+    const next = Math.min(el.scrollHeight, FIELD_BODY_MAX_HEIGHT);
+    el.style.height = next + 'px';
+    el.classList.toggle('at-max', el.scrollHeight > FIELD_BODY_MAX_HEIGHT);
+  }
+  fieldBody.addEventListener('input', () => autoGrowTextarea(fieldBody));
+
+  function openEditModal(item){
+    editingId = item ? item.id : null;
+    editModalTitle.textContent = item ? 'Editar noticia' : 'Nueva noticia';
+    fieldTitle.value = item ? item.title : '';
+    fieldDatePicker.setValue(item ? item.date : new Date().toISOString().slice(0, 10));
+    fieldDateUntilPicker.setValue(item && item.availableUntil ? item.availableUntil : '', { silent:true });
+    setEditMode(item && item.availableUntil ? 'programada' : 'simple');
+    fieldBody.value = item ? item.body : '';
+    autoGrowTextarea(fieldBody);
+    fieldBorrador.checked = item ? !item.published : false;
+    // En una noticia existente se respeta lo que ya tenía marcado a mano.
+    // En una nueva, si ya no queda lugar en la página pública, arranca
+    // marcada de entrada (así no le saca el lugar a otra sin querer); el
+    // admin puede destildarla, pero si no hay lugar le va a avisar.
+    updateScheduleHint();
+    selectedCats = new Set(item ? getItemCategories(item) : (categoryFilter !== '__todas__' ? [categoryFilter] : []));
+    renderCatChips();
+    setImagePreview(item ? item.image : '');
+    imgNote.textContent = '';
+    formError.textContent = '';
+    imgFile.value = '';
+    editModalBg.classList.add('open');
+    fieldTitle.focus();
+  }
+  function closeEditModal(){ editModalBg.classList.remove('open'); }
+  document.getElementById('btnNew').addEventListener('click', () => openEditModal(null));
+  document.getElementById('editModalClose').addEventListener('click', closeEditModal);
+  document.getElementById('editModalCancel').addEventListener('click', closeEditModal);
+  editModalBg.addEventListener('click', (e) => { if(e.target === editModalBg) closeEditModal(); });
+
+  fieldImagePath.addEventListener('input', () => setImagePreview(fieldImagePath.value));
+
+  async function handleImageFile(file){
+    if(!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      let dataUrl = reader.result;
+      const originalBytes = estimateBytesFromDataUrl(dataUrl);
+      if(originalBytes > COMPRESS_THRESHOLD_BYTES){
+        dataUrl = await resizeDataUrl(dataUrl, 1280, 0.78);
+      }
+      const finalBytes = estimateBytesFromDataUrl(dataUrl);
+      imgNote.textContent = finalBytes < originalBytes
+        ? `Imagen comprimida: pesaba ${formatBytes(originalBytes)}, ahora ${formatBytes(finalBytes)}`
+        : `Peso: ${formatBytes(finalBytes)}`;
+      setImagePreview(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  }
+  imgFile.addEventListener('change', () => { if(imgFile.files[0]) handleImageFile(imgFile.files[0]); });
+  imgDrop.addEventListener('dragover', (e) => { e.preventDefault(); imgDrop.classList.add('dragover'); });
+  imgDrop.addEventListener('dragleave', () => imgDrop.classList.remove('dragover'));
+  imgDrop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    imgDrop.classList.remove('dragover');
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if(file) handleImageFile(file);
+  });
+  // Con imagen cargada: clic abre el visor con zoom. Sin imagen: clic
+  // abre el selector de archivos (mismo gesto rápido que antes tenía el
+  // <label>, ahora que el recuadro dejó de serlo para poder distinguir
+  // "ver" de "subir").
+  imgDrop.addEventListener('click', () => {
+    if(currentImageValue) openPhotoViewer(currentImageValue, fieldTitle.value.trim() || 'Vista previa');
+    else imgFile.click();
+  });
+
+  // ---- Visor de imagen con zoom (mismo mecanismo que galeria-admin.html):
+  // rueda para acercar/alejar, doble clic, y arrastrar para desplazarse
+  // una vez ampliada. ----
+  const photoViewModalBg = document.getElementById('photoViewModalBg');
+  const viewerImg = document.getElementById('viewerImg');
+  let viewerScale = 1, viewerX = 0, viewerY = 0;
+
+  function clampViewerPan(){
+    const w = viewerImg.offsetWidth, h = viewerImg.offsetHeight;
+    const maxX = Math.max((w * (viewerScale - 1)) / 2, 0);
+    const maxY = Math.max((h * (viewerScale - 1)) / 2, 0);
+    viewerX = Math.max(-maxX, Math.min(maxX, viewerX));
+    viewerY = Math.max(-maxY, Math.min(maxY, viewerY));
+  }
+  function applyViewerZoom(instant){
+    viewerImg.style.transition = instant ? 'none' : '';
+    clampViewerPan();
+    viewerImg.style.transform = `translate(${viewerX}px, ${viewerY}px) scale(${viewerScale})`;
+    const zoomed = viewerScale > 1;
+    viewerImg.classList.toggle('is-zoomed', zoomed);
+    if(instant) void viewerImg.offsetWidth;
+  }
+  function resetViewerZoom(instant){
+    viewerScale = 1; viewerX = 0; viewerY = 0;
+    applyViewerZoom(instant);
+  }
+  function setViewerZoom(next, focalX, focalY){
+    const clamped = Math.max(1, Math.min(4, next));
+    if(clamped === viewerScale) return;
+    if(typeof focalX === 'number' && typeof focalY === 'number'){
+      const rect = viewerImg.getBoundingClientRect();
+      const offsetX = focalX - (rect.left + rect.width / 2);
+      const offsetY = focalY - (rect.top + rect.height / 2);
+      const ratio = clamped / viewerScale;
+      viewerX += offsetX * (1 - ratio);
+      viewerY += offsetY * (1 - ratio);
+    }
+    viewerScale = clamped;
+    if(viewerScale === 1){ viewerX = 0; viewerY = 0; }
+    applyViewerZoom(false);
+  }
+  function openPhotoViewer(src, alt){
+    if(!src) return;
+    resetViewerZoom(true);
+    viewerImg.src = src;
+    viewerImg.alt = alt || '';
+    photoViewModalBg.classList.add('open');
+  }
+  function closePhotoViewer(){ photoViewModalBg.classList.remove('open'); }
+
+  document.getElementById('btnCloseImgViewer').addEventListener('click', closePhotoViewer);
+  photoViewModalBg.addEventListener('click', (e) => { if(e.target === photoViewModalBg) closePhotoViewer(); });
+
+  viewerImg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const direction = e.deltaY > 0 ? -1 : 1;
+    setViewerZoom(viewerScale + direction * 0.35, e.clientX, e.clientY);
+  }, { passive: false });
+
+  viewerImg.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    if(viewerScale > 1) resetViewerZoom(false);
+    else setViewerZoom(2.5, e.clientX, e.clientY);
+  });
+
+  let isPanningViewer = false, vPanStartX = 0, vPanStartY = 0, vPanOriginX = 0, vPanOriginY = 0;
+  viewerImg.addEventListener('mousedown', (e) => {
+    if(viewerScale <= 1) return;
+    isPanningViewer = true;
+    viewerImg.classList.add('is-panning');
+    vPanStartX = e.clientX; vPanStartY = e.clientY;
+    vPanOriginX = viewerX; vPanOriginY = viewerY;
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e) => {
+    if(!isPanningViewer) return;
+    viewerX = vPanOriginX + (e.clientX - vPanStartX);
+    viewerY = vPanOriginY + (e.clientY - vPanStartY);
+    applyViewerZoom(true);
+  });
+  window.addEventListener('mouseup', () => {
+    if(!isPanningViewer) return;
+    isPanningViewer = false;
+    viewerImg.classList.remove('is-panning');
+  });
+
+  document.getElementById('editModalSave').addEventListener('click', () => {
+    const title = fieldTitle.value.trim();
+    const date = fieldDate.value;
+    const until = editMode === 'programada' ? fieldDateUntil.value : '';
+    const body = fieldBody.value.trim();
+    if(!title){ formError.textContent = 'El título es obligatorio.'; fieldTitle.focus(); return; }
+    if(!date){ formError.textContent = 'La fecha es obligatoria.'; fieldDatePicker.focusInput(); return; }
+    if(editMode === 'programada'){
+      if(!until){ formError.textContent = 'La fecha "hasta" es obligatoria en modo Programada.'; fieldDateUntilPicker.focusInput(); return; }
+      if(until < date){ formError.textContent = 'La fecha "hasta" no puede ser anterior a "desde".'; fieldDateUntilPicker.focusInput(); return; }
+      if(until < toISO(new Date())){ formError.textContent = 'La fecha "hasta" ya pasó: elegí una fecha futura.'; fieldDateUntilPicker.focusInput(); return; }
+    }
+    if(!selectedCats.size){ formError.textContent = 'Elegí al menos una categoría.'; return; }
+    formError.textContent = '';
+
+    const categories = [...selectedCats];
+    const wasEditing = !!editingId;
+    const published = !fieldBorrador.checked;
+    let savedItem;
+    if(editingId){
+      const item = newsData.find(n => n.id === editingId);
+      item.title = title; item.date = date; item.body = body;
+      item.categories = categories; delete item.category;
+      item.image = currentImageValue;
+      item.published = published;
+      delete item.hidden;
+      if(until) item.availableUntil = until; else delete item.availableUntil;
+      savedItem = item;
+    } else {
+      const id = uniqueId(slugify(title));
+      savedItem = {
+        id, title, date, categories, body,
+        image: currentImageValue,
+        published
+      };
+      if(until) savedItem.availableUntil = until;
+      newsData.push(savedItem);
+    }
+    closeEditModal();
+    render();
+    const status = getItemStatus(savedItem);
+    const statusMsg = status === 'borrador' ? ' (borrador)' : status === 'programada' ? ' (programada)' : '';
+    const untilMsg = savedItem.availableUntil ? ` · disponible hasta ${savedItem.availableUntil.split('-').reverse().join('/')}` : '';
+    showToast(wasEditing ? `Noticia actualizada${statusMsg}${untilMsg}` : `Noticia añadida a "${getCategoryLabel(categories[0])}"${statusMsg}${untilMsg}`);
+  });
+
+  // ---- Modal Eliminar ----
+  // Dos modos: 'soft' (el botón "Eliminar" de todos los días) manda la
+  // noticia a la papelera, se puede restaurar. 'hard' (el botón "Eliminar
+  // definitivamente" que solo aparece DENTRO de la papelera) la borra de
+  // veras, sin vuelta atrás.
+  const deleteModalBg = document.getElementById('deleteModalBg');
+  const deleteModalTitle = document.getElementById('deleteModalTitle');
+  const deleteWarn = document.getElementById('deleteWarn');
+  const deleteModalConfirmBtn = document.getElementById('deleteModalConfirm');
+  let deletingId = null;
+  let deleteMode = 'soft';
+  function openDeleteModal(item, mode){
+    deletingId = item.id;
+    deleteMode = mode || 'soft';
+    document.getElementById('deleteThumb').style.backgroundImage = item.image ? `url('${item.image}')` : 'none';
+    document.getElementById('deleteCat').textContent = getItemCategories(item).map(getCategoryLabel).join(' · ');
+    document.getElementById('deleteTitle').textContent = item.title;
+    if(deleteMode === 'hard'){
+      deleteModalTitle.textContent = 'Eliminar definitivamente';
+      deleteWarn.textContent = 'Esta acción no se puede deshacer.';
+      deleteModalConfirmBtn.textContent = 'Eliminar definitivamente';
+    } else {
+      deleteModalTitle.textContent = 'Eliminar noticia';
+      deleteWarn.textContent = `Se mueve a la papelera. Se puede restaurar hasta dentro de ${TRASH_RETENTION_DAYS} días.`;
+      deleteModalConfirmBtn.textContent = 'Eliminar';
+    }
+    deleteModalBg.classList.add('open');
+  }
+  function closeDeleteModal(){ deleteModalBg.classList.remove('open'); deletingId = null; }
+  document.getElementById('deleteModalClose').addEventListener('click', closeDeleteModal);
+  document.getElementById('deleteModalCancel').addEventListener('click', closeDeleteModal);
+  deleteModalBg.addEventListener('click', (e) => { if(e.target === deleteModalBg) closeDeleteModal(); });
+  deleteModalConfirmBtn.addEventListener('click', () => {
+    const item = newsData.find(n => n.id === deletingId);
+    if(deleteMode === 'hard'){
+      newsData = newsData.filter(n => n.id !== deletingId);
+    } else if(item){
+      item.deletedAt = new Date().toISOString();
+    }
+    closeDeleteModal();
+    updateTrashButtonLabel();
+    render();
+    showToast(item ? (deleteMode === 'hard' ? `"${item.title}" eliminada definitivamente` : `"${item.title}" movida a la papelera`) : 'Noticia eliminada');
+  });
+
+  // ---- Guardar / Descartar / Toast ----
+  const toast = document.getElementById('toast');
+  function showToast(msg, isError){
+    toast.textContent = msg;
+    toast.classList.toggle('error', !!isError);
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), isError ? 3800 : 2200);
+  }
+  document.getElementById('btnSave').addEventListener('click', () => {
+    const payload = JSON.stringify(newsData);
+    try {
+      localStorage.setItem(NEWS_KEY, payload);
+      // Verificación extra: en algunos navegadores/configuraciones (modo
+      // privado con almacenamiento restringido, extensiones que bloquean
+      // localStorage, etc.) el setItem no tira error pero tampoco escribe
+      // nada de verdad. Por eso releemos justo después y comparamos: si no
+      // coincide, lo tratamos como un fallo real en vez de decir "guardado".
+      if (localStorage.getItem(NEWS_KEY) !== payload) {
+        throw new Error('Verificación de guardado falló: los datos no coinciden después de escribir.');
+      }
+    } catch (err) {
+      // Si el navegador se queda sin espacio (localStorage lleno, casi
+      // siempre por imágenes muy pesadas), antes esto fallaba en silencio:
+      // el botón decía "guardado" pero en realidad no se había escrito nada,
+      // por eso al recargar la página las noticias (o sus imágenes) parecían
+      // "desaparecer". Ahora se avisa claramente qué pasó y qué hacer.
+      console.error('No se pudo guardar en localStorage:', err);
+      showToast('No se pudo guardar: el navegador bloqueó el almacenamiento (falta espacio, modo privado, o una extensión lo está bloqueando). Probá cerrar la ventana privada/incógnito, liberar espacio, o revisar extensiones, y reintentá.', true);
+      return;
+    }
+    lastSavedSnapshot = payload;
+    updateRestoreBtn();
+    showToast('Cambios guardados: ya se ven en la página de noticias');
+  });
+  document.getElementById('btnRestore').addEventListener('click', () => {
+    newsData = JSON.parse(lastSavedSnapshot);
+    render();
+    showToast('Cambios descartados');
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape'){
+      if(editModalBg.classList.contains('open')) closeEditModal();
+      if(deleteModalBg.classList.contains('open')) closeDeleteModal();
+      if(bulkDeleteModalBg.classList.contains('open')) closeBulkDeleteModal();
+      if(emptyTrashModalBg.classList.contains('open')) closeEmptyTrashModal();
+      if(catModalBg.classList.contains('open')) closeCatModal();
+      if(deleteCategoryModalBg.classList.contains('open')) closeDeleteCategoryModal();
+      if(photoViewModalBg.classList.contains('open')) closePhotoViewer();
+    }
+  });
+
+  // ---- Barra de scroll de los modales: sólo cuando hace falta ----
+  // Antes el contenedor tenía overflow-y:auto siempre, y por cómo se
+  // acomodan las columnas del formulario (imagen a la izquierda, campos a
+  // la derecha, que se estiran a la misma altura) a veces sobraba un
+  // pixelito y aparecía la barra aunque se viera todo el contenido. Ahora
+  // arranca sin scroll (overflow:hidden) y un ResizeObserver mide el alto
+  // real del contenido contra el alto disponible; sólo si de verdad no
+  // entra, se prende la clase "can-scroll" que activa el overflow.
+  function updateModalScroll(el){
+    if(!el) return;
+    const needsScroll = el.scrollHeight > el.clientHeight + 1;
+    el.classList.toggle('can-scroll', needsScroll);
+  }
+  const modalScrollEls = ['editModalScroll','deleteModalScroll','bulkDeleteModalScroll','emptyTrashModalScroll','catModalScroll','deleteCategoryModalScroll']
+    .map(id => document.getElementById(id)).filter(Boolean);
+  if('ResizeObserver' in window){
+    const modalScrollObserver = new ResizeObserver((entries) => {
+      entries.forEach((entry) => updateModalScroll(entry.target.closest('.modal-scroll') || entry.target));
+    });
+    modalScrollEls.forEach((el) => {
+      modalScrollObserver.observe(el);
+      // El contenido interno (primer hijo) es lo que suele cambiar de alto
+      // (imagen que carga, categorías que envuelven línea, texto que
+      // crece), así que también se observa a él para recalcular apenas
+      // cambia, sin esperar a que cambie el propio contenedor.
+      if(el.firstElementChild) modalScrollObserver.observe(el.firstElementChild);
+    });
+  } else {
+    window.addEventListener('resize', () => modalScrollEls.forEach(updateModalScroll));
+  }
+  modalScrollEls.forEach(updateModalScroll);
+
+  renderCatsFilterRow();
+  render();
+</script>
+</body>
+</html>

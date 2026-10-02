@@ -1,0 +1,3171 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galería - E.E.S.T Nº3 Islas Malvinas</title>
+    <meta name="description" content="Galería de fotos de la vida escolar en la E.E.S.T Nº3 "Islas Malvinas".">
+    <link rel="icon" href="Assets/favicon.png" type="image/png">
+  <style>html{background:#eef3f8}</style>
+    <link rel="stylesheet" href="Styles/hi.css">
+    <style>
+        .gallery-heading {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .gallery-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .gallery-heading h2 {
+            margin: 0;
+            text-align: left;
+            font-size: clamp(1.75rem, 3vw, 2.45rem);
+        }
+
+        .gallery-heading p {
+            max-width: 420px;
+            margin: 0;
+            font-size: 0.98rem;
+            color: var(--ink-soft);
+        }
+
+        .gallery-count-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: rgba(202, 162, 74, 0.16);
+            box-shadow: inset 0 0 0 1px rgba(202, 162, 74, 0.35);
+            color: #8a6a1f;
+            font: 700 0.76rem var(--nav-font);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        .gallery-count-pill svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .gallery-count-pill strong {
+            font-size: 0.92rem;
+            color: var(--accent-blue);
+        }
+
+        .gallery-shell:hover .gallery-count-pill {
+            background: rgba(202, 162, 74, 0.28);
+            box-shadow: inset 0 0 0 1px rgba(202, 162, 74, 0.55);
+            transform: translateY(-1px);
+        }
+
+        .gallery-shell:hover .gallery-count-pill strong {
+            color: var(--accent-gold);
+        }
+
+        @media (max-width: 640px) {
+            .gallery-heading {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .admin-float {
+            position: fixed;
+            right: clamp(12px, 3vw, 28px);
+            bottom: clamp(12px, 3vw, 28px);
+            z-index: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border: 0;
+            border-radius: 50%;
+            padding: 0;
+            background: rgba(16, 59, 102, 0.72);
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(10, 24, 40, 0.28);
+            opacity: 0.72;
+            transition: transform 0.2s ease, background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .admin-float svg {
+            width: 19px;
+            height: 19px;
+            transition: transform 0.4s ease;
+        }
+
+        .admin-float:hover,
+        .admin-float:focus-visible {
+            transform: translateY(-2px) scale(1.06);
+            background: var(--accent-gold);
+            color: #132338;
+            opacity: 1;
+            box-shadow: 0 12px 24px rgba(10, 24, 40, 0.32);
+        }
+
+        .admin-float:hover svg {
+            transform: rotate(45deg);
+        }
+
+        .login-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1200;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            background: rgba(6, 18, 32, 0.58);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.22s ease, visibility 0.22s ease;
+        }
+
+        .login-modal.is-open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .login-box {
+            width: min(100%, 390px);
+            padding: clamp(20px, 5vw, 28px);
+            border: 1px solid rgba(117, 207, 239, 0.32);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+        }
+
+        .login-box h2 {
+            margin: 0 0 8px;
+            color: var(--accent-blue);
+            text-align: center;
+        }
+
+        .login-box p {
+            margin: 0 0 20px;
+            text-align: center;
+        }
+
+        .login-field {
+            display: grid;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .login-field label {
+            color: var(--accent-blue);
+            font-weight: 700;
+        }
+
+        .login-field input {
+            width: 100%;
+            padding: 11px 12px;
+            border: 2px solid #d8e0e8;
+            border-radius: 8px;
+            font: inherit;
+        }
+
+        .login-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .login-actions button {
+            flex: 1;
+            padding: 11px 14px;
+            border: 0;
+            border-radius: 8px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .login-submit {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        .login-cancel {
+            background: #e7edf3;
+            color: var(--accent-blue);
+        }
+
+        .login-feedback {
+            min-height: 20px;
+            margin-top: 12px;
+            color: #b3261e;
+            text-align: center;
+            font-weight: 700;
+            transition: transform 0.18s ease;
+        }
+
+        .login-feedback.is-shaking {
+            animation: loginShake 0.36s ease;
+        }
+
+        @keyframes loginShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        .login-password-wrap {
+            position: relative;
+        }
+
+        .login-password-wrap input {
+            padding-right: 42px;
+        }
+
+        .login-password-toggle {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            background: transparent;
+            color: var(--ink-soft);
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .login-password-toggle:hover {
+            color: var(--accent-blue);
+            background: rgba(16, 59, 102, 0.08);
+        }
+
+        .login-password-toggle svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .gallery-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .gallery-play {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 0;
+            border-radius: 999px;
+            background: rgba(16, 59, 102, 0.08);
+            color: var(--accent-blue);
+            font: 700 0.8rem var(--nav-font);
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .gallery-play:hover,
+        .gallery-play:focus-visible {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        .gallery-play svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .gallery-play .icon-play { display: inline-flex; }
+        .gallery-play .icon-pause { display: none; }
+        .gallery-play.is-playing .icon-play { display: none; }
+        .gallery-play.is-playing .icon-pause { display: inline-flex; }
+
+        .gallery-progress {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            height: 3px;
+            width: 0%;
+            background: var(--accent-gold);
+            transition: width linear;
+            z-index: 2;
+        }
+
+        .gallery-frame {
+            touch-action: pan-y;
+        }
+
+        .lightbox-figure {
+            touch-action: pan-y;
+        }
+
+        .gallery-caption-desc {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 400;
+            color: rgba(255,255,255,0.85);
+            margin-top: 2px;
+        }
+
+        /* --- Etiqueta bien visible con el nombre de la sección activa --- */
+        .gallery-section-badge {
+            position: absolute;
+            top: clamp(12px, 2.5vw, 20px);
+            left: 50%;
+            transform: translateX(-50%) translateY(-6px);
+            z-index: 3;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 20px;
+            border-radius: 999px;
+            background: var(--accent-gold);
+            color: #132338;
+            font: 800 0.95rem var(--nav-font, inherit);
+            letter-spacing: 0.4px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.28s ease, transform 0.28s ease;
+            white-space: nowrap;
+        }
+
+        .gallery-section-badge svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .gallery-section-badge.is-visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .gallery-frame.is-fading .gallery-section-badge {
+            opacity: 0;
+        }
+
+        @media (max-width: 640px) {
+            .gallery-section-badge {
+                font: 800 0.82rem var(--nav-font, inherit);
+                padding: 7px 15px;
+            }
+        }
+
+        .lightbox-desc {
+            display: block;
+            font-size: 0.86rem;
+            font-weight: 400;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 640px) {
+            .gallery-toolbar {
+                margin-left: 0;
+            }
+        }
+
+        /* --- Transición suave al cambiar de foto (evita el "salto" doble) --- */
+        .gallery-frame img#imagen-carrusel {
+            transition: opacity 0.28s ease, transform 0.28s ease;
+        }
+
+        .gallery-frame.is-fading img#imagen-carrusel {
+            opacity: 0;
+            transform: scale(0.985);
+        }
+
+        /* El título/contador ahora se desvanecen junto con la imagen, en vez
+           de cambiar de golpe (lo que hacía "flashear" el nombre de la foto
+           anterior durante un instante). */
+        .gallery-caption,
+        .gallery-counter {
+            transition: opacity 0.28s ease;
+        }
+
+        .gallery-frame.is-fading .gallery-caption,
+        .gallery-frame.is-fading .gallery-counter {
+            opacity: 0;
+        }
+
+        .lightbox-image {
+            transition: opacity 0.24s ease, transform 0.24s ease;
+        }
+
+        .lightbox-content.is-fading .lightbox-image {
+            opacity: 0;
+            transform: scale(0.985);
+        }
+
+        /* Antes sólo la FOTO se atenuaba al cambiar de imagen dentro del
+           visor; el título/descripción y el contador no tenían ninguna
+           transición asociada, así que el texto de la foto anterior se
+           quedaba fijo en pantalla unos instantes de más (o el nuevo texto
+           aparecía antes de tiempo), dando la sensación de un "flash" con
+           un nombre que no correspondía a lo que se veía en ese momento.
+           Ahora esos dos elementos se atenúan y reaparecen en sincro con
+           la imagen. */
+        .lightbox-caption,
+        .lightbox-counter,
+        .lightbox-breadcrumb-section {
+            transition: opacity 0.24s ease;
+        }
+
+        .lightbox-content.is-fading .lightbox-caption,
+        .lightbox-content.is-fading .lightbox-counter,
+        .lightbox-content.is-fading .lightbox-breadcrumb-section {
+            opacity: 0;
+        }
+
+        /* --- Visor ampliado (lightbox) rehecho: modal autocontenido --- */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 1500;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.26s ease, visibility 0.26s ease;
+        }
+
+        .lightbox.is-open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .lightbox-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(6, 14, 28, 0.82);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            cursor: zoom-out;
+            /* Algunos navegadores (sobre todo con GPU/composición) a
+               veces "recalculan" el backdrop-filter cuando algo cambia
+               cerca -como el fade de la foto o el texto al cambiar de
+               imagen- y de forma errática dejan ver, por un único frame,
+               el fondo SIN difuminar. Forzando esta capa a su propia
+               capa de composición (independiente de sus hermanos) se le
+               quita al navegador el motivo para volver a calcular el
+               desenfoque cada vez que el contenido de al lado cambia. */
+            will-change: backdrop-filter;
+            transform: translateZ(0);
+            isolation: isolate;
+        }
+
+        /* El contenido interactivo (foto, textos, botones) vive en un
+           wrapper propio, separado del fondo difuminado de arriba. Antes
+           el fade de foto/texto se aplicaba como clase directo sobre
+           ".lightbox" -el mismo elemento padre que también contiene el
+           fondo difuminado-, así que cada cambio de foto forzaba al
+           navegador a "tocar" ese árbol entero, incluido el fondo, y
+           eso disparaba el parpadeo intermitente del blur. Ahora el
+           fade queda encapsulado acá adentro, sin tocar para nada al
+           fondo difuminado. */
+        .lightbox-content {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Barra superior de ancho completo: a la izquierda un
+           breadcrumb "Galería / Sección", a la derecha el contador de
+           fotos y el botón de cerrar. Reemplaza a los elementos sueltos
+           que antes flotaban cada uno en una esquina distinta y a veces
+           terminaban pisándose con el pie de foto. --- */
+        .lightbox-topbar {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: clamp(12px, 3vw, 18px) clamp(16px, 4vw, 30px);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .lightbox-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
+            font: 500 0.82rem var(--nav-font, inherit);
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .lightbox-breadcrumb svg {
+            width: 12px;
+            height: 12px;
+            flex-shrink: 0;
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .lightbox-breadcrumb-section {
+            color: var(--accent-gold);
+            font-weight: 700;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .lightbox-topbar-right {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lightbox-play {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 0;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font: 700 0.8rem var(--nav-font, inherit);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .lightbox-play:hover,
+        .lightbox-play:focus-visible {
+            background: var(--accent-gold);
+            color: #132338;
+        }
+
+        .lightbox-play svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .lightbox-play .icon-play { display: inline-flex; }
+        .lightbox-play .icon-pause { display: none; }
+        .lightbox-play.is-playing .icon-play { display: none; }
+        .lightbox-play.is-playing .icon-pause { display: inline-flex; }
+
+        @media (max-width: 640px) {
+            .lightbox-play span:not(.icon-play):not(.icon-pause) {
+                display: none;
+            }
+            .lightbox-play {
+                padding: 8px;
+            }
+        }
+
+        .lightbox-progress-track {
+            flex-shrink: 0;
+            height: 3px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .lightbox-progress {
+            height: 100%;
+            width: 0%;
+            background: var(--accent-gold);
+            transition: width linear;
+        }
+
+        .lightbox-body {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(12px, 4vw, 40px);
+            /* Red de seguridad: si en pantallas muy bajas el contenido
+               (imagen + controles + título) igual no entra en el alto
+               disponible, se puede hacer scroll en vez de que la parte
+               de abajo quede invisible sin ninguna forma de verla. */
+            overflow-y: auto;
+        }
+
+        .lightbox-figure {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: min(1100px, 92vw);
+            /* Antes esto era sólo "max-height: 100%": un techo que no
+               fuerza nada, así que si la imagen (con su propio alto fijo
+               en vh, ver más abajo) más los controles de zoom más el
+               título pedían más alto del disponible, todo eso se
+               desbordaba de la figura sin que nada lo recortara ni lo
+               achicara -"max-height" no encoge contenido, sólo limita la
+               CAJA-. Con "height: 100%" la figura sí toma el alto real
+               disponible, y sus hijos (ver .lightbox-image más abajo)
+               pueden repartírselo entre sí con flexbox en vez de que cada
+               uno pida el suyo por separado. */
+            height: 100%;
+            margin: 0;
+            transform: scale(0.94);
+            opacity: 0;
+            transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.26s ease;
+        }
+
+        .lightbox.is-open .lightbox-figure {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Contenedor que reserva el mismo espacio que antes ocupaba la
+           imagen (mismo flex/min-height, ver comentario que estaba acá)
+           pero con "overflow: hidden": al acercar el zoom, la imagen
+           crece visualmente por transform (eso NO cambia su caja de
+           layout, sólo lo que se pinta en pantalla), y sin este recorte
+           ese excedente se dibujaba libremente por encima de lo que
+           venía justo debajo -los controles de acercar/alejar-, tapando
+           el botón para seguir acercando. Ahora ese excedente queda
+           recortado en el borde de este contenedor, como en cualquier
+           visor de fotos con zoom. */
+        .lightbox-image-frame {
+            flex: 1 1 auto;
+            min-height: 0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        .lightbox-image {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+            background: #0c1c30;
+            object-fit: contain;
+            cursor: zoom-in;
+            touch-action: none;
+            transform-origin: center center;
+            transition: transform 0.18s ease;
+            will-change: transform;
+        }
+
+        .lightbox-image[hidden] {
+            display: none;
+        }
+
+        .lightbox-image.is-zoomed {
+            cursor: grab;
+        }
+
+        .lightbox-image.is-panning {
+            cursor: grabbing;
+            transition: none;
+        }
+
+        .lightbox-video-frame {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 1100px;
+            max-height: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+        }
+
+        .lightbox-video,
+        .lightbox-video-embed {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            background: #000;
+        }
+
+        .lightbox-video[hidden],
+        .lightbox-video-embed[hidden] {
+            display: none;
+        }
+
+        /* --- Video reproduciéndose dentro de la vitrina chica de arriba ---
+           Antes, al llegarle el turno a un video durante el pase
+           automático, la vitrina sólo mostraba la miniatura estática con
+           el cartel "Video": nunca se veía ni se escuchaba nada. Ahora
+           ocupa el mismo lugar que la foto (mismo recuadro, mismo
+           fundido) y arranca solo, muteado -los navegadores no dejan
+           reproducir con sonido sin que la persona interactúe antes-,
+           igual que cualquier miniatura de video que "vive" sola en una
+           página. */
+        .gallery-frame img#imagen-carrusel[hidden] {
+            display: none !important;
+        }
+
+        .gallery-video-frame {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 1;
+            border-radius: inherit;
+            overflow: hidden;
+            opacity: 1;
+            transition: opacity 0.28s ease, transform 0.28s ease;
+        }
+
+        .gallery-video-frame[hidden] {
+            display: none !important;
+        }
+
+        .gallery-frame.is-fading .gallery-video-frame {
+            opacity: 0;
+            transform: scale(0.985);
+        }
+
+        .gallery-video,
+        .gallery-video-embed {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            object-fit: cover;
+            background: #000;
+        }
+
+        .gallery-video[hidden],
+        .gallery-video-embed[hidden] {
+            display: none !important;
+        }
+
+        .gallery-video-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 3;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(10, 24, 40, 0.68);
+            color: #fff;
+            font: 700 0.72rem var(--nav-font);
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+
+        .gallery-video-badge[hidden] {
+            display: none;
+        }
+
+        .gallery-video-badge svg {
+            width: 13px;
+            height: 13px;
+            flex-shrink: 0;
+        }
+
+        /* --- Controles de zoom (acercar / alejar / restablecer) ---
+           Van DENTRO de la figura, justo debajo de la imagen y antes del
+           título/descripción, como un elemento más del flujo normal (no
+           position:absolute sobre toda la pantalla). Antes flotaban fijos
+           abajo del visor y, si el título/descripción ocupaban varias
+           líneas o la imagen no llenaba todo el alto disponible, terminaban
+           superpuestos al texto de la leyenda. */
+        .lightbox-zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 12px;
+            padding: 6px;
+            border-radius: 999px;
+            background: rgba(6, 14, 28, 0.55);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+        }
+
+        .lightbox-zoom-controls[hidden] {
+            display: none;
+        }
+
+        .lightbox-zoom-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border: 0;
+            border-radius: 50%;
+            padding: 0;
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+        }
+
+        .lightbox-zoom-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .lightbox-zoom-btn:hover,
+        .lightbox-zoom-btn:focus-visible {
+            background: var(--accent-gold);
+            color: #132338;
+        }
+
+        .lightbox-zoom-btn:disabled {
+            opacity: 0.35;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .lightbox-zoom-level {
+            min-width: 46px;
+            text-align: center;
+            color: #fff;
+            font: 700 0.78rem var(--nav-font, inherit);
+            letter-spacing: 0.4px;
+            user-select: none;
+        }
+
+        @media (max-width: 640px) {
+            .lightbox-zoom-btn {
+                width: 32px;
+                height: 32px;
+            }
+            .lightbox-zoom-btn svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+
+        .lightbox-caption {
+            margin-top: 16px;
+            max-width: 640px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .lightbox-caption span[data-lightbox-caption] {
+            display: block;
+            font: 700 1.05rem var(--nav-font, inherit);
+            letter-spacing: 0.2px;
+        }
+
+        .lightbox-desc {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 400;
+            opacity: 0.78;
+            margin-top: 6px;
+        }
+
+        .lightbox-counter {
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            font: 700 0.78rem var(--nav-font, inherit);
+            letter-spacing: 0.6px;
+            white-space: nowrap;
+        }
+
+        .lightbox-close {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border: 0;
+            border-radius: 50%;
+            padding: 0;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .lightbox-close svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .lightbox-close:hover,
+        .lightbox-close:focus-visible {
+            background: var(--accent-gold);
+            color: #132338;
+            transform: scale(1.06);
+        }
+
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border: 0;
+            border-radius: 50%;
+            padding: 0;
+            background: rgba(6, 14, 28, 0.55);
+            color: #fff;
+            cursor: pointer;
+            transform: translateY(-50%);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .lightbox-nav svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .lightbox-nav:hover,
+        .lightbox-nav:focus-visible {
+            background: var(--accent-gold);
+            color: #132338;
+            transform: translateY(-50%) scale(1.08);
+        }
+
+        .lightbox-prev { left: clamp(8px, 2.5vw, 22px); }
+        .lightbox-next { right: clamp(8px, 2.5vw, 22px); }
+
+        @media (max-width: 640px) {
+            .lightbox-nav {
+                width: 40px;
+                height: 40px;
+            }
+            .lightbox-nav svg {
+                width: 18px;
+                height: 18px;
+            }
+            .lightbox-caption span[data-lightbox-caption] {
+                font-size: 0.95rem;
+            }
+        }
+
+        /* --- Fila de categorías con flechas para desplazar --- */
+        .gallery-thumbs-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 0 -18px;
+        }
+
+        .gallery-thumbs-row .gallery-thumbs {
+            display: flex;
+            flex-wrap: nowrap;
+            flex: 1;
+            min-width: 0;
+            gap: 18px;
+            overflow-x: auto;
+            /* "overflow-x: auto" obliga a que el eje Y también recorte
+               (así funciona overflow en CSS), lo que cortaba el brillo/
+               borde dorado de las tiles. El padding le da lugar para
+               dibujarse completo. Sin margen negativo: la tarjeta que
+               envuelve todo esto tiene overflow:hidden con bordes
+               redondeados, así que compensar con margen negativo hacía
+               que el contenido se saliera de ahí y se cortara.
+               El padding superior es mayor a propósito: la miniatura
+               activa tiene un brillo dorado (box-shadow con blur) que
+               se extiende bastante más allá de su propio borde, y como
+               las tiles quedan pegadas arriba del contenedor, ese brillo
+               se corta justo en el borde superior si el padding es chico.
+               26px arriba es el mínimo que evita el recorte. NO reducir
+               este valor (el padding lateral de 18px sí alcanza para el
+               recorte horizontal, no hace falta tocarlo). */
+            padding: 26px 18px 14px;
+            scroll-behavior: smooth;
+            scroll-snap-type: x proximity;
+            scroll-padding-left: 18px;
+            scroll-padding-right: 18px;
+        }
+
+        /* La barra de desplazamiento nativa del navegador no se puede
+           animar (el navegador la mueve, no CSS/JS), así que para lograr
+           el efecto "resorte" al arrastrar hasta el final se oculta y se
+           reemplaza por una barra propia (ver .gallery-thumbs-scrollbar-*
+           más abajo, controlada desde el script). */
+        .gallery-thumbs-row .gallery-thumbs {
+            scrollbar-width: none;
+        }
+
+        .gallery-thumbs-row .gallery-thumbs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .gallery-thumbs-row .gallery-thumbs .gallery-thumb {
+            flex: 0 0 calc((100% - 3 * 18px) / 4);
+            max-width: calc((100% - 3 * 18px) / 4);
+            scroll-snap-align: start;
+        }
+
+        /* La tarjeta (.gallery-thumb) trae un padding interno propio de
+           Styles/hi.css que dejaba un marco/espacio vacío entre la foto
+           y el borde de la tarjeta. Se saca ese padding para que la
+           imagen llegue de punta a punta (el borde redondeado se sigue
+           respetando gracias al overflow:hidden). */
+        .gallery-thumbs-row .gallery-thumbs .gallery-thumb {
+            padding: 0;
+            /* La tarjeta trae un border: 2px solid rgba(255,255,255,0.14)
+               propio de Styles/hi.css. Mezclado con el fondo azul oscuro
+               generaba una fina línea más clara alrededor de la miniatura
+               (más notoria en el borde recto izquierdo). Se saca para que
+               la foto quede sin ese marco. */
+            border: none;
+            /* El box-shadow (0 6px 14px rgba(4,18,39,0.28)) de
+               .gallery-thumb en hi.css dejaba una transición de color
+               sutil contra el fondo del carrusel, así que se saca.
+               El background (rgba(5,24,53,0.28)) en cambio SE MANTIENE:
+               la imagen y la etiqueta tienen border-radius de 8px pero
+               el contenedor tiene 10px, y ese background es lo que tapa
+               el huequito de 2px que queda en las esquinas por ese
+               desajuste. Sacarlo dejaba ver una muesca fea entre la
+               foto y la etiqueta (más notoria en la miniatura activa). */
+            box-shadow: none;
+            background: rgba(5, 24, 53, 0.28);
+        }
+
+        .gallery-thumbs-row .gallery-thumbs .gallery-thumb:hover {
+            box-shadow: none;
+        }
+
+        /* El brillo dorado de la miniatura activa (definido en hi.css
+           como .gallery-thumb.is-active) se mantiene: como es más
+           específico que la regla de arriba, no lo pisa. Lo repetimos
+           acá explícito para que quede claro y a prueba de cambios de
+           orden en el CSS. */
+        .gallery-thumbs-row .gallery-thumbs .gallery-thumb.is-active {
+            box-shadow:
+                0 0 0 2px rgba(202, 162, 74, 0.9),
+                0 0 16px 4px rgba(202, 162, 74, 0.65),
+                0 10px 22px rgba(4, 18, 39, 0.4);
+        }
+
+        /* hi.css le suma a la etiqueta de abajo (.gallery-thumb-label)
+           SU PROPIO anillo dorado cuando la miniatura está activa. Esa
+           etiqueta tiene las esquinas de arriba cuadradas (solo se
+           redondean las de abajo), así que ese segundo anillo no
+           coincide con la curva del anillo exterior de la tarjeta y se
+           veía como un "pellizco"/muesca justo en la unión entre la
+           foto y el texto. Con un solo anillo (el de la tarjeta entera)
+           alcanza, así que se saca el de la etiqueta. */
+        .gallery-thumbs-row .gallery-thumbs .gallery-thumb.is-active .gallery-thumb-label {
+            box-shadow: none;
+        }
+
+        .gallery-thumbs-row .gallery-thumbs .gallery-thumb img {
+            border-radius: 8px 8px 0 0;
+            display: block;
+        }
+
+        .gallery-thumbs-row .gallery-thumbs .gallery-thumb .gallery-thumb-label {
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        .gallery-thumb-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            width: 100%;
+            padding: 6px 8px;
+            background: #081e3b;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            text-align: center;
+        }
+
+        .gallery-thumb-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 4px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 900px) {
+            .gallery-thumbs-row .gallery-thumbs {
+                gap: 16px;
+            }
+
+            .gallery-thumbs-row .gallery-thumbs .gallery-thumb {
+                flex-basis: calc((100% - 2 * 16px) / 3);
+                max-width: calc((100% - 2 * 16px) / 3);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .gallery-thumbs-row {
+                margin: 0 -10px;
+            }
+
+            .gallery-thumbs-row .gallery-thumbs {
+                gap: 12px;
+                padding: 22px 10px 10px;
+                scroll-padding-left: 10px;
+                scroll-padding-right: 10px;
+            }
+
+            .gallery-thumbs-row .gallery-thumbs .gallery-thumb {
+                flex-basis: 100%;
+                max-width: 100%;
+            }
+
+            .gallery-thumbs-row .gallery-thumbs .gallery-thumb img {
+                height: auto;
+                /* Antes era 16/8 (2:1), distinto a la proporción real de
+                   las fotos (10:7, la misma que en escritorio). Ese
+                   desfasaje dejaba una franja vacía a los costados en
+                   celular. Usando la misma proporción en todos los
+                   tamaños de pantalla, la foto llena el recuadro sin
+                   huecos. */
+                aspect-ratio: 10 / 7;
+            }
+
+            .gallery-thumbs-row .gallery-thumbs .gallery-thumb-label {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                padding: 8px 8px 9px;
+                font-size: 0.8rem;
+            }
+
+            .gallery-thumbs-row .gallery-thumbs .gallery-thumb-count {
+                margin-left: 0;
+            }
+        }
+
+
+        /* --- Barra de desplazamiento personalizada con efecto resorte ---
+           En reposo el thumb vuelve al comienzo del track, dejando un
+           margen fijo respecto a la punta -ver restThumbsScrollbar() en
+           el script-. Al arrastrar más allá del límite cede con
+           resistencia hasta un tope (SCROLLBAR_OVERDRAG_MAX) y al soltar
+           vuelve a esa posición con una transición tipo resorte
+           (cubic-bezier con rebote). */
+        .gallery-thumbs-scrollbar-wrap {
+            padding: 0 18px;
+            margin-top: 8px;
+        }
+
+        .gallery-thumbs-scrollbar-wrap.is-hidden {
+            display: none;
+        }
+
+        .gallery-thumbs-scrollbar-track {
+            position: relative;
+            width: 100%;
+            margin: 0 auto;
+            height: 16px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.18);
+            overflow: hidden;
+        }
+
+        .gallery-thumbs-scrollbar-thumb {
+            position: absolute;
+            top: 50%;
+            left: 18px;
+            transform: translateY(-50%);
+            height: 10px;
+            width: 40px;
+            border-radius: 999px;
+            background: rgba(202, 162, 74, 0.85);
+            cursor: grab;
+            touch-action: none;
+            transition: left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .gallery-thumbs-scrollbar-thumb:hover {
+            background: rgba(202, 162, 74, 0.72);
+        }
+
+        .gallery-thumbs-scrollbar-thumb.is-dragging {
+            cursor: grabbing;
+            background: rgba(202, 162, 74, 0.8);
+            transition: none;
+        }
+
+        /* Mientras la fila se desplaza por las flechas (u otro scroll que
+           no sea el arrastre manual), la barra sigue la posición real con
+           un deslizamiento suave -no instantáneo, para que se vea como una
+           animación fluida en vez de un salto- pero sin el rebote elástico
+           (ese es sólo para cuando se suelta tras un arrastre que se salió
+           del límite). */
+        .gallery-thumbs-scrollbar-thumb.is-tracking {
+            transition: left 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @media (max-width: 640px) {
+            .gallery-thumbs-scrollbar-wrap {
+                padding: 0 10px;
+            }
+        }
+
+        .gallery-thumbs-arrow {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border: 0;
+            border-radius: 50%;
+            background: rgba(16, 59, 102, 0.08);
+            color: var(--accent-blue);
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+        }
+
+        .gallery-thumbs-arrow svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .gallery-thumbs-arrow:hover,
+        .gallery-thumbs-arrow:focus-visible {
+            background: var(--accent-blue);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+        }
+
+        .gallery-thumbs-arrow:disabled {
+            opacity: 0.3;
+            cursor: default;
+            pointer-events: none;
+            box-shadow: none;
+        }
+
+        .gallery-thumbs-arrow.is-hidden {
+            display: none;
+        }
+
+        @media (max-width: 640px) {
+            .gallery-thumbs-arrow {
+                width: 32px;
+                height: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido principal</a>
+  <header>
+    <div class="container header-container">
+      <picture><source srcset="Assets/tecnica3.webp" type="image/webp"><img src="Assets/tecnica3.png" alt="Logo del colegio" class="logo" width="130" height="130" fetchpriority="high"></picture>
+      <h1>E.E.S.T Nº3 "Islas Malvinas"</h1>
+      <button class="nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span><span></span></button>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html">Inicio</a></li>
+          <li class="nav-dropdown">
+            <button class="dropdown-toggle" type="button" aria-expanded="false">Especialidades</button>
+            <ul class="dropdown-menu"><li class="dropdown-menu-label" aria-hidden="true">Especialidades</li>
+              <li><a href="informatica.html" class="dropdown-link"><span class="dropdown-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="8 6 3 12 8 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16 6 21 12 16 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="13" y1="4.5" x2="11" y2="19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="dropdown-link-text"><span class="dropdown-link-title">Programación</span><span class="dropdown-link-desc">Desarrollo de software, bases de datos y proyectos digitales.</span></span></a></li>
+              <li><a href="construcciones.html" class="dropdown-link"><span class="dropdown-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3" width="10" height="18" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="14" y="9.5" width="6.5" height="11.5" rx="1" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 7h1.2M10.3 7h1.2M6.5 10.5h1.2M10.3 10.5h1.2M6.5 14h1.2M10.3 14h1.2M6.5 17.5h1.2M10.3 17.5h1.2M16.5 12.5h1.2M16.5 16h1.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><span class="dropdown-link-text"><span class="dropdown-link-title">Construcciones</span><span class="dropdown-link-desc">Diseño, planificación y dirección técnica de obras.</span></span></a></li>
+              <li><a href="turismo.html" class="dropdown-link"><span class="dropdown-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.3" stroke="currentColor" stroke-width="1.6"/></svg></span><span class="dropdown-link-text"><span class="dropdown-link-title">Turismo</span><span class="dropdown-link-desc">Gestión turística, patrimonio cultural y atención al viajero.</span></span></a></li>
+            </ul>
+          </li>
+          <li class="nav-dropdown">
+            <button class="dropdown-toggle" type="button" aria-expanded="false">Centro de Estudiantes</button>
+            <ul class="dropdown-menu"><li class="dropdown-menu-label" aria-hidden="true">Centro de Estudiantes</li>
+                <li><a href="a1.html" class="dropdown-link"><span class="dropdown-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 20c0-3 2.5-5.3 5.5-5.3s5.5 2.3 5.5 5.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="8.5" r="2.3" stroke="currentColor" stroke-width="1.6"/><path d="M14.8 14.8c2.5.2 4.7 2.3 4.7 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="dropdown-link-text"><span class="dropdown-link-title">Miembros</span><span class="dropdown-link-desc">Conocé a la comisión directiva y sus integrantes.</span></span></a></li>
+                <li><a href="b1.html" class="dropdown-link"><span class="dropdown-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v8A2.5 2.5 0 0 1 17.5 17H10l-4.5 3.5V17h-1A2.5 2.5 0 0 1 2 14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="dropdown-link-text"><span class="dropdown-link-title">Sugerencias</span><span class="dropdown-link-desc">Dejá tu mensaje o propuesta para el centro.</span></span></a></li>
+                <li><a href="d1.html" class="dropdown-link"><span class="dropdown-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 10h3l9-4.5v13L7 14H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6.5 14v4.5a1 1 0 0 0 1 1h1a1 1 0 0 0 .97-1.24L8.7 14.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 9.5a3.5 3.5 0 0 1 0 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="dropdown-link-text"><span class="dropdown-link-title">Presentación</span><span class="dropdown-link-desc">Nuestra lista, propuesta y compromiso.</span></span></a></li>
+            </ul>
+          </li>
+          <li><a href="galeria.html">Galería</a></li>
+          <li><a href="noticias.html">Noticias</a></li>
+          <li><a href="CONTACTO.HTML">Contacto</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido">
+
+  <section id="galeria" class="section gallery-section">
+    <div class="container gallery-shell">
+      <div class="gallery-copy">
+        <div class="gallery-heading">
+          <div class="gallery-title">
+            <h2>Galería</h2>
+            <span class="gallery-title-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="18" height="18"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="8.5" cy="10" r="1.4" stroke="currentColor" stroke-width="1.6"/><path d="M21 15l-5-5-4 4-3-3-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </div>
+          <span class="gallery-count-pill">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="10" r="1.4" stroke="currentColor" stroke-width="2"/><path d="M21 15l-5-5-4 4-3-3-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <strong data-gallery-total>4</strong> fotos
+          </span>
+          <div class="gallery-toolbar">
+            <button class="gallery-play" type="button" data-gallery-play title="Reproducir presentación automática" aria-label="Reproducir presentación automática">
+              <span class="icon-play"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+              <span class="icon-pause"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg></span>
+              <span data-gallery-play-label>Reproducir</span>
+            </button>
+          </div>
+        </div>
+        <p>Un vistazo a la vida escolar, los talleres y los proyectos de nuestra comunidad educativa.</p>
+      </div>
+
+      <div class="gallery-stage" data-gallery>
+        <div class="gallery-mat">
+          <div class="gallery-viewport">
+            <div class="gallery-frame">
+              <img id="imagen-carrusel" src="Assets/imagen1.jpg" alt="Patio y actividades de la escuela" data-gallery-image width="1600" height="1200" fetchpriority="high" decoding="async">
+              <div class="gallery-video-frame" data-gallery-video-frame hidden>
+                <video class="gallery-video" data-gallery-video muted playsinline hidden></video>
+                <iframe class="gallery-video-embed" data-gallery-embed hidden title="Video" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+              </div>
+              <span class="gallery-video-badge" data-gallery-video-badge hidden>
+                <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                Video
+              </span>
+              <div class="gallery-dim"></div>
+              <span class="gallery-section-badge" data-gallery-section>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="10" r="1.4" stroke="currentColor" stroke-width="2"/><path d="M21 15l-5-5-4 4-3-3-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span data-gallery-section-label></span>
+              </span>
+              <span class="gallery-counter" data-gallery-count>01 / 04</span>
+              <div class="gallery-caption">
+                <span class="gallery-caption-pill" data-gallery-title>Comunidad técnica</span>
+              </div>
+              <div class="gallery-progress" data-gallery-progress></div>
+              <button class="gallery-zoom" type="button" aria-label="Ver imagen ampliada" data-gallery-zoom>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M15.2 15.2 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M10.5 8v5M8 10.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <button class="gallery-control gallery-prev" type="button" aria-label="Imagen anterior" data-gallery-prev>
+              <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="gallery-control gallery-next" type="button" aria-label="Imagen siguiente" data-gallery-next>
+              <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="gallery-thumbs-row">
+            <button class="gallery-thumbs-arrow" type="button" data-thumbs-prev aria-label="Desplazar categorías hacia la izquierda">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="gallery-thumbs" role="tablist" aria-label="Seleccionar sección">
+              <button class="gallery-thumb is-active" type="button" data-gallery-thumb="0" aria-label="Ver imagen 1: Comunidad técnica" aria-current="true">
+                <picture><source srcset="Assets/imagen1-thumb.webp" type="image/webp"><img src="Assets/imagen1-thumb.jpg" alt="" width="200" height="140" loading="lazy" decoding="async"></picture>
+                <span class="gallery-thumb-label">Comunidad técnica</span>
+              </button>
+              <button class="gallery-thumb" type="button" data-gallery-thumb="1" aria-label="Ver imagen 2: Aulas en movimiento">
+                <picture><source srcset="Assets/imagen2-thumb.webp" type="image/webp"><img src="Assets/imagen2-thumb.jpg" alt="" width="200" height="140" loading="lazy" decoding="async"></picture>
+                <span class="gallery-thumb-label">Aulas en movimiento</span>
+              </button>
+              <button class="gallery-thumb" type="button" data-gallery-thumb="2" aria-label="Ver imagen 3: Talleres y proyectos">
+                <picture><source srcset="Assets/imagen3-thumb.webp" type="image/webp"><img src="Assets/imagen3-thumb.jpg" alt="" width="200" height="140" loading="lazy" decoding="async"></picture>
+                <span class="gallery-thumb-label">Talleres y proyectos</span>
+              </button>
+              <button class="gallery-thumb" type="button" data-gallery-thumb="3" aria-label="Ver imagen 4: Identidad Malvinas">
+                <picture><source srcset="Assets/imagen4-thumb.webp" type="image/webp"><img src="Assets/imagen4-thumb.jpg" alt="" width="200" height="140" loading="lazy" decoding="async"></picture>
+                <span class="gallery-thumb-label">Identidad Malvinas</span>
+              </button>
+            </div>
+            <button class="gallery-thumbs-arrow" type="button" data-thumbs-next aria-label="Desplazar categorías hacia la derecha">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="gallery-thumbs-scrollbar-wrap" data-thumbs-scrollbar-wrap aria-hidden="true">
+            <div class="gallery-thumbs-scrollbar-track" data-thumbs-scrollbar-track>
+              <div class="gallery-thumbs-scrollbar-thumb" data-thumbs-scrollbar-thumb></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </main>
+
+  <div class="lightbox" data-lightbox hidden>
+    <div class="lightbox-backdrop" data-lightbox-close></div>
+    <div class="lightbox-content" data-lightbox-content>
+      <div class="lightbox-topbar">
+        <div class="lightbox-breadcrumb">
+          <span>Galería</span>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="lightbox-breadcrumb-section" data-lightbox-section></span>
+        </div>
+        <div class="lightbox-topbar-right">
+          <button class="lightbox-play" type="button" data-lightbox-play title="Reproducir presentación automática" aria-label="Reproducir presentación automática">
+            <span class="icon-play"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+            <span class="icon-pause"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg></span>
+            <span data-lightbox-play-label>Reproducir</span>
+          </button>
+          <span class="lightbox-counter" data-lightbox-count></span>
+          <button class="lightbox-close" type="button" aria-label="Cerrar imagen ampliada" data-lightbox-close>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="lightbox-progress-track">
+        <div class="lightbox-progress" data-lightbox-progress></div>
+      </div>
+      <div class="lightbox-body">
+        <button class="lightbox-nav lightbox-prev" type="button" aria-label="Imagen anterior" data-lightbox-prev>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <figure class="lightbox-figure">
+          <div class="lightbox-image-frame">
+            <img class="lightbox-image" data-lightbox-image src="" alt="" decoding="async">
+            <div class="lightbox-video-frame" data-lightbox-video-frame hidden>
+              <video class="lightbox-video" data-lightbox-video controls playsinline hidden></video>
+              <iframe class="lightbox-video-embed" data-lightbox-embed hidden title="Video" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          </div>
+          <div class="lightbox-zoom-controls" data-lightbox-zoom-controls>
+            <button class="lightbox-zoom-btn" type="button" aria-label="Alejar imagen" data-lightbox-zoom-out>
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M15.2 15.2 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M8 10.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <span class="lightbox-zoom-level" data-lightbox-zoom-level>100%</span>
+            <button class="lightbox-zoom-btn" type="button" aria-label="Acercar imagen" data-lightbox-zoom-in>
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M15.2 15.2 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M10.5 8v5M8 10.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button class="lightbox-zoom-btn" type="button" aria-label="Restablecer zoom" data-lightbox-zoom-reset>
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M4 12a8 8 0 1 1 2.3 5.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 17v-4.5h4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <figcaption class="lightbox-caption"><span data-lightbox-caption></span><span class="lightbox-desc" data-lightbox-desc></span></figcaption>
+        </figure>
+        <button class="lightbox-nav lightbox-next" type="button" aria-label="Imagen siguiente" data-lightbox-next>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <button class="admin-float" id="openLogin" type="button" title="Administrar galería" aria-label="Administrar galería">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.16 5.84l-1.84 1.84M7.68 16.48l-1.84 1.84M18.16 18.16l-1.84-1.84M7.68 7.52 5.84 5.68" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </button>
+
+  <div class="login-modal" id="loginModal" aria-hidden="true">
+    <form class="login-box" id="loginForm">
+      <h2>Acceso administrativo</h2>
+      <p>Uso educativo interno para editar la galería.</p>
+      <div class="login-field">
+        <label for="loginUser">Usuario</label>
+        <input id="loginUser" type="text" autocomplete="username" required>
+      </div>
+      <div class="login-field">
+        <label for="loginPass">Contraseña</label>
+        <div class="login-password-wrap">
+          <input id="loginPass" type="password" autocomplete="current-password" required>
+          <button class="login-password-toggle" type="button" id="toggleLoginPass" aria-label="Mostrar contraseña" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-eye-open><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.7"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-eye-closed style="display:none"><path d="M3 3l18 18M10.6 10.7a2.6 2.6 0 0 0 3.7 3.6M7.4 7.5C4.7 9 3 12 3 12s3.5 7 10 7c1.7 0 3.2-.4 4.5-1.1M14.7 5.4A10.6 10.6 0 0 1 22 12s-1 2-2.9 3.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="login-actions">
+        <button class="login-submit" type="submit">Ingresar</button>
+        <button class="login-cancel" id="closeLogin" type="button">Cancelar</button>
+      </div>
+      <div class="login-feedback" id="loginFeedback"></div>
+    </form>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 E.E.S.T Nº3 "Islas Malvinas" - Remedios de Escalada, Lanús</p>
+    <p><em>"Enseñamos profesiones, inspiramos personas."</em></p>
+    <p class="footer-credit">Hecha con <span class="heart">♥</span> por los cursos de Programación 2025-actualidad</p>
+  </footer>
+
+  <script src="ui.js"></script>
+  <script>
+    const GALLERY_KEY = 'eest3Galeria';
+    const CATS_ORDER_KEY = 'eest3GaleriaCategorias';
+
+    // Si en este navegador quedaron fotos/categorías viejas guardadas de
+    // pruebas anteriores, las borramos una sola vez para que se vea la
+    // galería nueva (13 fotos + proyectos) en vez de datos de otra época.
+    const DATA_VERSION_KEY = 'eest3GaleriaVersion';
+    const DATA_VERSION = '2026-08-19-assets';
+    if (localStorage.getItem(DATA_VERSION_KEY) !== DATA_VERSION) {
+      localStorage.removeItem(GALLERY_KEY);
+      localStorage.removeItem(CATS_ORDER_KEY);
+      localStorage.setItem(DATA_VERSION_KEY, DATA_VERSION);
+    }
+    const SESSION_KEY = 'eest3GaleriaAdmin';
+    const REDIRECT_KEY = 'eest3GaleriaLoginRefresh';
+
+    // "Modo vista previa": cuando galeria-admin.html abre esta misma
+    // página adentro de un iframe (con "?preview=1") para mostrar la
+    // "Vista previa en vivo", esta página se comporta igual que siempre
+    // pero además: (a) no redirige nunca a galeria-admin.html aunque la
+    // sesión de administrador siga activa en este navegador, y (b)
+    // escucha por postMessage los datos "en memoria" del panel de admin
+    // (incluso sin guardar todavía) y los muestra en vez de lo que haya
+    // en localStorage, para que la vista previa refleje exactamente lo
+    // que se está editando en ese momento.
+    const previewQueryParams = new URLSearchParams(location.search);
+    const isPreviewMode = previewQueryParams.get('preview') === '1';
+    const ADMIN_USERS = [
+      { user: 'admin', pass: 'Malvinas2026' },
+      { user: 'profesor', pass: 'Tecnica123' }
+    ];
+
+    const defaultPhotos = [
+      { id: 'n1', title: 'Aula', image: 'Assets/fotos_galeria/aulas-1.jpg', visible: true, categoria: 'Aulas' },
+
+      { id: 'n2', title: 'Taller 1', image: 'Assets/fotos_galeria/talleres-1.jpg', visible: true, categoria: 'Talleres' },
+      { id: 'n3', title: 'Taller 2', image: 'Assets/fotos_galeria/talleres-2.jpg', visible: true, categoria: 'Talleres' },
+      { id: 'n4', title: 'Taller 3', image: 'Assets/fotos_galeria/talleres-3.jpg', visible: true, categoria: 'Talleres' },
+      { id: 'n5', title: 'Taller 4', image: 'Assets/fotos_galeria/talleres-4.jpg', visible: true, categoria: 'Talleres' },
+
+      { id: 'n6', title: 'Laboratorio 1', image: 'Assets/fotos_galeria/laboratorio-1.jpg', visible: true, categoria: 'Laboratorio' },
+      { id: 'n7', title: 'Laboratorio 2', image: 'Assets/fotos_galeria/laboratorio-2.jpg', visible: true, categoria: 'Laboratorio' },
+      { id: 'n8', title: 'Laboratorio 3', image: 'Assets/fotos_galeria/laboratorio-3.jpg', visible: true, categoria: 'Laboratorio' },
+
+      { id: 'n9', title: 'Biblioteca', image: 'Assets/fotos_galeria/biblioteca-1.jpg', visible: true, categoria: 'Biblioteca' },
+
+      { id: 'n10', title: 'Patio 1', image: 'Assets/fotos_galeria/patio-1.jpg', visible: true, categoria: 'Patio' },
+      { id: 'n11', title: 'Patio 2', image: 'Assets/fotos_galeria/patio-2.jpg', visible: true, categoria: 'Patio' },
+
+      { id: 'p1', title: 'Comunidad técnica', image: 'Assets/imagen1.jpg', visible: true, categoria: 'proyectos' },
+      { id: 'p2', title: 'Aulas en movimiento', image: 'Assets/imagen2.jpg', visible: true, categoria: 'proyectos' },
+      { id: 'p3', title: 'Talleres y proyectos', image: 'Assets/imagen3.jpg', visible: true, categoria: 'proyectos' },
+
+      { id: 'n12', title: 'Secretaría 1', image: 'Assets/fotos_galeria/secretaria-1.jpg', visible: true, categoria: 'Secretaria' },
+      { id: 'n13', title: 'Secretaría 2', image: 'Assets/fotos_galeria/secretaria-2.jpg', visible: true, categoria: 'Secretaria' }
+    ];
+
+    const readGallery = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(GALLERY_KEY));
+        return Array.isArray(stored) ? stored : defaultPhotos;
+      } catch {
+        return defaultPhotos;
+      }
+    };
+
+    // Orden de categorías guardado por el panel de admin en este mismo
+    // navegador (respaldo local; lo que manda de verdad para todos los
+    // visitantes es "galeria-datos.json", ver más abajo).
+    const readCategoryOrder = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(CATS_ORDER_KEY));
+        return Array.isArray(stored) && stored.length ? stored : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const mainImg = document.getElementById('imagen-carrusel');
+    const counterEl = document.querySelector('[data-gallery-count]');
+    const captionTitleEl = document.querySelector('[data-gallery-title]');
+    const captionDescEl = document.querySelector('[data-gallery-desc]');
+    const totalEl = document.querySelector('[data-gallery-total]');
+    const sectionBadgeEl = document.querySelector('[data-gallery-section]');
+    const sectionBadgeLabelEl = document.querySelector('[data-gallery-section-label]');
+    const thumbsContainer = document.querySelector('.gallery-thumbs');
+    const lightbox = document.querySelector('[data-lightbox]');
+    const lightboxContent = document.querySelector('[data-lightbox-content]');
+    const lightboxImg = document.querySelector('[data-lightbox-image]');
+    const lightboxVideoFrame = document.querySelector('[data-lightbox-video-frame]');
+    const lightboxVideoEl = document.querySelector('[data-lightbox-video]');
+    const lightboxEmbedEl = document.querySelector('[data-lightbox-embed]');
+    const galleryVideoBadge = document.querySelector('[data-gallery-video-badge]');
+    const galleryVideoFrame = document.querySelector('[data-gallery-video-frame]');
+    const galleryVideoEl = document.querySelector('[data-gallery-video]');
+    const galleryEmbedEl = document.querySelector('[data-gallery-embed]');
+    const lightboxCaption = document.querySelector('[data-lightbox-caption]');
+    const lightboxDesc = document.querySelector('[data-lightbox-desc]');
+    const lightboxCountEl = document.querySelector('[data-lightbox-count]');
+    const lightboxSectionEl = document.querySelector('[data-lightbox-section]');
+    const zoomInBtn = document.querySelector('[data-lightbox-zoom-in]');
+    const zoomOutBtn = document.querySelector('[data-lightbox-zoom-out]');
+    const zoomResetBtn = document.querySelector('[data-lightbox-zoom-reset]');
+    const zoomLevelEl = document.querySelector('[data-lightbox-zoom-level]');
+    const lightboxZoomControlsEl = document.querySelector('[data-lightbox-zoom-controls]');
+    const progressBar = document.querySelector('[data-gallery-progress]');
+    const lightboxProgressBar = document.querySelector('[data-lightbox-progress]');
+    const playBtn = document.querySelector('[data-gallery-play]');
+    const playLabel = document.querySelector('[data-gallery-play-label]');
+    const lightboxPlayBtn = document.querySelector('[data-lightbox-play]');
+    const lightboxPlayLabel = document.querySelector('[data-lightbox-play-label]');
+    const galleryStage = document.querySelector('[data-gallery]');
+    const galleryFrameEl = document.querySelector('.gallery-frame');
+    const lightboxFigureEl = document.querySelector('.lightbox-figure');
+    const thumbsPrevBtn = document.querySelector('[data-thumbs-prev]');
+    const thumbsNextBtn = document.querySelector('[data-thumbs-next]');
+
+    const getCategoria = (photo) => {
+      const raw = photo && typeof photo.categoria === 'string' ? photo.categoria.trim() : '';
+      return raw || 'General';
+    };
+
+    // Una foto puede estar etiquetada en varias categorías a la vez desde
+    // el panel de admin (array "categorias"); si no tiene ese array,
+    // usamos la categoría única de siempre. Así una foto puede aparecer
+    // en más de una sección de la galería pública, igual que se ve en
+    // el admin.
+    const getCategoriasDe = (photo) => {
+      if (photo && Array.isArray(photo.categorias) && photo.categorias.length) {
+        const limpias = photo.categorias
+          .map((c) => (typeof c === 'string' ? c.trim() : ''))
+          .filter(Boolean);
+        if (limpias.length) return [...new Set(limpias)];
+      }
+      return [getCategoria(photo)];
+    };
+
+    let allPhotos = readGallery().filter((item) => item.visible !== false);
+    if (!allPhotos.length) allPhotos = defaultPhotos;
+    let categoryOrder = readCategoryOrder();
+    let activeCategory = 'todas';
+    let photos = allPhotos;
+    let currentIndex = 0;
+    let autoplayActive = false;
+    let autoplayAdvanceCleanup = null;
+    const AUTOPLAY_MS = 4500;
+
+    const pad = (n) => (n < 10 ? '0' + n : '' + n);
+
+    const applyStageContent = () => {
+      if (currentIndex >= photos.length) currentIndex = photos.length - 1;
+      if (currentIndex < 0) currentIndex = 0;
+      const p = photos[currentIndex];
+      if (!p || !mainImg) return;
+      stopGalleryVideo();
+      if (p.type === 'video') {
+        mainImg.hidden = true;
+        mainImg.src = '';
+        showGalleryVideo(p);
+      } else {
+        mainImg.hidden = false;
+        mainImg.src = p.image || '';
+        mainImg.alt = p.title || '';
+      }
+      if (galleryVideoBadge) galleryVideoBadge.hidden = p.type !== 'video';
+      if (counterEl) counterEl.textContent = pad(currentIndex + 1) + ' / ' + pad(photos.length);
+      if (captionTitleEl) captionTitleEl.textContent = p.title || '';
+      if (totalEl) totalEl.textContent = allPhotos.length;
+    };
+
+    // Cambiar de foto hace un pequeño fundido (fade-out -> se actualiza el
+    // contenido -> fade-in). Antes el contenido se actualizaba al instante
+    // mientras el navegador todavía animaba el cambio anterior, lo que se
+    // percibía como un "salto doble". Con un único temporizador controlado
+    // (que además se cancela si el usuario cambia de foto muy rápido) el
+    // cambio queda siempre suave.
+    let stageFadeTimer = null;
+    const renderStage = (options) => {
+      const instant = options && options.instant;
+      if (!galleryFrameEl || instant) {
+        applyStageContent();
+        return;
+      }
+      if (stageFadeTimer) clearTimeout(stageFadeTimer);
+      galleryFrameEl.classList.add('is-fading');
+      stageFadeTimer = window.setTimeout(() => {
+        applyStageContent();
+        requestAnimationFrame(() => {
+          galleryFrameEl.classList.remove('is-fading');
+        });
+        stageFadeTimer = null;
+      }, 280);
+    };
+
+    // Las "miniaturas" de abajo ahora son categorías/secciones (Aulas, Talleres, Patio...),
+    // no fotos individuales. Cada tile usa como portada la primera foto de esa categoría.
+    // Al hacer clic, la foto grande de arriba pasa a recorrer todas las fotos de esa sección
+    // (con las flechas prev/next y el reproductor automático, que ya recorren el array `photos`).
+    const getCategoryTiles = () => {
+      const porCategoria = new Map();
+      allPhotos.forEach((p) => {
+        getCategoriasDe(p).forEach((c) => {
+          if (!porCategoria.has(c)) porCategoria.set(c, []);
+          porCategoria.get(c).push(p);
+        });
+      });
+      let categorias = Array.from(porCategoria.keys());
+      if (categoryOrder && categoryOrder.length) {
+        // Mismo criterio que usa el panel de admin: primero las
+        // categorías en el orden guardado, después las que falten
+        // (por ejemplo recién creadas) ordenadas alfabéticamente.
+        const enOrden = categoryOrder.filter((c) => categorias.includes(c));
+        const faltantes = categorias.filter((c) => !categoryOrder.includes(c)).sort((a, b) => a.localeCompare(b, 'es'));
+        categorias = [...enOrden, ...faltantes];
+      } else {
+        categorias = categorias.sort((a, b) => a.localeCompare(b, 'es'));
+      }
+      const tiles = [{ key: 'todas', label: 'Todas', count: allPhotos.length, cover: allPhotos[0] }];
+      categorias.forEach((c) => {
+        const fotosCat = porCategoria.get(c);
+        tiles.push({ key: c, label: c, count: fotosCat.length, cover: fotosCat[0] });
+      });
+      return tiles;
+    };
+
+    // Sólo actualiza qué tile queda marcado como activo, sin tocar el
+    // resto del DOM. Antes esto se hacía re-generando todo el innerHTML
+    // de .gallery-thumbs en cada cambio de categoría, lo que destruía y
+    // recreaba los botones -incluido el que acababas de clickear- y por
+    // eso las transiciones de hi.css (borde dorado, sombra, transform)
+    // nunca se veían: el navegador pintaba directo el estado final, sin
+    // un estado previo del que animar. Manteniendo los mismos elementos
+    // y sólo alternando la clase, esas transiciones ya definidas en
+    // hi.css se disparan solas.
+    const updateActiveThumb = () => {
+      if (!thumbsContainer) return;
+      thumbsContainer.querySelectorAll('.gallery-thumb').forEach((btn) => {
+        const isActive = btn.dataset.category === activeCategory;
+        btn.classList.toggle('is-active', isActive);
+        if (isActive) {
+          btn.setAttribute('aria-current', 'true');
+        } else {
+          btn.removeAttribute('aria-current');
+        }
+      });
+      updateThumbsArrows();
+    };
+
+    const updateSectionBadge = () => {
+      if (!sectionBadgeEl || !sectionBadgeLabelEl) return;
+      if (activeCategory === 'todas') {
+        sectionBadgeEl.classList.remove('is-visible');
+        return;
+      }
+      sectionBadgeLabelEl.textContent = activeCategory;
+      sectionBadgeEl.classList.add('is-visible');
+    };
+
+    const applyCategoryFilter = () => {
+      const filtered = activeCategory === 'todas'
+        ? allPhotos
+        : allPhotos.filter((p) => getCategoriasDe(p).includes(activeCategory));
+
+      if (filtered.length) {
+        photos = filtered;
+      } else {
+        // Si la sección activa ya no tiene fotos (por ejemplo, se renombró
+        // o se vació), volvemos a "Todas" en vez de mezclar en silencio
+        // las fotos de otras secciones bajo una pestaña que seguía
+        // marcada como si fuera la nueva.
+        activeCategory = 'todas';
+        photos = allPhotos;
+      }
+
+      currentIndex = 0;
+      renderStage();
+      updateActiveThumb();
+      updateSectionBadge();
+    };
+
+    const renderThumbs = () => {
+      if (!thumbsContainer) return;
+      const tiles = getCategoryTiles();
+      thumbsContainer.innerHTML = tiles.map((tile) => `
+        <button class="gallery-thumb${tile.key === activeCategory ? ' is-active' : ''}" type="button" data-category="${tile.key.replace(/"/g, '&quot;')}" aria-label="Ver sección: ${tile.label} (${tile.count} ${tile.count === 1 ? 'foto' : 'fotos'})"${tile.key === activeCategory ? ' aria-current="true"' : ''}>
+          <img src="${tile.cover ? tile.cover.image : ''}" alt="" width="200" height="140" loading="lazy" decoding="async" fetchpriority="low">
+          <span class="gallery-thumb-label">${tile.label}<span class="gallery-thumb-count">${tile.count}</span></span>
+        </button>
+      `).join('');
+      thumbsContainer.querySelectorAll('.gallery-thumb').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (autoplayActive) stopAutoplay();
+          activeCategory = btn.dataset.category;
+          applyCategoryFilter();
+        });
+      });
+      // El ancho del contenido recién insertado se conoce después del
+      // reflow, por eso se recalcula el estado de las flechas en el
+      // siguiente frame.
+      requestAnimationFrame(() => {
+        updateThumbsArrows();
+        layoutThumbsScrollbar();
+      });
+    };
+
+    const applyLightboxMeta = () => {
+      const p = photos[currentIndex];
+      if (!p) return;
+      if (lightboxCaption) lightboxCaption.textContent = p.title || '';
+      if (lightboxDesc) lightboxDesc.textContent = p.desc || '';
+      if (lightboxCountEl) lightboxCountEl.textContent = pad(currentIndex + 1) + ' / ' + pad(photos.length);
+      // El zoom (arrastrar/acercar/alejar) no tiene sentido sobre un
+      // video, así que esos controles se ocultan mientras se está viendo
+      // uno; para fotos vuelven a aparecer como siempre.
+      if (lightboxZoomControlsEl) lightboxZoomControlsEl.hidden = p.type === 'video';
+      if (lightboxSectionEl) {
+        // La sección se toma de la categoría real de la foto, no de la
+        // pestaña activa: así, aunque se esté viendo "Todas", el visor
+        // ampliado igual aclara a qué sección pertenece cada imagen.
+        lightboxSectionEl.textContent = getCategoria(p);
+      }
+    };
+
+    // --- Reproducción de video dentro del visor ampliado ---
+    // Los videos no se guardan como base64 (pesarían demasiado); se
+    // guardan como enlace (YouTube, Vimeo o un archivo .mp4 alojado en
+    // otro lado) y acá se arma el reproductor que corresponda.
+    const parseVideoUrlFallback = (raw) => {
+      const url = (raw || '').trim();
+      if (!url) return null;
+      let m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+      if (m) return { provider: 'youtube', embedUrl: `https://www.youtube-nocookie.com/embed/${m[1]}` };
+      m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+      if (m) return { provider: 'vimeo', embedUrl: `https://player.vimeo.com/video/${m[1]}` };
+      if (/\.(mp4|webm|ogv|ogg|mov)(\?.*)?$/i.test(url)) return { provider: 'direct', embedUrl: url };
+      return { provider: 'url', embedUrl: url };
+    };
+
+    // --- Reproducción de video en la vitrina chica (arriba, la que
+    //     recorre el botón "Reproducir") ---
+    // A diferencia del visor ampliado -donde el video arranca con
+    // controles y sonido porque la persona lo pidió a propósito-, acá el
+    // video tiene que arrancar solo durante el pase automático. Los
+    // navegadores sólo dejan hacer eso si el video está muteado, así
+    // que siempre se reproduce sin sonido (igual que cualquier
+    // miniatura de video "viva" en una página).
+    const stopGalleryVideo = () => {
+      if (galleryVideoEl) {
+        galleryVideoEl.pause();
+        galleryVideoEl.removeAttribute('src');
+        galleryVideoEl.load();
+        galleryVideoEl.hidden = true;
+      }
+      if (galleryEmbedEl) {
+        galleryEmbedEl.src = '';
+        galleryEmbedEl.hidden = true;
+      }
+      if (galleryVideoFrame) galleryVideoFrame.hidden = true;
+    };
+
+    const withMutedAutoplay = (embedUrl, provider) => {
+      if (!embedUrl) return embedUrl;
+      try {
+        const url = new URL(embedUrl, window.location.href);
+        url.searchParams.set('autoplay', '1');
+        url.searchParams.set('mute', '1');
+        if (provider === 'vimeo') url.searchParams.set('muted', '1');
+        return url.toString();
+      } catch (err) {
+        return embedUrl;
+      }
+    };
+
+    const showGalleryVideo = (p) => {
+      if (!galleryVideoFrame) return;
+      const info = parseVideoUrlFallback(p.videoUrl) || {};
+      const provider = p.videoProvider || info.provider;
+      const embedUrl = p.videoEmbedUrl || info.embedUrl || p.videoUrl;
+      galleryVideoFrame.hidden = false;
+      if (provider === 'direct' && galleryVideoEl) {
+        if (galleryEmbedEl) { galleryEmbedEl.hidden = true; galleryEmbedEl.src = ''; }
+        galleryVideoEl.hidden = false;
+        galleryVideoEl.muted = true;
+        galleryVideoEl.src = embedUrl;
+        galleryVideoEl.play().catch(() => {});
+      } else if (galleryEmbedEl) {
+        if (galleryVideoEl) galleryVideoEl.hidden = true;
+        galleryEmbedEl.hidden = false;
+        galleryEmbedEl.src = withMutedAutoplay(embedUrl, provider);
+      }
+    };
+
+    const stopLightboxVideo = () => {
+      if (lightboxVideoEl) {
+        lightboxVideoEl.pause();
+        lightboxVideoEl.removeAttribute('src');
+        lightboxVideoEl.load();
+        lightboxVideoEl.hidden = true;
+      }
+      if (lightboxEmbedEl) {
+        lightboxEmbedEl.src = '';
+        lightboxEmbedEl.hidden = true;
+      }
+      if (lightboxVideoFrame) lightboxVideoFrame.hidden = true;
+    };
+
+    const showLightboxVideo = (p) => {
+      if (!lightboxVideoFrame) return;
+      const info = parseVideoUrlFallback(p.videoUrl) || {};
+      const provider = p.videoProvider || info.provider;
+      const embedUrl = p.videoEmbedUrl || info.embedUrl || p.videoUrl;
+      lightboxVideoFrame.hidden = false;
+      if (provider === 'direct' && lightboxVideoEl) {
+        if (lightboxEmbedEl) { lightboxEmbedEl.hidden = true; lightboxEmbedEl.src = ''; }
+        lightboxVideoEl.hidden = false;
+        lightboxVideoEl.src = embedUrl;
+      } else if (lightboxEmbedEl) {
+        if (lightboxVideoEl) { lightboxVideoEl.hidden = true; }
+        lightboxEmbedEl.hidden = false;
+        lightboxEmbedEl.src = embedUrl;
+      }
+    };
+
+    const applyLightboxContent = () => {
+      const p = photos[currentIndex];
+      if (!p || !lightboxImg) return;
+      stopLightboxVideo();
+      if (p.type === 'video') {
+        lightboxImg.hidden = true;
+        lightboxImg.src = '';
+        showLightboxVideo(p);
+      } else {
+        lightboxImg.hidden = false;
+        lightboxImg.src = p.image || '';
+        lightboxImg.alt = p.title || '';
+      }
+      applyLightboxMeta();
+    };
+
+    let lightboxFadeTimer = null;
+    // Este "token" identifica cada pedido de cambio de foto. Si el
+    // usuario cambia de foto varias veces rápido (varios clicks en las
+    // flechas antes de que la anterior termine de decodificar), sólo debe
+    // aplicarse el resultado del ÚLTIMO pedido -de lo contrario, una
+    // decodificación vieja que termina tarde podría "pisar" el contenido
+    // con una foto que ya no corresponde a la posición actual.
+    let lightboxRenderToken = 0;
+    const renderLightbox = (options) => {
+      const instant = options && options.instant;
+      if (!lightbox || instant) {
+        applyLightboxContent();
+        return;
+      }
+      if (lightboxFadeTimer) clearTimeout(lightboxFadeTimer);
+      lightboxContent.classList.add('is-fading');
+      const token = ++lightboxRenderToken;
+      lightboxFadeTimer = window.setTimeout(() => {
+        const p = photos[currentIndex];
+        const reveal = () => {
+          if (token !== lightboxRenderToken) return;
+          applyLightboxMeta();
+          requestAnimationFrame(() => {
+            lightboxContent.classList.remove('is-fading');
+          });
+          lightboxFadeTimer = null;
+        };
+        if (!p || !lightboxImg) { reveal(); return; }
+        stopLightboxVideo();
+        if (p.type === 'video') {
+          lightboxImg.hidden = true;
+          lightboxImg.src = '';
+          showLightboxVideo(p);
+          reveal();
+          return;
+        }
+        lightboxImg.hidden = false;
+        // OJO: la versión anterior precargaba la foto en un elemento
+        // <img> APARTE (uno invisible, creado sólo para la precarga) y
+        // recién al terminar esa carga asignaba el "src" al <img> real y
+        // visible. El problema es que el evento "load" sólo garantiza
+        // que los bytes ya se descargaron, no que el navegador terminó
+        // de DECODIFICARLOS en un bitmap listo para pintar -y esa
+        // decodificación puede volver a demorar un poco al asignarse a
+        // otro elemento distinto, sobre todo con imágenes grandes o
+        // "pesadas" de decodificar como gráficos con muchos detalles
+        // finos (el caso reportado: el logo con líneas). Ese resto de
+        // decodificación podía alcanzar a pintarse a medias.
+        //
+        // Ahora se asigna el "src" DIRECTO al <img> real y visible -pero
+        // que en este momento sigue con opacity:0 por la clase
+        // "is-fading"-, y se usa img.decode() (que sí espera a que el
+        // bitmap esté completamente listo para pintar) antes de sacar la
+        // clase "is-fading" y mostrarlo. Como el elemento ya está
+        // invisible mientras tanto, no importa cuánto tarde: nunca hay
+        // un frame a medio cargar o con contenido equivocado a la vista.
+        lightboxImg.src = p.image || '';
+        lightboxImg.alt = p.title || '';
+        if (lightboxImg.decode) {
+          lightboxImg.decode().then(reveal).catch(reveal);
+        } else {
+          lightboxImg.addEventListener('load', reveal, { once: true });
+          lightboxImg.addEventListener('error', reveal, { once: true });
+        }
+      }, 200);
+    };
+
+    // --- Desplazar la fila de categorías con flechas ---
+    const updateThumbsArrows = () => {
+      if (!thumbsContainer || !thumbsPrevBtn || !thumbsNextBtn) return;
+      const maxScroll = thumbsContainer.scrollWidth - thumbsContainer.clientWidth;
+      const hasOverflow = maxScroll > 4;
+      thumbsPrevBtn.classList.toggle('is-hidden', !hasOverflow);
+      thumbsNextBtn.classList.toggle('is-hidden', !hasOverflow);
+      if (!hasOverflow) return;
+      // Las flechas no sólo desplazan la fila: también cambian de
+      // categoría (ver goToAdjacentCategory), así que se habilitan según
+      // si existe una categoría anterior/siguiente real, no según si la
+      // fila puede seguir scrolleando. Antes, al pasar a una categoría
+      // que ya quedaba visible sin necesitar scroll (la fila se quedaba
+      // con scrollLeft en 0), la flecha de "volver" se deshabilitaba
+      // igual aunque sí había una categoría previa a la que ir.
+      const tiles = Array.from(thumbsContainer.querySelectorAll('.gallery-thumb'));
+      let idx = tiles.findIndex((btn) => btn.dataset.category === activeCategory);
+      if (idx === -1) idx = 0;
+      thumbsPrevBtn.disabled = idx <= 0;
+      thumbsNextBtn.disabled = idx >= tiles.length - 1;
+    };
+
+    // Las flechas ahora no solo desplazan la fila: también cambian de
+    // sección (como si hicieras click en la categoría siguiente/anterior),
+    // y de paso se aseguran de que esa categoría quede visible.
+    //
+    // OJO: antes esto usaba scrollIntoView({block:'nearest'}), que sólo
+    // mueve la fila cuando el destino queda realmente fuera de la vista.
+    // Como varias tiles suelen entrar juntas en el ancho visible, al
+    // pasar de una a la siguiente (ambas ya visibles) no se generaba
+    // ningún scroll real: la única señal de cambio era el borde dorado
+    // de "activo" saltando de una tile a otra, sin que la fila ni la
+    // barra dorada de abajo se movieran. Por eso cada click de flecha
+    // ahora desplaza la fila un "paso" fijo (ancho de una tile + su
+    // separación) en la dirección presionada, sea o no necesario para
+    // que la tile activa quede visible. Así el desplazamiento siempre
+    // se ve, y la barra dorada lo sigue en tiempo real vía el listener
+    // de "scroll" ya existente (syncThumbsScrollbarFromScroll).
+    const getThumbsStep = () => {
+      const tiles = Array.from(thumbsContainer.querySelectorAll('.gallery-thumb'));
+      if (tiles.length < 2) return thumbsContainer.clientWidth;
+      // La distancia entre los "offsetLeft" de dos tiles consecutivas ya
+      // incluye el ancho de la tile y el gap entre ellas, y se adapta
+      // sola a los distintos anchos por breakpoint (4/3/2 por fila).
+      return tiles[1].offsetLeft - tiles[0].offsetLeft;
+    };
+
+    // Cada click de flecha dispara un scrollTo suave (dura ~250-300ms).
+    // Si se clickea rápido, un segundo click puede llegar mientras el
+    // primero todavía está animando: en ese momento thumbsContainer.
+    // scrollLeft es una posición de tránsito (a mitad de camino), no el
+    // destino final. Sumarle el paso a ESE valor de tránsito da un
+    // resultado desparejo -a veces se avanza medio paso, a veces uno y
+    // medio- que se ve como saltos irregulares en vez de un
+    // desplazamiento parejo. Por eso se guarda el destino que se pidió
+    // la última vez (thumbsScrollTarget) y cada click nuevo suma su paso
+    // sobre ESE valor, no sobre la posición real todavía en movimiento.
+    // "scrollend" mantiene ese valor sincronizado con la posición real
+    // en todos los demás casos (arrastre de la barra, resize, snap al
+    // soltar), así nunca queda desalineado del scroll real.
+    let thumbsScrollTarget = 0;
+    const resyncThumbsScrollTarget = () => {
+      thumbsScrollTarget = thumbsContainer ? thumbsContainer.scrollLeft : 0;
+    };
+    if (thumbsContainer) {
+      resyncThumbsScrollTarget();
+      thumbsContainer.addEventListener('scrollend', resyncThumbsScrollTarget);
+    }
+
+    const goToAdjacentCategory = (direction) => {
+      if (!thumbsContainer) return;
+      const tiles = Array.from(thumbsContainer.querySelectorAll('.gallery-thumb'));
+      if (!tiles.length) return;
+
+      let currentIndex = tiles.findIndex((btn) => btn.dataset.category === activeCategory);
+      if (currentIndex === -1) currentIndex = 0;
+
+      const nextIndex = Math.max(0, Math.min(tiles.length - 1, currentIndex + direction));
+      if (nextIndex === currentIndex) return;
+
+      if (autoplayActive) stopAutoplay();
+      activeCategory = tiles[nextIndex].dataset.category;
+      applyCategoryFilter();
+
+      // Antes cada click de flecha desplazaba la fila un paso (el ancho
+      // de una tile), sin importar si la tile recién activada ya era
+      // visible o no. Eso hacía que la fila se moviera de a poquito en
+      // cada click, en vez de mantenerse quieta mientras la selección
+      // avanza entre las tiles ya visibles y saltar recién cuando hace
+      // falta.
+      //
+      // Ahora: si la tile de destino ya está completamente visible
+      // dentro del contenedor, no se toca el scroll -sólo cambia el
+      // resaltado dorado de "activo"-. Recién cuando la tile de destino
+      // queda fuera del área visible, se salta una "página" completa
+      // (el ancho del contenedor) en la dirección presionada, para
+      // revelar de una sola vez el siguiente set de categorías, como en
+      // las capturas de referencia.
+      const targetTile = tiles[nextIndex];
+      const containerLeft = thumbsContainer.scrollLeft;
+      const containerRight = containerLeft + thumbsContainer.clientWidth;
+      const tileLeft = targetTile.offsetLeft;
+      const tileRight = tileLeft + targetTile.offsetWidth;
+      const isTileVisible = tileLeft >= containerLeft - 2 && tileRight <= containerRight + 2;
+
+      if (!isTileVisible) {
+        const maxScroll = getThumbsMaxScroll();
+        // OJO: la versión anterior buscaba "la tile más cercana" a un
+        // salto genérico de una página completa (containerLeft +
+        // direction*clientWidth). El problema es que esa búsqueda podía
+        // encontrar una tile MÁS ALLÁ de la tile de destino real -por
+        // ejemplo, al ir de "aaaaas" a "Aulas", el salto de página caía
+        // justo en el rango de la siguiente sección (Comunidad) y el
+        // scroll terminaba ahí, pasándose de largo de "Aulas" sin nunca
+        // asentarse en ella. Por eso se sentía como un salto raro que no
+        // "centraba" la tile a la que se hizo click.
+        //
+        // La forma correcta es anclar el scroll directamente al borde de
+        // LA TILE DE DESTINO (la que realmente se activó), no a un punto
+        // genérico de página:
+        // - Si se va hacia adelante (siguiente), su borde derecho queda
+        //   pegado al borde derecho del contenedor (la tile de destino
+        //   pasa a ser la última completamente visible).
+        // - Si se va hacia atrás (anterior), su borde izquierdo queda
+        //   pegado al borde izquierdo del contenedor (la tile de destino
+        //   pasa a ser la primera completamente visible).
+        // Así la tile a la que se hizo click SIEMPRE termina visible y
+        // completa, sin pasarse de largo ni cortarla a la mitad.
+        const target = direction > 0
+          ? Math.max(0, Math.min(maxScroll, tileRight - thumbsContainer.clientWidth))
+          : Math.max(0, Math.min(maxScroll, tileLeft));
+        thumbsScrollTarget = target;
+        thumbsContainer.scrollTo({ left: target, behavior: 'smooth' });
+        // La barra dorada se sincroniza sola con los eventos "scroll" del
+        // contenedor, pero si el navegador tarda un poco en disparar el
+        // primero, forzamos una sincronización inmediata para que siempre
+        // acompañe al click, no sólo cuando el scroll efectivamente se mueve.
+        requestAnimationFrame(syncThumbsScrollbarFromScroll);
+      }
+    };
+
+    if (thumbsPrevBtn) thumbsPrevBtn.addEventListener('click', () => goToAdjacentCategory(-1));
+    if (thumbsNextBtn) thumbsNextBtn.addEventListener('click', () => goToAdjacentCategory(1));
+    if (thumbsContainer) thumbsContainer.addEventListener('scroll', updateThumbsArrows, { passive: true });
+
+    // --- Barra de desplazamiento personalizada con efecto "resorte" ---
+    // La barra nativa del navegador no se puede animar, así que esta barra
+    // propia refleja el scroll de .gallery-thumbs. Al arrastrarla más allá
+    // de sus límites cede con resistencia (como un elástico) y, al soltar,
+    // vuelve a su posición con una transición que rebota levemente, para
+    // que nunca quede pegada del todo a las puntas del track.
+    const thumbsScrollbarWrap = document.querySelector('[data-thumbs-scrollbar-wrap]');
+    const thumbsScrollbarTrack = document.querySelector('[data-thumbs-scrollbar-track]');
+    const thumbsScrollbarThumb = document.querySelector('[data-thumbs-scrollbar-thumb]');
+
+    const SCROLLBAR_DRAG_GAP = 8;       // margen funcional mínimo al arrastrar (rango completo de movimiento)
+    const SCROLLBAR_REST_GAP = 18;      // margen de reposo: separación del thumb respecto al comienzo del track
+    const SCROLLBAR_MIN_THUMB = 34;     // ancho mínimo del thumb en px
+    const SCROLLBAR_OVERDRAG_GIVE = 0.32;  // cuánto "cede" al arrastrar más allá del límite (0-1)
+    const SCROLLBAR_OVERDRAG_MAX = 14;     // tope: por más que arrastres, no cede más que esto
+
+    let scrollbarDragging = false;
+    let scrollbarDragStartX = 0;
+    let scrollbarDragStartLeft = SCROLLBAR_REST_GAP;
+    let scrollbarUsableWidth = 0;
+    let scrollbarThumbWidth = SCROLLBAR_MIN_THUMB;
+    // Guarda si el arrastre actual se salió del límite, y de qué lado
+    // (-1 = principio, 1 = final, 0 = dentro de rango). El resorte al
+    // soltar sólo debe activarse en ese caso.
+    let scrollbarOverdragSide = 0;
+
+    const getThumbsMaxScroll = () => thumbsContainer
+      ? Math.max(0, thumbsContainer.scrollWidth - thumbsContainer.clientWidth)
+      : 0;
+
+    const layoutThumbsScrollbar = () => {
+      if (!thumbsContainer || !thumbsScrollbarTrack || !thumbsScrollbarThumb || !thumbsScrollbarWrap) return;
+      resyncThumbsScrollTarget();
+      const maxScroll = getThumbsMaxScroll();
+      const hasOverflow = maxScroll > 4;
+      thumbsScrollbarWrap.classList.toggle('is-hidden', !hasOverflow);
+      if (!hasOverflow) return;
+
+      const trackWidth = thumbsScrollbarTrack.clientWidth;
+      // El rango de arrastre (para que siga siendo funcional y navegue el
+      // scroll real) usa un margen chico; el margen "de reposo" -al
+      // comienzo del track- es aparte y se aplica en restThumbsScrollbar().
+      scrollbarUsableWidth = Math.max(trackWidth - SCROLLBAR_DRAG_GAP * 2, 10);
+      const ratio = thumbsContainer.clientWidth / thumbsContainer.scrollWidth;
+      scrollbarThumbWidth = Math.min(scrollbarUsableWidth, Math.max(scrollbarUsableWidth * ratio, SCROLLBAR_MIN_THUMB));
+      thumbsScrollbarThumb.style.width = scrollbarThumbWidth + 'px';
+      // Si la fila ya está desplazada (por ejemplo, tras cambiar de
+      // categoría con las flechas), reflejamos esa posición real en vez
+      // de resetear el thumb al comienzo del track: antes este reset
+      // ganaba la carrera al scroll suave disparado por scrollIntoView y
+      // la barra dorada se quedaba pegada al inicio sin moverse.
+      if (thumbsContainer.scrollLeft > 0) {
+        syncThumbsScrollbarFromScroll();
+      } else {
+        restThumbsScrollbar();
+      }
+    };
+
+    // En reposo (layout inicial / resize, sin haber arrastrado todavía)
+    // el thumb vuelve al comienzo del track, dejando un margen fijo
+    // respecto a la punta -nunca llega a tocarla-. Si el "reposo" ocurre
+    // porque se soltó tras un arrastre que se salió del límite, vuelve al
+    // lado correspondiente (principio o final) con el mismo margen.
+    const restThumbsScrollbar = () => {
+      if (scrollbarDragging || !thumbsScrollbarThumb) return;
+      if (scrollbarOverdragSide === 1 && thumbsScrollbarTrack) {
+        const trackWidth = thumbsScrollbarTrack.clientWidth;
+        const endLeft = Math.max(SCROLLBAR_REST_GAP, trackWidth - SCROLLBAR_REST_GAP - scrollbarThumbWidth);
+        thumbsScrollbarThumb.style.left = endLeft + 'px';
+      } else {
+        thumbsScrollbarThumb.style.left = SCROLLBAR_REST_GAP + 'px';
+      }
+    };
+
+    let scrollbarTrackingEndTimer = null;
+
+    // Sincroniza la barra dorada con el scroll real de la fila cada vez
+    // que ésta se mueve por una causa distinta al arrastre manual (por
+    // ejemplo, al hacer click en las flechas, que desplazan la fila con
+    // un scroll suave). Mientras dura ese scroll, sigue la posición al
+    // instante (sin la transición de resorte); al terminar, se le saca
+    // la clase para que el resorte vuelva a estar disponible para el
+    // arrastre.
+    const syncThumbsScrollbarFromScroll = () => {
+      if (scrollbarDragging || !thumbsContainer || !thumbsScrollbarThumb || !thumbsScrollbarTrack) return;
+      const maxScroll = getThumbsMaxScroll();
+      if (maxScroll <= 4) return;
+
+      thumbsScrollbarThumb.classList.add('is-tracking');
+      const maxThumbLeft = Math.max(scrollbarUsableWidth - scrollbarThumbWidth, 0);
+      const minLeft = SCROLLBAR_DRAG_GAP;
+      const progress = Math.max(0, Math.min(1, thumbsContainer.scrollLeft / maxScroll));
+      thumbsScrollbarThumb.style.left = (minLeft + progress * maxThumbLeft) + 'px';
+
+      if (scrollbarTrackingEndTimer) clearTimeout(scrollbarTrackingEndTimer);
+      scrollbarTrackingEndTimer = window.setTimeout(() => {
+        if (thumbsScrollbarThumb) thumbsScrollbarThumb.classList.remove('is-tracking');
+        scrollbarTrackingEndTimer = null;
+      }, 140);
+    };
+
+    if (thumbsContainer) thumbsContainer.addEventListener('scroll', syncThumbsScrollbarFromScroll);
+
+    const onThumbsScrollbarDown = (event) => {
+      if (!thumbsContainer || !thumbsScrollbarThumb) return;
+      scrollbarDragging = true;
+      thumbsScrollbarThumb.classList.add('is-dragging');
+      scrollbarDragStartX = event.touches ? event.touches[0].clientX : event.clientX;
+      scrollbarDragStartLeft = parseFloat(thumbsScrollbarThumb.style.left) || SCROLLBAR_DRAG_GAP;
+      // La fila tiene "scroll-behavior: smooth" y "scroll-snap-type" en
+      // CSS (pensados para los clicks de flecha y el snap al soltar).
+      // El problema es que esas dos propiedades también capturan las
+      // asignaciones directas de scrollLeft que hace onThumbsScrollbarMove
+      // en cada mousemove: en vez de moverse al instante, el navegador
+      // intenta animar/snappear hacia cada nuevo valor, y como llegan
+      // valores nuevos todo el tiempo, el resultado visual es que las
+      // imágenes "saltan" de un estado a otro en vez de deslizarse junto
+      // con el mouse. Por eso se desactivan las dos mientras se arrastra
+      // (scroll instantáneo, 1:1 con el dedo/mouse) y se restauran al
+      // soltar, para que ahí sí quede el snap "de aterrizaje".
+      thumbsContainer.style.scrollBehavior = 'auto';
+      thumbsContainer.style.scrollSnapType = 'none';
+      if (autoplayActive) stopAutoplay();
+      event.preventDefault();
+    };
+
+    const onThumbsScrollbarMove = (event) => {
+      if (!scrollbarDragging || !thumbsContainer || !thumbsScrollbarThumb) return;
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+      const dx = clientX - scrollbarDragStartX;
+      const maxThumbLeft = Math.max(scrollbarUsableWidth - scrollbarThumbWidth, 0);
+      const minLeft = SCROLLBAR_DRAG_GAP;
+      const maxLeft = SCROLLBAR_DRAG_GAP + maxThumbLeft;
+      let targetLeft = scrollbarDragStartLeft + dx;
+
+      // Efecto resorte: más allá del límite, cede con resistencia en vez
+      // de topar en seco contra la punta del track... pero solo hasta un
+      // tope (SCROLLBAR_OVERDRAG_MAX): pasado eso, no se mueve más aunque
+      // se siga arrastrando. Sólo en este caso (fuera de [minLeft, maxLeft])
+      // se marca el lado del overdrag, para que el resorte al soltar
+      // dispare únicamente cuando se llegó a un extremo.
+      if (targetLeft < minLeft) {
+        scrollbarOverdragSide = -1;
+        const give = Math.min((minLeft - targetLeft) * SCROLLBAR_OVERDRAG_GIVE, SCROLLBAR_OVERDRAG_MAX);
+        targetLeft = minLeft - give;
+      } else if (targetLeft > maxLeft) {
+        scrollbarOverdragSide = 1;
+        const give = Math.min((targetLeft - maxLeft) * SCROLLBAR_OVERDRAG_GIVE, SCROLLBAR_OVERDRAG_MAX);
+        targetLeft = maxLeft + give;
+      } else {
+        scrollbarOverdragSide = 0;
+      }
+
+      thumbsScrollbarThumb.style.left = targetLeft + 'px';
+
+      const clampedLeft = Math.max(minLeft, Math.min(maxLeft, targetLeft));
+      const progress = maxThumbLeft > 0 ? (clampedLeft - minLeft) / maxThumbLeft : 0;
+      thumbsContainer.scrollLeft = progress * getThumbsMaxScroll();
+      event.preventDefault();
+    };
+
+    const onThumbsScrollbarUp = () => {
+      if (!scrollbarDragging) return;
+      scrollbarDragging = false;
+      if (thumbsScrollbarThumb) thumbsScrollbarThumb.classList.remove('is-dragging');
+      // Se restauran el "scroll-behavior: smooth" y el snap que se habían
+      // apagado en onThumbsScrollbarDown. Al volver a activarse, el
+      // navegador acomoda la fila en la tile más cercana con una
+      // animación suave (el "aterrizaje" del snap), en vez de dejarla
+      // a mitad de una tile.
+      if (thumbsContainer) {
+        thumbsContainer.style.scrollBehavior = '';
+        thumbsContainer.style.scrollSnapType = '';
+      }
+      // El listener de "scrollend" ya deja thumbsScrollTarget alineado con
+      // la posición real una vez que el snap termina de aterrizar; este
+      // timeout es sólo un respaldo para navegadores que todavía no
+      // soportan ese evento.
+      window.setTimeout(resyncThumbsScrollTarget, 360);
+      // Sólo si el arrastre se salió de los límites (llegó al principio o
+      // al final "estirando") vuelve con el resorte a esa punta. Si se
+      // soltó dentro del rango normal, se queda exactamente donde el
+      // usuario lo dejó.
+      if (scrollbarOverdragSide !== 0) {
+        restThumbsScrollbar();
+      }
+      scrollbarOverdragSide = 0;
+    };
+
+    if (thumbsScrollbarThumb) {
+      thumbsScrollbarThumb.addEventListener('mousedown', onThumbsScrollbarDown);
+      thumbsScrollbarThumb.addEventListener('touchstart', onThumbsScrollbarDown, { passive: false });
+    }
+    window.addEventListener('mousemove', onThumbsScrollbarMove, { passive: false });
+    window.addEventListener('touchmove', onThumbsScrollbarMove, { passive: false });
+    window.addEventListener('mouseup', onThumbsScrollbarUp);
+    window.addEventListener('touchend', onThumbsScrollbarUp);
+
+    // Antes 'updateThumbsArrows' y 'layoutThumbsScrollbar' escuchaban
+    // 'resize' cada uno por su lado. Cada evento de resize (que puede
+    // dispararse muchas veces por segundo mientras se arrastra el borde
+    // de la ventana) hacía que ambas funciones leyeran measures del DOM
+    // (scrollWidth/clientWidth) por separado, forzando dos reflows en
+    // vez de uno. Ahora un único listener "debounced" (espera a que el
+    // usuario deje de redimensionar ~120ms) dispara ambas una sola vez.
+    let resizeDebounceTimer = null;
+    window.addEventListener('resize', () => {
+      if (resizeDebounceTimer) clearTimeout(resizeDebounceTimer);
+      resizeDebounceTimer = window.setTimeout(() => {
+        updateThumbsArrows();
+        layoutThumbsScrollbar();
+        resizeDebounceTimer = null;
+      }, 120);
+    });
+
+    const prevBtn = document.querySelector('[data-gallery-prev]');
+    const nextBtn = document.querySelector('[data-gallery-next]');
+    const zoomBtn = document.querySelector('[data-gallery-zoom]');
+    const lbPrev = document.querySelector('[data-lightbox-prev]');
+    const lbNext = document.querySelector('[data-lightbox-next]');
+    const lbCloseButtons = document.querySelectorAll('[data-lightbox-close]');
+
+    if (prevBtn) prevBtn.addEventListener('click', () => {
+      currentIndex = (currentIndex - 1 + photos.length) % photos.length;
+      renderStage();
+    });
+    if (nextBtn) nextBtn.addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % photos.length;
+      renderStage();
+    });
+    // --- Abrir / cerrar el visor ampliado (lightbox) ---
+    // Antes esto sólo alternaba el atributo "hidden", lo que hacía que el
+    // modal apareciera y desapareciera de golpe (display:none no anima).
+    // Ahora se usa una clase "is-open": el atributo "hidden" se quita/pone
+    // en el momento justo (antes de animar para abrir, después de animar
+    // para cerrar) y la transición de opacidad/escala definida en el CSS
+    // se encarga del resto. De paso, se bloquea el scroll del body
+    // mientras el visor está abierto, igual que ya se hacía con el modal
+    // de login.
+    let lightboxCloseTimer = null;
+    const openLightbox = () => {
+      if (!lightbox) return;
+      if (lightboxCloseTimer) { clearTimeout(lightboxCloseTimer); lightboxCloseTimer = null; }
+      resetZoom({ instant: true });
+      renderLightbox({ instant: true });
+      lightbox.hidden = false;
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(() => lightbox.classList.add('is-open'));
+    };
+    const closeLightbox = () => {
+      if (!lightbox) return;
+      lightbox.classList.remove('is-open');
+      document.body.style.overflow = '';
+      stopLightboxVideo();
+      lightboxCloseTimer = window.setTimeout(() => {
+        lightbox.hidden = true;
+        lightboxCloseTimer = null;
+      }, 260);
+      // La foto grande de fondo (la que queda difuminada detrás del
+      // visor) no se actualiza mientras el visor está abierto -ver nota
+      // en lbPrev/lbNext más abajo-, así que al cerrar se sincroniza una
+      // sola vez con la posición final a la que se llegó dentro del
+      // visor, sin animación (para que no se note el salto detrás del
+      // modal que se está cerrando).
+      renderStage({ instant: true });
+    };
+
+    if (zoomBtn) zoomBtn.addEventListener('click', openLightbox);
+    // La foto grande ya tenía cursor "zoom-in" en el CSS, dando a entender
+    // que se podía clickear para ampliar, pero no había ningún listener
+    // que realmente abriera el visor detallado -sólo lo hacía la lupa.
+    // Se agrega acá, más soporte de teclado (Enter/Espacio) ya que la
+    // imagen pasa a ser un disparador interactivo.
+    if (mainImg) {
+      mainImg.setAttribute('tabindex', '0');
+      mainImg.setAttribute('role', 'button');
+      mainImg.setAttribute('aria-label', 'Ver imagen ampliada');
+      mainImg.addEventListener('click', openLightbox);
+      mainImg.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openLightbox();
+        }
+      });
+    }
+    if (galleryVideoFrame) {
+      galleryVideoFrame.setAttribute('tabindex', '0');
+      galleryVideoFrame.setAttribute('role', 'button');
+      galleryVideoFrame.setAttribute('aria-label', 'Ver video ampliado');
+      galleryVideoFrame.addEventListener('click', openLightbox);
+      galleryVideoFrame.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openLightbox();
+        }
+      });
+    }
+    lbCloseButtons.forEach((btn) => btn.addEventListener('click', closeLightbox));
+
+    // --- Zoom del visor ampliado (rueda, doble clic/tap, pinch, arrastre) ---
+    // Todo el zoom vive en tres variables: la escala actual y el
+    // desplazamiento (pan) en X/Y, en píxeles "sin escalar" -ver nota en
+    // applyZoomTransform sobre por qué el pan no necesita dividirse por la
+    // escala-. Cada acción (rueda, botones, pinch, doble click) sólo
+    // modifica estas tres variables y llama a applyZoomTransform().
+    const ZOOM_MIN = 1;
+    const ZOOM_MAX = 4;
+    const ZOOM_STEP = 0.5;
+    const ZOOM_DBLCLICK = 2.5;
+    let zoomScale = 1;
+    let zoomX = 0;
+    let zoomY = 0;
+
+    // El desplazamiento máximo permitido crece con la escala: a más zoom,
+    // más margen para poder recorrer la imagen, pero siempre queda una
+    // porción visible dentro del visor (no se puede arrastrar la imagen
+    // completamente fuera de la vista).
+    const clampZoomPan = () => {
+      if (!lightboxImg) return;
+      const baseW = lightboxImg.offsetWidth;
+      const baseH = lightboxImg.offsetHeight;
+      const maxX = Math.max((baseW * (zoomScale - 1)) / 2, 0);
+      const maxY = Math.max((baseH * (zoomScale - 1)) / 2, 0);
+      zoomX = Math.max(-maxX, Math.min(maxX, zoomX));
+      zoomY = Math.max(-maxY, Math.min(maxY, zoomY));
+    };
+
+    const applyZoomTransform = (options) => {
+      if (!lightboxImg) return;
+      const smooth = !(options && options.instant);
+      lightboxImg.style.transition = smooth ? '' : 'none';
+      clampZoomPan();
+      lightboxImg.style.transform = `translate(${zoomX}px, ${zoomY}px) scale(${zoomScale})`;
+      lightboxImg.classList.toggle('is-zoomed', zoomScale > 1);
+      if (zoomLevelEl) zoomLevelEl.textContent = Math.round(zoomScale * 100) + '%';
+      if (zoomOutBtn) zoomOutBtn.disabled = zoomScale <= ZOOM_MIN;
+      if (zoomInBtn) zoomInBtn.disabled = zoomScale >= ZOOM_MAX;
+      if (!smooth) void lightboxImg.offsetWidth;
+    };
+
+    const resetZoom = (options) => {
+      zoomScale = 1;
+      zoomX = 0;
+      zoomY = 0;
+      applyZoomTransform(options);
+    };
+
+    const setZoom = (nextScale, focalClientX, focalClientY) => {
+      if (!lightboxImg) return;
+      const clamped = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, nextScale));
+      if (clamped === zoomScale) return;
+      // Si se hace zoom desde un punto concreto (rueda del mouse, doble
+      // click, pinch), la imagen "crece" desde ahí en vez de desde el
+      // centro, para que el punto sobre el que está el cursor/los dedos
+      // se mantenga aproximadamente fijo en pantalla.
+      if (typeof focalClientX === 'number' && typeof focalClientY === 'number') {
+        const rect = lightboxImg.getBoundingClientRect();
+        const offsetX = focalClientX - (rect.left + rect.width / 2);
+        const offsetY = focalClientY - (rect.top + rect.height / 2);
+        const ratio = clamped / zoomScale;
+        zoomX = zoomX + offsetX * (1 - ratio);
+        zoomY = zoomY + offsetY * (1 - ratio);
+      }
+      zoomScale = clamped;
+      if (zoomScale === ZOOM_MIN) {
+        zoomX = 0;
+        zoomY = 0;
+      }
+      applyZoomTransform();
+    };
+
+    if (zoomInBtn) zoomInBtn.addEventListener('click', () => setZoom(zoomScale + ZOOM_STEP));
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => setZoom(zoomScale - ZOOM_STEP));
+    if (zoomResetBtn) zoomResetBtn.addEventListener('click', () => resetZoom());
+
+    if (lightboxImg) {
+      // Rueda del mouse: acercar/alejar centrado en el puntero.
+      lightboxImg.addEventListener('wheel', (event) => {
+        event.preventDefault();
+        const direction = event.deltaY > 0 ? -1 : 1;
+        setZoom(zoomScale + direction * 0.35, event.clientX, event.clientY);
+      }, { passive: false });
+
+      // Doble click (escritorio): alterna entre 100% y un zoom fijo,
+      // centrado en el punto clickeado.
+      lightboxImg.addEventListener('dblclick', (event) => {
+        event.preventDefault();
+        if (zoomScale > 1) {
+          resetZoom();
+        } else {
+          setZoom(ZOOM_DBLCLICK, event.clientX, event.clientY);
+        }
+      });
+
+      // Arrastre con mouse: sólo mueve la imagen si ya está ampliada.
+      let isDraggingImage = false;
+      let dragStartX = 0;
+      let dragStartY = 0;
+      let dragOriginX = 0;
+      let dragOriginY = 0;
+
+      lightboxImg.addEventListener('mousedown', (event) => {
+        if (zoomScale <= 1) return;
+        isDraggingImage = true;
+        lightboxImg.classList.add('is-panning');
+        dragStartX = event.clientX;
+        dragStartY = event.clientY;
+        dragOriginX = zoomX;
+        dragOriginY = zoomY;
+        event.preventDefault();
+      });
+
+      window.addEventListener('mousemove', (event) => {
+        if (!isDraggingImage) return;
+        zoomX = dragOriginX + (event.clientX - dragStartX);
+        zoomY = dragOriginY + (event.clientY - dragStartY);
+        applyZoomTransform({ instant: true });
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (!isDraggingImage) return;
+        isDraggingImage = false;
+        lightboxImg.classList.remove('is-panning');
+      });
+
+      // Táctil: un dedo mueve la imagen ampliada (o navega si no está
+      // ampliada, ver addSwipeSupport); dos dedos hacen pinch-to-zoom;
+      // un doble tap alterna el zoom igual que el doble click.
+      let touchMode = null; // 'pan' | 'pinch' | null
+      let pinchStartDist = 0;
+      let pinchStartScale = 1;
+      let pinchMidX = 0;
+      let pinchMidY = 0;
+      let panStartX = 0;
+      let panStartY = 0;
+      let panOriginX = 0;
+      let panOriginY = 0;
+      let lastTapTime = 0;
+
+      const touchDistance = (touches) => {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.hypot(dx, dy);
+      };
+
+      lightboxImg.addEventListener('touchstart', (event) => {
+        if (event.touches.length === 2) {
+          touchMode = 'pinch';
+          pinchStartDist = touchDistance(event.touches);
+          pinchStartScale = zoomScale;
+          pinchMidX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+          pinchMidY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+        } else if (event.touches.length === 1) {
+          const now = Date.now();
+          if (now - lastTapTime < 320) {
+            // Doble tap
+            if (zoomScale > 1) {
+              resetZoom();
+            } else {
+              setZoom(ZOOM_DBLCLICK, event.touches[0].clientX, event.touches[0].clientY);
+            }
+            touchMode = null;
+            lastTapTime = 0;
+            return;
+          }
+          lastTapTime = now;
+          if (zoomScale > 1) {
+            touchMode = 'pan';
+            panStartX = event.touches[0].clientX;
+            panStartY = event.touches[0].clientY;
+            panOriginX = zoomX;
+            panOriginY = zoomY;
+          } else {
+            touchMode = null;
+          }
+        }
+      }, { passive: true });
+
+      lightboxImg.addEventListener('touchmove', (event) => {
+        if (touchMode === 'pinch' && event.touches.length === 2) {
+          event.preventDefault();
+          const dist = touchDistance(event.touches);
+          const nextScale = pinchStartScale * (dist / pinchStartDist);
+          setZoom(nextScale, pinchMidX, pinchMidY);
+        } else if (touchMode === 'pan' && event.touches.length === 1) {
+          event.preventDefault();
+          zoomX = panOriginX + (event.touches[0].clientX - panStartX);
+          zoomY = panOriginY + (event.touches[0].clientY - panStartY);
+          applyZoomTransform({ instant: true });
+        }
+      }, { passive: false });
+
+      lightboxImg.addEventListener('touchend', (event) => {
+        if (event.touches.length === 0) touchMode = null;
+      });
+    }
+    // OJO: antes cada click de "siguiente/anterior" DENTRO del visor
+    // también llamaba a renderStage(), que actualiza la foto grande de
+    // fondo -la que queda difuminada (backdrop-filter: blur) detrás del
+    // modal-. Cambiar esa imagen de fondo mientras el navegador está
+    // aplicando el desenfoque puede hacer que, por una fracción de
+    // segundo, se recalcule el blur y se vea un "flash" de esa foto de
+    // fondo sin difuminar (una foto distinta a la que se está mostrando
+    // en el visor), que es justo lo que se reportó. Como esa foto de
+    // fondo de todos modos queda tapada por el visor, no hace falta
+    // mantenerla al día en tiempo real: sólo se sincroniza una vez, al
+    // cerrar el visor (ver closeLightbox).
+    if (lbPrev) lbPrev.addEventListener('click', () => {
+      currentIndex = (currentIndex - 1 + photos.length) % photos.length;
+      resetZoom({ instant: true });
+      renderLightbox();
+    });
+    if (lbNext) lbNext.addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % photos.length;
+      resetZoom({ instant: true });
+      renderLightbox();
+    });
+
+    renderStage({ instant: true });
+    renderThumbs();
+
+    // --- Cargar los datos publicados (galeria-datos.json) -----------------
+    // El panel de administración, al guardar cambios, descarga un archivo
+    // "galeria-datos.json". Si ese archivo se sube al servidor junto a
+    // esta página, lo usamos como fuente real de la galería para
+    // TODOS los visitantes (en vez de depender del localStorage de cada
+    // navegador, que sólo lo ve quien hizo los cambios). Si el archivo
+    // no existe todavía, o esta página se abrió localmente con doble
+    // click (sin subirla a un servidor) y por eso el navegador bloquea
+    // la carga, seguimos mostrando tranquilos lo que ya se ve arriba
+    // (localStorage o los datos por defecto): nada se rompe.
+    if (!isPreviewMode) {
+      fetch('galeria-datos.json', { cache: 'no-store' })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (!data || !Array.isArray(data.photos) || !data.photos.length) return;
+          allPhotos = data.photos.filter((item) => item && item.visible !== false);
+          if (!allPhotos.length) allPhotos = defaultPhotos;
+          if (Array.isArray(data.categorias) && data.categorias.length) categoryOrder = data.categorias;
+          activeCategory = 'todas';
+          renderThumbs();
+          applyCategoryFilter();
+        })
+        .catch(() => {
+          // Sin conexión, archivo inexistente o bloqueado por el
+          // navegador (típico al abrir el HTML con doble click): se
+          // ignora y queda lo que ya se cargó desde localStorage/valores
+          // por defecto.
+        });
+    }
+
+    // --- Modo vista previa: recibir datos en vivo desde galeria-admin ---
+    // Le avisamos al panel de admin (la ventana "padre" del iframe) que
+    // ya terminamos de armar la página y estamos listos para recibir el
+    // estado actual (que puede incluir cambios todavía sin guardar). El
+    // admin responde con un mensaje "eest3-preview-data" que contiene el
+    // array de fotos vigente y, opcionalmente, en qué foto puntual hay
+    // que arrancar (si la vista previa se abrió desde una foto puntual).
+    if (isPreviewMode) {
+      window.addEventListener('message', (event) => {
+        const data = event.data;
+        if (!data || data.type !== 'eest3-preview-data') return;
+        const incoming = Array.isArray(data.photos) ? data.photos : [];
+        allPhotos = incoming.filter((item) => item && item.visible !== false);
+        if (!allPhotos.length) allPhotos = defaultPhotos;
+        activeCategory = 'todas';
+        renderThumbs();
+        applyCategoryFilter();
+        if (data.focusId) {
+          const idx = allPhotos.findIndex((p) => p.id === data.focusId);
+          if (idx >= 0) {
+            currentIndex = idx;
+            renderStage({ instant: true });
+          }
+        }
+      });
+      window.parent.postMessage({ type: 'eest3-preview-ready' }, '*');
+    }
+
+    // --- Autoplay / presentación automática ---
+    // El tiempo que se muestra cada elemento ahora depende de qué es:
+    // una foto siempre dura AUTOPLAY_MS, pero un video dura lo que dura
+    // el video de verdad -2 segundos, una hora, lo que sea- y recién se
+    // avanza a lo siguiente cuando termina de reproducirse. La barra
+    // dorada de abajo también sigue el progreso real de la
+    // reproducción en vez de una animación a tiempo fijo. Para video de
+    // YouTube/Vimeo hace falta el reproductor oficial de cada
+    // plataforma (se carga solo, una única vez, la primera vez que
+    // hace falta) para poder saber cuánto dura y cuándo termina.
+    const setProgressBars = (pct, transitionMs) => {
+      [progressBar, lightboxProgressBar].forEach((bar) => {
+        if (!bar) return;
+        if (transitionMs != null) {
+          bar.style.transition = 'none';
+          bar.style.width = '0%';
+          // Forzar reflow para reiniciar la animación
+          void bar.offsetWidth;
+          bar.style.transition = `width ${transitionMs}ms linear`;
+          bar.style.width = '100%';
+        } else {
+          bar.style.transition = 'none';
+          bar.style.width = pct + '%';
+        }
+      });
+    };
+
+    const stopAutoplay = () => {
+      autoplayActive = false;
+      if (autoplayAdvanceCleanup) {
+        autoplayAdvanceCleanup();
+        autoplayAdvanceCleanup = null;
+      }
+      setProgressBars(0);
+      if (playBtn) {
+        playBtn.classList.remove('is-playing');
+        playBtn.setAttribute('aria-label', 'Reproducir presentación automática');
+        if (playLabel) playLabel.textContent = 'Reproducir';
+      }
+      if (lightboxPlayBtn) {
+        lightboxPlayBtn.classList.remove('is-playing');
+        lightboxPlayBtn.setAttribute('aria-label', 'Reproducir presentación automática');
+        if (lightboxPlayLabel) lightboxPlayLabel.textContent = 'Reproducir';
+      }
+    };
+
+    const advanceAutoplaySlide = () => {
+      if (!autoplayActive) return;
+      currentIndex = (currentIndex + 1) % photos.length;
+      renderStage();
+      // Si el visor ampliado está abierto durante la presentación
+      // automática, lo mantenemos sincronizado con la foto actual.
+      if (lightbox && !lightbox.hidden) {
+        resetZoom({ instant: true });
+        renderLightbox();
+      }
+      scheduleAutoAdvance();
+    };
+
+    // Si por lo que sea no se puede saber cuánto dura un video (falló
+    // la carga del reproductor oficial, es un enlace de un sitio que
+    // no es YouTube/Vimeo/un archivo directo, etc.), la presentación
+    // no debe quedar trabada para siempre: como red de seguridad se lo
+    // trata como si durara lo mismo que una foto.
+    const scheduleFixedAdvance = () => {
+      setProgressBars(null, AUTOPLAY_MS);
+      const id = window.setTimeout(advanceAutoplaySlide, AUTOPLAY_MS);
+      autoplayAdvanceCleanup = () => window.clearTimeout(id);
+    };
+
+    const scheduleDirectVideoAdvance = () => {
+      const video = galleryVideoEl;
+      if (!video) { scheduleFixedAdvance(); return; }
+      setProgressBars(0);
+      let rafId = null;
+      const onEnded = () => advanceAutoplaySlide();
+      const paint = () => {
+        if (video.duration && isFinite(video.duration)) {
+          setProgressBars((video.currentTime / video.duration) * 100);
+        }
+        rafId = window.requestAnimationFrame(paint);
+      };
+      video.addEventListener('ended', onEnded);
+      rafId = window.requestAnimationFrame(paint);
+      autoplayAdvanceCleanup = () => {
+        video.removeEventListener('ended', onEnded);
+        if (rafId) window.cancelAnimationFrame(rafId);
+      };
+    };
+
+    let youTubeApiPromise = null;
+    const loadYouTubeApi = () => {
+      if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
+      if (youTubeApiPromise) return youTubeApiPromise;
+      youTubeApiPromise = new Promise((resolve) => {
+        const previous = window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady = () => {
+          if (typeof previous === 'function') previous();
+          resolve(window.YT);
+        };
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+      });
+      return youTubeApiPromise;
+    };
+
+    let vimeoApiPromise = null;
+    const loadVimeoApi = () => {
+      if (window.Vimeo && window.Vimeo.Player) return Promise.resolve(window.Vimeo);
+      if (vimeoApiPromise) return vimeoApiPromise;
+      vimeoApiPromise = new Promise((resolve, reject) => {
+        const tag = document.createElement('script');
+        tag.src = 'https://player.vimeo.com/api/player.js';
+        tag.onload = () => resolve(window.Vimeo);
+        tag.onerror = () => reject(new Error('No se pudo cargar el reproductor de Vimeo'));
+        document.head.appendChild(tag);
+      });
+      return vimeoApiPromise;
+    };
+
+    const scheduleYouTubeAdvance = () => {
+      const iframe = galleryEmbedEl;
+      if (!iframe) { scheduleFixedAdvance(); return; }
+      setProgressBars(0);
+      let cancelled = false;
+      let pollId = null;
+      const fallbackId = window.setTimeout(() => {
+        if (cancelled) return;
+        cancelled = true;
+        scheduleFixedAdvance();
+      }, 6000);
+      loadYouTubeApi().then((YT) => {
+        if (cancelled) return;
+        const player = new YT.Player(iframe, {
+          events: {
+            onReady: () => {
+              if (cancelled) return;
+              window.clearTimeout(fallbackId);
+              pollId = window.setInterval(() => {
+                const duration = player.getDuration ? player.getDuration() : 0;
+                const current = player.getCurrentTime ? player.getCurrentTime() : 0;
+                if (duration > 0) setProgressBars((current / duration) * 100);
+              }, 250);
+            },
+            onStateChange: (event) => {
+              if (cancelled) return;
+              if (event.data === YT.PlayerState.ENDED) advanceAutoplaySlide();
+            },
+            onError: () => {
+              if (cancelled) return;
+              cancelled = true;
+              window.clearTimeout(fallbackId);
+              if (pollId) window.clearInterval(pollId);
+              scheduleFixedAdvance();
+            }
+          }
+        });
+      }).catch(() => {
+        if (cancelled) return;
+        cancelled = true;
+        window.clearTimeout(fallbackId);
+        scheduleFixedAdvance();
+      });
+      autoplayAdvanceCleanup = () => {
+        cancelled = true;
+        window.clearTimeout(fallbackId);
+        if (pollId) window.clearInterval(pollId);
+      };
+    };
+
+    const scheduleVimeoAdvance = () => {
+      const iframe = galleryEmbedEl;
+      if (!iframe) { scheduleFixedAdvance(); return; }
+      setProgressBars(0);
+      let cancelled = false;
+      let player = null;
+      const fallbackId = window.setTimeout(() => {
+        if (cancelled) return;
+        cancelled = true;
+        scheduleFixedAdvance();
+      }, 6000);
+      loadVimeoApi().then((Vimeo) => {
+        if (cancelled) return;
+        window.clearTimeout(fallbackId);
+        player = new Vimeo.Player(iframe);
+        player.on('timeupdate', (data) => {
+          if (cancelled || !data || !data.duration) return;
+          setProgressBars((data.seconds / data.duration) * 100);
+        });
+        player.on('ended', () => { if (!cancelled) advanceAutoplaySlide(); });
+      }).catch(() => {
+        if (cancelled) return;
+        cancelled = true;
+        window.clearTimeout(fallbackId);
+        scheduleFixedAdvance();
+      });
+      autoplayAdvanceCleanup = () => {
+        cancelled = true;
+        window.clearTimeout(fallbackId);
+        if (player && player.unload) player.unload().catch(() => {});
+      };
+    };
+
+    const scheduleAutoAdvance = () => {
+      if (autoplayAdvanceCleanup) {
+        autoplayAdvanceCleanup();
+        autoplayAdvanceCleanup = null;
+      }
+      if (!autoplayActive) return;
+      const p = photos[currentIndex];
+      if (p && p.type === 'video') {
+        const info = parseVideoUrlFallback(p.videoUrl) || {};
+        const provider = p.videoProvider || info.provider;
+        if (provider === 'direct') { scheduleDirectVideoAdvance(); return; }
+        if (provider === 'youtube') { scheduleYouTubeAdvance(); return; }
+        if (provider === 'vimeo') { scheduleVimeoAdvance(); return; }
+        // Enlace de video de un sitio que no es YouTube/Vimeo/un
+        // archivo directo: no hay forma de saber cuándo termina, así
+        // que se muestra el tiempo fijo de siempre.
+        scheduleFixedAdvance();
+        return;
+      }
+      scheduleFixedAdvance();
+    };
+
+    const startAutoplay = () => {
+      if (photos.length < 2) return;
+      autoplayActive = true;
+      if (playBtn) {
+        playBtn.classList.add('is-playing');
+        playBtn.setAttribute('aria-label', 'Pausar presentación automática');
+        if (playLabel) playLabel.textContent = 'Pausar';
+      }
+      if (lightboxPlayBtn) {
+        lightboxPlayBtn.classList.add('is-playing');
+        lightboxPlayBtn.setAttribute('aria-label', 'Pausar presentación automática');
+        if (lightboxPlayLabel) lightboxPlayLabel.textContent = 'Pausar';
+      }
+      scheduleAutoAdvance();
+    };
+
+    if (playBtn) {
+      playBtn.addEventListener('click', () => {
+        if (autoplayActive) stopAutoplay();
+        else startAutoplay();
+      });
+    }
+
+    if (lightboxPlayBtn) {
+      lightboxPlayBtn.addEventListener('click', () => {
+        if (autoplayActive) stopAutoplay();
+        else startAutoplay();
+      });
+    }
+
+    // Pausar el autoplay si el usuario interactúa manualmente
+    [prevBtn, nextBtn, lbPrev, lbNext].forEach((btn) => {
+      if (btn) btn.addEventListener('click', () => { if (autoplayActive) stopAutoplay(); });
+    });
+
+    // --- Navegación por teclado ---
+    document.addEventListener('keydown', (event) => {
+      const tag = (event.target && event.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      if (!lightbox.hidden) {
+        if (event.key === 'ArrowLeft' && lbPrev) lbPrev.click();
+        if (event.key === 'ArrowRight' && lbNext) lbNext.click();
+        if (event.key === 'Escape') closeLightbox();
+        if (event.key === '+' || event.key === '=') setZoom(zoomScale + ZOOM_STEP);
+        if (event.key === '-' || event.key === '_') setZoom(zoomScale - ZOOM_STEP);
+        if (event.key === '0') resetZoom();
+        return;
+      }
+
+      if (event.key === 'ArrowLeft' && prevBtn) prevBtn.click();
+      if (event.key === 'ArrowRight' && nextBtn) nextBtn.click();
+    });
+
+    // --- Deslizar (swipe) en móviles ---
+    const addSwipeSupport = (el, onPrev, onNext) => {
+      if (!el) return;
+      let startX = 0;
+      let startY = 0;
+      let tracking = false;
+
+      el.addEventListener('touchstart', (event) => {
+        if (!event.touches || !event.touches.length) return;
+        startX = event.touches[0].clientX;
+        startY = event.touches[0].clientY;
+        tracking = true;
+      }, { passive: true });
+
+      el.addEventListener('touchend', (event) => {
+        if (!tracking) return;
+        tracking = false;
+        const touch = event.changedTouches && event.changedTouches[0];
+        if (!touch) return;
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+        if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+          if (dx > 0) onPrev(); else onNext();
+        }
+      }, { passive: true });
+    };
+
+    addSwipeSupport(document.querySelector('.gallery-frame'), () => prevBtn && prevBtn.click(), () => nextBtn && nextBtn.click());
+    addSwipeSupport(document.querySelector('.lightbox-figure'), () => { if (zoomScale <= 1 && lbPrev) lbPrev.click(); }, () => { if (zoomScale <= 1 && lbNext) lbNext.click(); });
+
+    const modal = document.getElementById('loginModal');
+    const openLogin = document.getElementById('openLogin');
+    const closeLogin = document.getElementById('closeLogin');
+    const loginForm = document.getElementById('loginForm');
+    const loginFeedback = document.getElementById('loginFeedback');
+
+    const openModal = () => {
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('loginUser').focus();
+    };
+
+    const closeModal = () => {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      loginFeedback.textContent = '';
+      loginForm.reset();
+    };
+
+    if (!isPreviewMode && sessionStorage.getItem(SESSION_KEY) === 'true' && sessionStorage.getItem(REDIRECT_KEY) === 'true') {
+      sessionStorage.removeItem(REDIRECT_KEY);
+      window.location.replace('galeria-admin.html');
+    }
+
+    openLogin.addEventListener('click', () => {
+      // Dentro del iframe de vista previa del panel de admin no tiene
+      // sentido navegar a ningún lado al clickear "Acceso administrador".
+      if (isPreviewMode) return;
+      if (sessionStorage.getItem(SESSION_KEY) === 'true') {
+        window.location.replace('galeria-admin.html');
+        return;
+      }
+      openModal();
+    });
+    closeLogin.addEventListener('click', closeModal);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeModal();
+    });
+
+    const togglePassBtn = document.getElementById('toggleLoginPass');
+    if (togglePassBtn) {
+      togglePassBtn.addEventListener('click', () => {
+        const passInput = document.getElementById('loginPass');
+        const eyeOpen = togglePassBtn.querySelector('[data-eye-open]');
+        const eyeClosed = togglePassBtn.querySelector('[data-eye-closed]');
+        const isShown = passInput.type === 'text';
+        passInput.type = isShown ? 'password' : 'text';
+        togglePassBtn.setAttribute('aria-pressed', String(!isShown));
+        togglePassBtn.setAttribute('aria-label', isShown ? 'Mostrar contraseña' : 'Ocultar contraseña');
+        if (eyeOpen) eyeOpen.style.display = isShown ? '' : 'none';
+        if (eyeClosed) eyeClosed.style.display = isShown ? 'none' : '';
+        passInput.focus();
+      });
+    }
+
+    loginForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const user = document.getElementById('loginUser').value.trim();
+      const pass = document.getElementById('loginPass').value;
+      const isValid = ADMIN_USERS.some((account) => account.user === user && account.pass === pass);
+
+      if (!isValid) {
+        loginFeedback.textContent = 'Usuario o contraseña incorrectos.';
+        loginFeedback.classList.remove('is-shaking');
+        void loginFeedback.offsetWidth;
+        loginFeedback.classList.add('is-shaking');
+        return;
+      }
+
+      sessionStorage.setItem(SESSION_KEY, 'true');
+      sessionStorage.setItem(REDIRECT_KEY, 'true');
+      loginFeedback.textContent = 'Acceso correcto. Redirigiendo...';
+      window.setTimeout(() => window.location.reload(), 450);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
+    });
+  </script>
+</body>
+</html>
