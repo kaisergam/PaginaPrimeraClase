@@ -1,7 +1,7 @@
-name = "tecnica3"
+name = "PaginaPrimeraClase"
 main = "index.js"
 compatibility_date = "2026-05-26"
-account_id = "01dbfaa23813de0ed498516365ee24eb"
+account_id = "dc13b2cb0be44bd64e418965f37b4019"
 workers_dev = true
 
 [assets]
