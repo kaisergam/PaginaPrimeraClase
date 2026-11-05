@@ -1,7 +1,7 @@
 name = "tecnica3"
 main = "index.js"
 compatibility_date = "2026-05-26"
-account_id = "e636ceb62148fbaac9f75b50a15f0101"
+account_id = "dc13b2cb0be44bd64e418965f37b4019"
 workers_dev = true
 
 [assets]
