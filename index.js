@@ -1,21 +1,15 @@
-const mimeTypes = {
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'application/javascript; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
-  '.webp': 'image/webp',
-  '.ico': 'image/x-icon',
-  '.txt': 'text/plain; charset=utf-8',
-};
-
-function getContentType(pathname) {
+// Long cache for static assets (images, fonts, css/js without a build hash get a
+// shorter window so updates still show up within a day); HTML is revalidated
+// on every request so page edits go live immediately.
+function getCacheControl(pathname) {
   const ext = pathname.substring(pathname.lastIndexOf('.')).toLowerCase();
-  return mimeTypes[ext] || 'application/octet-stream';
+  if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico'].includes(ext)) {
+    return 'public, max-age=604800, stale-while-revalidate=86400';
+  }
+  if (['.css', '.js'].includes(ext)) {
+    return 'public, max-age=86400, stale-while-revalidate=3600';
+  }
+  return 'public, max-age=0, must-revalidate';
 }
 
 function candidatePaths(pathname) {
@@ -72,7 +66,14 @@ export default {
         return new Response('Not found', { status: 404 });
       }
 
-      return response;
+      const headers = new Headers(response.headers);
+      headers.set('Cache-Control', getCacheControl(resolvedPath));
+
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
     } catch (error) {
       return new Response('Worker error', { status: 500 });
     }
